@@ -5,10 +5,12 @@ from domain.scoring_policy import ScoringPolicy
 from domain.events import JobQualified
 
 from application.job_processing_service import JobProcessingService
+from application.resume_profile_builder import ResumeProfileBuilder
 from application.simple_event_dispatcher import SimpleEventDispatcher
 
 from infrastructure.in_memory_job_repository import InMemoryJobRepository
 from infrastructure.in_memory_event_publisher import InMemoryEventPublisher
+from infrastructure.resume.pdf_resume_parser import PdfResumeParser
 
 
 def job_qualified_handler(event):
@@ -17,28 +19,13 @@ def job_qualified_handler(event):
 
 def main():
 
-    profile = CandidateProfile(
-        preferred_locations=["Jacksonville", "Jax Beach"],
-        remote_allowed=True,
-        salary_minimum=85000,
-        ideal_max_experience_years=3,
+    parser = PdfResumeParser()
+    resume_text = parser.extract_text("resume.pdf")
 
-        core_skills={
-            "Java": 5,
-            "Spring": 4,
-            "Spring Boot": 5,
-            "REST": 3,
-            "SQL": 3,
-            "Microservices": 4
-        },
+    builder = ResumeProfileBuilder()
+    profile = builder.build(resume_text)
 
-        secondary_skills={
-            "Docker": 2,
-            "AWS": 2,
-            "Kafka": 2,
-            "React": 1
-        }
-    )
+    print(profile)
 
     repository = InMemoryJobRepository()
     filtering_policy = FilteringPolicy()
