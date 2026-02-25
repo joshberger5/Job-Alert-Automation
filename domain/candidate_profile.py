@@ -12,3 +12,5 @@ class CandidateProfile:
 
     core_skills: Dict[str, int]
     secondary_skills: Dict[str, int]
+
+    previous_titles: List[str]
