@@ -28,7 +28,7 @@ class ResumeProfileBuilder:
         secondary_skills = {skill.lower(): 2 for skill in other_skills}
 
         return CandidateProfile(
-            preferred_locations=["Jacksonville", "Jax Beach"],
+            preferred_locations=["Jacksonville", "Jacksonville Beach"],
             remote_allowed=True,
             salary_minimum=85000,
             ideal_max_experience_years=3,
