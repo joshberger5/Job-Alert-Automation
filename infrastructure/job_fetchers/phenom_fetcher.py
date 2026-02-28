@@ -36,8 +36,13 @@ class PhenomFetcher:
             response.raise_for_status()
             data = response.json()
 
+            if page == 1:
+                print(f"[PhenomFetcher] {self.company_name} response keys: {list(data.keys())}")
+                for k, v in list(data.items())[:4]:
+                    print(f"  {k!r}: {str(v)[:120]}")
+
             results_html = data.get("results", "")
-            has_content = data.get("hasContent", False)
+            has_content = data.get("hasContent", True)
             links = re.findall(r'href="(/job/[^"]+)"', results_html)
 
             for href in links:

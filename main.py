@@ -1,4 +1,6 @@
+import json
 import os
+from datetime import datetime
 from dotenv import load_dotenv
 
 from domain.filtering_policy import FilteringPolicy
@@ -70,6 +72,7 @@ def main() -> None:
             company="SSCTechnologies",
             company_name="SSC Technologies",
             recruiting_base="https://wd1.myworkdaysite.com/recruiting/ssctech/SSCTechnologies",
+            fetch_descriptions=True,
         ),
         WorkdayFetcher(
             base_url="https://vystarcu.wd1.myworkdayjobs.com",
@@ -78,6 +81,7 @@ def main() -> None:
             company_name="VyStar Credit Union",
             recruiting_base="https://vystarcu.wd1.myworkdayjobs.com/Careers",
             search_text="",
+            fetch_descriptions=True,
         ),
         BankOfAmericaFetcher(),
     ]
@@ -92,7 +96,22 @@ def main() -> None:
         except Exception as e:
             print(f"[{fetcher_name}] ERROR: {e}")
 
-    service.process(all_jobs)
+    debug_records = service.process(all_jobs)
+
+    counts: dict[str, int] = {}
+    for r in debug_records:
+        counts[r["result"]] = counts.get(r["result"], 0) + 1
+    print(f"[Processing] {counts}")
+
+    debug_output = {
+        "run_at": datetime.now().isoformat(timespec="seconds"),
+        "total_fetched": len(all_jobs),
+        "summary": counts,
+        "jobs": debug_records,
+    }
+    with open("jobs_debug.json", "w", encoding="utf-8") as f:
+        json.dump(debug_output, f, indent=2, default=str)
+    print("[Debug] Wrote jobs_debug.json")
 
 
 if __name__ == "__main__":
