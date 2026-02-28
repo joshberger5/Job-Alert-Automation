@@ -1,4 +1,6 @@
-from domain.job import Job
+import os
+from dotenv import load_dotenv
+
 from domain.candidate_profile import CandidateProfile
 from domain.filtering_policy import FilteringPolicy
 from domain.scoring_policy import ScoringPolicy
@@ -12,9 +14,17 @@ from infrastructure.in_memory_job_repository import InMemoryJobRepository
 from infrastructure.in_memory_event_publisher import InMemoryEventPublisher
 from infrastructure.resume.pdf_resume_parser import PdfResumeParser
 
+from infrastructure.job_fetchers.adzuna_fetcher import AdzunaFetcher
+from infrastructure.job_fetchers.lever_fetcher import LeverFetcher
+from infrastructure.job_fetchers.phenom_fetcher import PhenomFetcher
+from infrastructure.job_fetchers.workday_fetcher import WorkdayFetcher
+from infrastructure.job_fetchers.boa_fetcher import BankOfAmericaFetcher
+
+load_dotenv()
+
 
 def job_qualified_handler(event):
-    print(f"\n🎉 JOB QUALIFIED: {event.job_id} | Score: {event.score}")
+    print(f"\n*** JOB QUALIFIED: {event.job_id} | Score: {event.score}")
 
 
 def main():
@@ -44,20 +54,43 @@ def main():
         event_publisher=publisher
     )
 
-    sample_jobs = [
-        Job(
-            id="1",
-            title="Java Backend Engineer",
-            company="Acme",
-            location="Jacksonville",
-            description="3 years experience with Java and Spring",
-            salary="$90,000 - $100,000",
-            url="https://example.com/job",
-            required_skills=["Java", "Spring", "Kafka"]
-        )
+    fetchers = [
+        AdzunaFetcher(
+            app_id=os.environ["ADZUNA_APP_ID"],
+            app_key=os.environ["ADZUNA_APP_KEY"],
+        ),
+        LeverFetcher(company="dnb", company_name="Dun & Bradstreet"),
+        PhenomFetcher(base_domain="jobs.citi.com", org_id="287", company_name="Citi"),
+        PhenomFetcher(base_domain="jobs.mayoclinic.org", org_id="33647", company_name="Mayo Clinic"),
+        PhenomFetcher(base_domain="jobs.us.pwc.com", org_id="932", company_name="PwC"),
+        WorkdayFetcher(
+            base_url="https://wd1.myworkdaysite.com",
+            tenant="ssctech",
+            company="SSCTechnologies",
+            company_name="SSC Technologies",
+            recruiting_base="https://wd1.myworkdaysite.com/recruiting/ssctech/SSCTechnologies",
+        ),
+        WorkdayFetcher(
+            base_url="https://vystarcu.wd1.myworkdayjobs.com",
+            tenant="vystarcu",
+            company="Careers",
+            company_name="VyStar Credit Union",
+            recruiting_base="https://vystarcu.wd1.myworkdayjobs.com/Careers",
+        ),
+        BankOfAmericaFetcher(),
     ]
 
-    service.process(sample_jobs)
+    all_jobs = []
+    for fetcher in fetchers:
+        fetcher_name = type(fetcher).__name__
+        try:
+            jobs = fetcher.fetch()
+            print(f"[{fetcher_name}] Fetched {len(jobs)} jobs")
+            all_jobs.extend(jobs)
+        except Exception as e:
+            print(f"[{fetcher_name}] ERROR: {e}")
+
+    service.process(all_jobs)
 
 
 if __name__ == "__main__":
