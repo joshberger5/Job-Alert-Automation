@@ -1,12 +1,16 @@
+from domain.candidate_profile import CandidateProfile
+from domain.job import Job
+
+
 class ScoringPolicy:
 
     MINIMUM_SCORE = 7
 
-    def evaluate(self, job, profile):
+    def evaluate(self, job: Job, profile: CandidateProfile) -> tuple[int, dict[str, int]]:
         job_content = job.normalized_content()
 
         total_score = 0
-        breakdown = {}
+        breakdown: dict[str, int] = {}
 
         total_score += self._calculate_skill_score(
             job_content,
@@ -25,8 +29,12 @@ class ScoringPolicy:
     def qualifies(self, score: int) -> bool:
         return score >= self.MINIMUM_SCORE
 
-    def _calculate_skill_score(self, job_content, profile, breakdown):
-
+    def _calculate_skill_score(
+        self,
+        job_content: str,
+        profile: CandidateProfile,
+        breakdown: dict[str, int],
+    ) -> int:
         score = 0
 
         for skill, weight in profile.core_skills.items():
@@ -40,9 +48,13 @@ class ScoringPolicy:
                 breakdown[f"secondary:{skill}"] = weight
 
         return score
-    
-    def _calculate_missing_skill_penalty(self, job, profile, breakdown):
 
+    def _calculate_missing_skill_penalty(
+        self,
+        job: Job,
+        profile: CandidateProfile,
+        breakdown: dict[str, int],
+    ) -> int:
         if not job.required_skills:
             return 0
 

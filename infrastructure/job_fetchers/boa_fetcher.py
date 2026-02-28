@@ -15,14 +15,15 @@ class BankOfAmericaFetcher:
         start = 0
 
         while True:
+            params: dict[str, str | int] = {
+                "start": start,
+                "rows": self.ROWS,
+                "search": "jobsByLocation",
+                "searchstring": self.location,
+            }
             response = requests.get(
                 f"{BOA_BASE}/services/jobssearchservlet",
-                params={
-                    "start": start,
-                    "rows": self.ROWS,
-                    "search": "jobsByLocation",
-                    "searchstring": self.location,
-                },
+                params=params,
                 timeout=10,
             )
             response.raise_for_status()

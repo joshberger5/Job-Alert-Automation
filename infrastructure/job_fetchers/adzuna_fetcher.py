@@ -24,18 +24,19 @@ class AdzunaFetcher:
         page = 1
 
         while True:
+            params: dict[str, str | int] = {
+                "app_id": self.app_id,
+                "app_key": self.app_key,
+                "what": self.keywords,
+                "where": self.location,
+                "distance": 25,
+                "max_days_old": self.max_days_old,
+                "results_per_page": 50,
+                "content-type": "application/json",
+            }
             response = requests.get(
                 f"{self.BASE_URL}/{page}",
-                params={
-                    "app_id": self.app_id,
-                    "app_key": self.app_key,
-                    "what": self.keywords,
-                    "where": self.location,
-                    "distance": 25,
-                    "max_days_old": self.max_days_old,
-                    "results_per_page": 50,
-                    "content-type": "application/json",
-                },
+                params=params,
                 timeout=10,
             )
             response.raise_for_status()

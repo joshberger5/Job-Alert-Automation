@@ -1,6 +1,10 @@
+from domain.candidate_profile import CandidateProfile
+from domain.job import Job
+
+
 class FilteringPolicy:
 
-    def allows(self, job, profile) -> bool:
+    def allows(self, job: Job, profile: CandidateProfile) -> bool:
         # Filter out contract roles if the candidate isn't open to them
         if not profile.open_to_contract and job.employment_type == "contract":
             return False

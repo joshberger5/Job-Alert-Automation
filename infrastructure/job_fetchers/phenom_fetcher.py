@@ -19,20 +19,21 @@ class PhenomFetcher:
         page = 1
 
         while True:
+            params: dict[str, str | int] = {
+                "Keywords": self.keywords,
+                "Location": self.location,
+                "Distance": self.distance,
+                "CurrentPage": page,
+                "RecordsPerPage": self.RESULTS_PER_PAGE,
+                "OrganizationIds": self.org_id,
+                "SearchType": 1,
+                "SortCriteria": 0,
+                "SortDirection": 0,
+                "ResultsType": 0,
+            }
             response = requests.get(
                 f"https://{self.base_domain}/search-jobs/results",
-                params={
-                    "Keywords": self.keywords,
-                    "Location": self.location,
-                    "Distance": self.distance,
-                    "CurrentPage": page,
-                    "RecordsPerPage": self.RESULTS_PER_PAGE,
-                    "OrganizationIds": self.org_id,
-                    "SearchType": 1,
-                    "SortCriteria": 0,
-                    "SortDirection": 0,
-                    "ResultsType": 0,
-                },
+                params=params,
                 timeout=10,
             )
             response.raise_for_status()

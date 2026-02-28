@@ -1,10 +1,9 @@
 import os
 from dotenv import load_dotenv
 
-from domain.candidate_profile import CandidateProfile
 from domain.filtering_policy import FilteringPolicy
 from domain.scoring_policy import ScoringPolicy
-from domain.events import JobQualified
+from domain.events import DomainEvent, JobQualified
 
 from application.job_processing_service import JobProcessingService
 from application.resume_profile_builder import ResumeProfileBuilder
@@ -13,6 +12,7 @@ from application.simple_event_dispatcher import SimpleEventDispatcher
 from infrastructure.in_memory_job_repository import InMemoryJobRepository
 from infrastructure.in_memory_event_publisher import InMemoryEventPublisher
 from infrastructure.resume.pdf_resume_parser import PdfResumeParser
+from infrastructure.job_fetchers import JobFetcher
 
 from infrastructure.job_fetchers.adzuna_fetcher import AdzunaFetcher
 from infrastructure.job_fetchers.lever_fetcher import LeverFetcher
@@ -23,11 +23,12 @@ from infrastructure.job_fetchers.boa_fetcher import BankOfAmericaFetcher
 load_dotenv()
 
 
-def job_qualified_handler(event):
+def job_qualified_handler(event: DomainEvent) -> None:
+    assert isinstance(event, JobQualified)
     print(f"\n*** JOB QUALIFIED: {event.job_id} | Score: {event.score}")
 
 
-def main():
+def main() -> None:
 
     parser = PdfResumeParser()
     resume_text = parser.extract_text("resume.pdf")
@@ -54,7 +55,7 @@ def main():
         event_publisher=publisher
     )
 
-    fetchers = [
+    fetchers: list[JobFetcher] = [
         AdzunaFetcher(
             app_id=os.environ["ADZUNA_APP_ID"],
             app_key=os.environ["ADZUNA_APP_KEY"],
