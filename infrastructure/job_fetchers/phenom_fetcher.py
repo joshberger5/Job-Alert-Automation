@@ -1,3 +1,4 @@
+import re
 import requests
 from domain.job import Job
 
@@ -6,13 +7,11 @@ class PhenomFetcher:
     RESULTS_PER_PAGE = 15
 
     def __init__(self, base_domain: str, org_id: str, company_name: str,
-                 keywords: str = "java", location: str = "Jacksonville, FL", distance: int = 50):
+                 keywords: str = "java"):
         self.base_domain = base_domain
         self.org_id = org_id
         self.company_name = company_name
         self.keywords = keywords
-        self.location = location
-        self.distance = distance
 
     def fetch(self) -> list[Job]:
         jobs: list[Job] = []
@@ -21,8 +20,6 @@ class PhenomFetcher:
         while True:
             params: dict[str, str | int] = {
                 "Keywords": self.keywords,
-                "Location": self.location,
-                "Distance": self.distance,
                 "CurrentPage": page,
                 "RecordsPerPage": self.RESULTS_PER_PAGE,
                 "OrganizationIds": self.org_id,
@@ -39,25 +36,27 @@ class PhenomFetcher:
             response.raise_for_status()
             data = response.json()
 
-            results = data.get("searchResults", [])
-            for item in results:
-                city = item.get("city") or item.get("City", "")
-                state = item.get("state") or item.get("State", "")
-                location_str = ", ".join(filter(None, [city, state]))
+            results_html = data.get("results", "")
+            has_content = data.get("hasContent", False)
+            links = re.findall(r'href="(/job/[^"]+)"', results_html)
 
-                job_id = str(item.get("jobId") or item.get("JobId") or "")
-                title = item.get("jobTitle") or item.get("JobTitle") or ""
-                description = item.get("jobDescription") or item.get("JobDescription") or ""
-                url = item.get("applyUrl") or item.get("ApplyUrl") or f"https://{self.base_domain}/job/{job_id}"
-
-                remote = True if "remote" in location_str.lower() else None
+            for href in links:
+                parts = href.strip("/").split("/")
+                # parts: ["job", city, title-slug, company-id, job-id]
+                if len(parts) < 5:
+                    continue
+                job_id = parts[-1]
+                title = parts[-3].replace("-", " ").title()
+                location = parts[1].replace("-", " ").title()
+                url = f"https://{self.base_domain}{href}"
+                remote = True if "remote" in location.lower() else None
 
                 jobs.append(Job(
                     id=job_id,
                     title=title,
                     company=self.company_name,
-                    location=location_str,
-                    description=description,
+                    location=location,
+                    description="",
                     salary=None,
                     url=url,
                     required_skills=[],
@@ -65,7 +64,7 @@ class PhenomFetcher:
                     employment_type=None,
                 ))
 
-            if len(results) < self.RESULTS_PER_PAGE:
+            if not has_content or len(links) < self.RESULTS_PER_PAGE:
                 break
             page += 1
 

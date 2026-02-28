@@ -77,6 +77,7 @@ def main() -> None:
             company="Careers",
             company_name="VyStar Credit Union",
             recruiting_base="https://vystarcu.wd1.myworkdayjobs.com/Careers",
+            search_text="",
         ),
         BankOfAmericaFetcher(),
     ]
