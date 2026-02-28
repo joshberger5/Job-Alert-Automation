@@ -38,15 +38,20 @@ class BankOfAmericaFetcher:
                 lob = item.get("lob", "")
                 description = " | ".join(filter(None, [family, lob]))
 
+                location = item.get("location", "")
+                remote = True if "remote" in location.lower() else None
+
                 jobs.append(Job(
                     id=job_id,
                     title=item.get("postingTitle", ""),
                     company="Bank of America",
-                    location=item.get("location", ""),
+                    location=location,
                     description=description,
                     salary=None,
                     url=url,
                     required_skills=[],
+                    remote=remote,
+                    employment_type=None,
                 ))
 
             if len(listings) < self.ROWS:

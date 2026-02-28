@@ -14,6 +14,8 @@ class Job:
     salary: str | None = None
     url: str | None = None
     required_skills: List[str] = field(default_factory=list)
+    remote: bool | None = None
+    employment_type: str | None = None
 
     def normalized_content(self) -> str:
         return f"{self.title} {self.description}".lower()

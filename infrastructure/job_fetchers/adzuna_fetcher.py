@@ -54,15 +54,31 @@ class AdzunaFetcher:
                 else:
                     salary = None
 
+                location_display = item.get("location", {}).get("display_name", "")
+                remote = True if location_display and "remote" in location_display.lower() else None
+
+                contract_type = item.get("contract_type") or ""
+                contract_time = item.get("contract_time") or ""
+                if contract_type == "permanent" or contract_time == "full_time":
+                    employment_type = "full-time"
+                elif contract_type == "contract":
+                    employment_type = "contract"
+                elif contract_time == "part_time":
+                    employment_type = "part-time"
+                else:
+                    employment_type = None
+
                 jobs.append(Job(
                     id=str(item.get("id", "")),
                     title=item.get("title", ""),
                     company=item.get("company", {}).get("display_name", ""),
-                    location=item.get("location", {}).get("display_name", ""),
+                    location=location_display,
                     description=item.get("description", ""),
                     salary=salary,
                     url=item.get("redirect_url"),
                     required_skills=[],
+                    remote=remote,
+                    employment_type=employment_type,
                 ))
 
             # Stop if we got fewer than a full page (no more pages)

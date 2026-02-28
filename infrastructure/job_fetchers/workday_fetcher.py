@@ -41,15 +41,20 @@ class WorkdayFetcher:
                 external_path = item.get("externalPath", "")
                 url = f"{self.recruiting_base}{external_path}" if external_path else None
 
+                locations_text = item.get("locationsText", "")
+                remote = True if "remote" in locations_text.lower() else None
+
                 jobs.append(Job(
                     id=job_id,
                     title=item.get("title", ""),
                     company=self.company_name,
-                    location=item.get("locationsText", ""),
+                    location=locations_text,
                     description="",
                     salary=None,
                     url=url,
                     required_skills=[],
+                    remote=remote,
+                    employment_type=None,
                 ))
 
             if len(postings) < self.LIMIT:

@@ -35,6 +35,7 @@ class ResumeProfileBuilder:
             core_skills=core_skills,
             secondary_skills=secondary_skills,
             previous_titles=previous_titles,
+            open_to_contract=False,
         )
 
     def _extract_skills(self, resume_text: str) -> tuple[list[str], list[str]]:

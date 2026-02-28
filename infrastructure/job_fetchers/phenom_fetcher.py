@@ -49,6 +49,8 @@ class PhenomFetcher:
                 description = item.get("jobDescription") or item.get("JobDescription") or ""
                 url = item.get("applyUrl") or item.get("ApplyUrl") or f"https://{self.base_domain}/job/{job_id}"
 
+                remote = True if "remote" in location_str.lower() else None
+
                 jobs.append(Job(
                     id=job_id,
                     title=title,
@@ -58,6 +60,8 @@ class PhenomFetcher:
                     salary=None,
                     url=url,
                     required_skills=[],
+                    remote=remote,
+                    employment_type=None,
                 ))
 
             if len(results) < self.RESULTS_PER_PAGE:

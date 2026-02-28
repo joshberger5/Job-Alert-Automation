@@ -14,3 +14,4 @@ class CandidateProfile:
     secondary_skills: Dict[str, int]
 
     previous_titles: List[str]
+    open_to_contract: bool = False

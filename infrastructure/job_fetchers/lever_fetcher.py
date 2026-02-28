@@ -33,15 +33,33 @@ class LeverFetcher:
                 salary = None
 
             categories = item.get("categories") or {}
+
+            location_str = categories.get("location", "")
+            remote = True if location_str and "remote" in location_str.lower() else None
+
+            commitment = (categories.get("commitment") or "").lower()
+            if "full" in commitment:
+                employment_type = "full-time"
+            elif "contract" in commitment:
+                employment_type = "contract"
+            elif "part" in commitment:
+                employment_type = "part-time"
+            elif "intern" in commitment:
+                employment_type = "internship"
+            else:
+                employment_type = None
+
             jobs.append(Job(
                 id=item.get("id", ""),
                 title=item.get("text", ""),
                 company=self.company_name,
-                location=categories.get("location", ""),
+                location=location_str,
                 description=item.get("descriptionPlain", ""),
                 salary=salary,
                 url=item.get("hostedUrl"),
                 required_skills=[],
+                remote=remote,
+                employment_type=employment_type,
             ))
 
         return jobs
