@@ -11,11 +11,12 @@ class ExperienceRequirement:
         tokens = job_content.lower().split()
 
         for index, token in enumerate(tokens):
-            if token.isdigit():
+            digit_str: str = token.rstrip("+")
+            if digit_str.isdigit():
                 if index + 1 < len(tokens):
-                    next_token = tokens[index + 1]
+                    next_token: str = tokens[index + 1]
                     if next_token in ("year", "years", "yrs"):
-                        return ExperienceRequirement(int(token))
+                        return ExperienceRequirement(int(digit_str))
 
         return ExperienceRequirement(None)
 

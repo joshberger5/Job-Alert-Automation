@@ -2,6 +2,7 @@ from typing import Iterable
 
 from domain.candidate_profile import CandidateProfile
 from domain.events import DomainEvent, JobEvaluated, JobQualified
+from domain.experience_alignment import ExperienceAlignment
 from domain.filtering_policy import FilteringPolicy
 from domain.job import Job
 from domain.scoring_policy import ScoringPolicy
@@ -12,6 +13,16 @@ from infrastructure.in_memory_job_repository import InMemoryJobRepository
 def _filter_reason(job: Job, profile: CandidateProfile) -> str:
     if not profile.open_to_contract and job.employment_type == "contract":
         return "contract role"
+    if profile.ideal_max_experience_years > 0:
+        alignment: ExperienceAlignment = job.experience_requirement().alignment_with(
+            profile.ideal_max_experience_years
+        )
+        if alignment in (ExperienceAlignment.MODERATE_GAP, ExperienceAlignment.LARGE_GAP):
+            req_years: int | None = job.experience_requirement().required_years
+            return (
+                f"experience gap ({req_years} yrs required, "
+                f"ideal max {profile.ideal_max_experience_years})"
+            )
     if profile.remote_allowed and (
         job.remote is True
         or "remote" in job.description.lower()
