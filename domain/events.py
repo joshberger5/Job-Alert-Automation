@@ -16,6 +16,7 @@ class DomainEvent:
 class JobQualified(DomainEvent):
     job_id: str
     score: int
+    url: str
 
 
 @dataclass(frozen=True)

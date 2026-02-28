@@ -27,7 +27,7 @@ load_dotenv()
 
 def job_qualified_handler(event: DomainEvent) -> None:
     assert isinstance(event, JobQualified)
-    print(f"\n*** JOB QUALIFIED: {event.job_id} | Score: {event.score}")
+    print(f"\n*** JOB QUALIFIED: {event.url} | Score: {event.score}")
 
 
 def main() -> None:
