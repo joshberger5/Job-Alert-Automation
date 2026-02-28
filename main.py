@@ -21,6 +21,7 @@ from infrastructure.job_fetchers.lever_fetcher import LeverFetcher
 from infrastructure.job_fetchers.phenom_fetcher import PhenomFetcher
 from infrastructure.job_fetchers.workday_fetcher import WorkdayFetcher
 from infrastructure.job_fetchers.boa_fetcher import BankOfAmericaFetcher
+from infrastructure.job_fetchers.icims_fetcher import IcimsFetcher, IcimsSitemapFetcher
 
 load_dotenv()
 
@@ -84,6 +85,12 @@ def main() -> None:
             fetch_descriptions=True,
         ),
         BankOfAmericaFetcher(),
+        IcimsFetcher(base_url="https://jobs.paysafe.com", company_name="Paysafe"),
+        IcimsSitemapFetcher(
+            base_url="https://careers-fnf.icims.com",
+            company_name="FNF",
+            location_filter="jacksonville",
+        ),
     ]
 
     all_jobs = []
