@@ -27,9 +27,6 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Decode resume
-        run: echo "${{ secrets.RESUME_PDF_BASE64 }}" | base64 -d > resume.pdf
-
       - name: Run job alerts
         env:
           ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}

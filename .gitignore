@@ -8,9 +8,6 @@ __pycache__/
 # Environment variables
 .env
 
-# Resume (personal file)
-resume.pdf
-
 # Claude guidance file
 CLAUDE.md
 .claude
