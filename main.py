@@ -146,12 +146,19 @@ def main() -> None:
         ),
     ]
 
+    _FETCHER_TIMEOUT: int = 120  # seconds per fetcher before giving up
+
     print(f"  Fetching from {len(fetchers)} sources in parallel...")
     all_jobs: list[Job] = []
     with ThreadPoolExecutor(max_workers=len(fetchers)) as pool:
         futures = {pool.submit(_run_fetcher, f): f for f in fetchers}
         for future in as_completed(futures):
-            label, jobs, error = future.result()
+            try:
+                label, jobs, error = future.result(timeout=_FETCHER_TIMEOUT)
+            except TimeoutError:
+                label = _fetcher_label(futures[future])
+                print(f"  [{label}] TIMEOUT (>{_FETCHER_TIMEOUT}s) — skipped")
+                continue
             if error:
                 print(f"  [{label}] ERROR: {error}")
             else:

@@ -34,9 +34,10 @@ class IcimsFetcher:
 
     _PAGE_SIZE: int = 10
 
-    def __init__(self, base_url: str, company_name: str) -> None:
+    def __init__(self, base_url: str, company_name: str, max_jobs: int = 300) -> None:
         self.base_url = base_url.rstrip("/")
         self.company_name = company_name
+        self.max_jobs: int = max_jobs
 
     def fetch(self) -> list[Job]:
         job_stubs: list[tuple[str, str, str]] = self._fetch_all_stubs()
@@ -98,10 +99,10 @@ class IcimsFetcher:
                 id_match = re.search(r"/(\d+)/?$", relative_url)
                 job_id: str = id_match.group(1) if id_match else relative_url
                 stubs.append((job_id, title, relative_url))
-            if len(tiles) < self._PAGE_SIZE:
+            if len(tiles) < self._PAGE_SIZE or len(stubs) >= self.max_jobs:
                 break
             startrow += self._PAGE_SIZE
-        return stubs
+        return stubs[:self.max_jobs]
 
     def _fetch_detail(self, url: str) -> tuple[str, str]:
         """Returns (location, plain_text_description) for a job detail page."""
