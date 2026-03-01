@@ -1,6 +1,6 @@
 # Job Alert Automation
 
-Scrapes job postings from 13 sources 3× daily, scores them against a candidate profile parsed from a resume PDF, and emails a formatted digest of qualified matches.
+Scrapes job postings from 27 sources 3× daily, scores them against a candidate profile parsed from a resume PDF, and emails a formatted digest of qualified matches.
 
 ---
 
@@ -47,15 +47,19 @@ All fetchers implement the `JobFetcher` protocol (`fetch() -> list[Job]`) and ru
 
 | Source | Class | API Mechanism |
 |---|---|---|
-| Adzuna | `AdzunaFetcher` | REST JSON — paginated, filters by keyword + location |
-| SoFi | `GreenhouseFetcher` | `boards-api.greenhouse.io/v1/boards/{company}/jobs?content=true` — single request, all jobs |
-| Dun & Bradstreet | `LeverFetcher` | `api.lever.co/v0/postings/{company}?mode=json` — filtered by location param |
+| Adzuna (local) | `AdzunaFetcher` | REST JSON — paginated, filters by keyword + location |
+| Adzuna (remote, national) | `AdzunaFetcher` | Same API, `keywords="java developer remote"`, no location constraint, 3-day window |
+| RemoteOK | `RemoteOKFetcher` | `remoteok.com/api?tags=java` — single JSON array, all results remote |
+| We Work Remotely | `WeWorkRemotelyFetcher` | RSS XML feed — programming category; skips explicitly non-USA regions |
+| SoFi, Robinhood, Brex, Plaid, Coinbase, DoorDash, Gusto, Checkr | `GreenhouseFetcher` | `boards-api.greenhouse.io/v1/boards/{company}/jobs?content=true` — single request, all jobs |
+| Dun & Bradstreet, Netlify, Greenhouse, Clipboard Health | `LeverFetcher` | `api.lever.co/v0/postings/{company}?mode=json` |
 | Citi, Mayo Clinic (×2), PwC | `PhenomFetcher` | `/search-jobs/results` — paginated HTML fragment, regex-parsed for job hrefs; Mayo Clinic has a second instance with lat/lon for Tampa proximity |
-| SSC Technologies | `WorkdayFetcher` | POST `/wday/cxs/{tenant}/{company}/jobs` — paginated JSON; descriptions fetched from individual job pages via ld+json, **parallelized** |
+| FIS Global | `WorkdayFetcher` | POST `/wday/cxs/fis/SearchJobs/jobs` — paginated JSON |
+| SSC Technologies | `WorkdayFetcher` | POST `/wday/cxs/ssctech/SSCTechnologies/jobs` — descriptions fetched from job pages via ld+json, **parallelized** |
 | VyStar Credit Union | `WorkdayFetcher` | Same as above |
 | Bank of America (×2) | `BankOfAmericaFetcher` | `/services/jobssearchservlet` — one instance location-only, one with `keywords=Java`; deduplication handles overlap |
-| Paysafe | `IcimsFetcher` | HTML scrape of `/tile-search-results/` (paginated, capped at 300 jobs); location + description fetched from each detail page, **parallelized** |
-| FNF | `IcimsSitemapFetcher` | Parses `sitemap.xml` for job URLs, then fetches `?in_iframe=1` on each to read ld+json; **parallelized** |
+| Paysafe | `IcimsFetcher` | HTML scrape of `/tile-search-results/` (paginated, capped at 300 jobs); detail page per job, **parallelized** |
+| FNF | `IcimsSitemapFetcher` | Parses `sitemap.xml` for job URLs, fetches `?in_iframe=1` on each to read ld+json, **parallelized** |
 
 Detail-page fetches inside `WorkdayFetcher`, `IcimsFetcher`, and `IcimsSitemapFetcher` use `ThreadPoolExecutor(max_workers=10)` with an 8-second per-request timeout.
 
@@ -70,7 +74,7 @@ Detail-page fetches inside `WorkdayFetcher`, `IcimsFetcher`, and `IcimsSitemapFe
    - `> max + 2` → `LARGE_GAP` (reject)
    - Not found → `UNKNOWN` (pass — benefit of the doubt)
 3. **Remote check** — passes if:
-   - `job.remote is True` **and** the location is US-accessible (strips "remote", checks remaining words against `{"us", "usa", "united", "states", "america"}`; empty location passes), **or**
+   - `job.remote is True` **and** the location is US-accessible (strips "remote", checks remaining words against `{"us", "usa", "united", "states", "america", "worldwide", "global", "anywhere"}`; empty location passes), **or**
    - `job.remote is None` **and** the description/location contains an explicit remote phrase (`"fully remote"`, `"100% remote"`, `"work from home"`, etc.) **and** the location is US-accessible (prevents foreign on-site jobs from slipping through via description phrasing).
 4. **Location check** — passes if any `preferred_locations` substring appears in `job.location` (case-insensitive).
 
@@ -79,7 +83,7 @@ Detail-page fetches inside `WorkdayFetcher`, `IcimsFetcher`, and `IcimsSitemapFe
 `ScoringPolicy.evaluate()` operates on `"{title} {description}".lower()`:
 
 - **+weight** for each skill found in content (`core_skills` weight 4, `secondary_skills` weight 2).
-- **−2** for each skill in `job.required_skills` not present in the candidate's combined skill set (only applies when the fetcher populates `required_skills`; most don't).
+- **−2** for each skill in `job.required_skills` not present in the candidate's combined skill set (only applies when the fetcher populates `required_skills`; most don't — `RemoteOKFetcher` does via job tags).
 - **Qualifies** if `score ≥ 7` (`ScoringPolicy.MINIMUM_SCORE`).
 
 ### 5 — Persistence
@@ -96,7 +100,7 @@ Duplicate detection happens before filtering and scoring, so already-seen jobs c
 
 ### 6 — Events & Output
 
-`JobProcessingService` emits `JobEvaluated` and `JobQualified` domain events via `InMemoryEventPublisher` → `SimpleEventDispatcher`. Each job's result is recorded in `jobs_debug.json` with full score breakdown, filter reason, and metadata. Qualified jobs are printed to stdout and passed to `EmailNotifier`.
+`JobProcessingService` emits `JobEvaluated` and `JobQualified` domain events via `InMemoryEventPublisher` → `SimpleEventDispatcher`. Each job's result is recorded in `jobs_debug.json` with full score breakdown, filter reason, and metadata — `result` is one of `"duplicate"`, `"filtered_out"`, `"scored_out"`, `"qualified"`. Qualified jobs are printed to stdout and passed to `EmailNotifier`.
 
 ### 7 — Email
 
@@ -112,7 +116,7 @@ Sent via SMTP STARTTLS. Skipped entirely if `SMTP_HOST` is not set.
 
 ## Deployment
 
-GitHub Actions workflow (`.github/workflows/job_alerts.yml`) runs at **9 AM, 12 PM, and 5 PM ET** daily, plus on-demand via `workflow_dispatch`.
+GitHub Actions workflow (`.github/workflows/job_alerts.yml`) runs at **6 AM, 12 PM, and 5 PM ET** daily, plus on-demand via `workflow_dispatch`. (Cron times are UTC and require manual adjustment for DST — see comments in the workflow file.)
 
 After each run, `seen_jobs.json` is force-committed back to the repo (`git add -f`, bypassing `.gitignore`) so job history persists across runs.
 
