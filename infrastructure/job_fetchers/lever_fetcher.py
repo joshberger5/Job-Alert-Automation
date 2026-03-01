@@ -5,14 +5,18 @@ from domain.job import Job
 class LeverFetcher:
     BASE_URL = "https://api.lever.co/v0/postings"
 
-    def __init__(self, company: str, company_name: str):
-        self.company = company
-        self.company_name = company_name
+    def __init__(self, company: str, company_name: str, location: str | None = None) -> None:
+        self.company: str = company
+        self.company_name: str = company_name
+        self.location: str | None = location
 
     def fetch(self) -> list[Job]:
+        params: dict[str, str] = {"mode": "json"}
+        if self.location is not None:
+            params["location"] = self.location
         response = requests.get(
             f"{self.BASE_URL}/{self.company}",
-            params={"mode": "json"},
+            params=params,
             timeout=10,
         )
         response.raise_for_status()

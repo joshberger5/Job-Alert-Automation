@@ -11,12 +11,13 @@ from application.job_processing_service import JobProcessingService
 from application.resume_profile_builder import ResumeProfileBuilder
 from application.simple_event_dispatcher import SimpleEventDispatcher
 
-from infrastructure.in_memory_job_repository import InMemoryJobRepository
+from infrastructure.json_job_repository import JsonJobRepository
 from infrastructure.in_memory_event_publisher import InMemoryEventPublisher
 from infrastructure.resume.pdf_resume_parser import PdfResumeParser
 from infrastructure.job_fetchers import JobFetcher
 
 from infrastructure.job_fetchers.adzuna_fetcher import AdzunaFetcher
+from infrastructure.job_fetchers.greenhouse_fetcher import GreenhouseFetcher
 from infrastructure.job_fetchers.lever_fetcher import LeverFetcher
 from infrastructure.job_fetchers.phenom_fetcher import PhenomFetcher
 from infrastructure.job_fetchers.workday_fetcher import WorkdayFetcher
@@ -41,7 +42,7 @@ def main() -> None:
 
     print(profile)
 
-    repository = InMemoryJobRepository()
+    repository = JsonJobRepository()
     filtering_policy = FilteringPolicy()
     scoring_policy = ScoringPolicy()
 
@@ -63,9 +64,25 @@ def main() -> None:
             app_id=os.environ["ADZUNA_APP_ID"],
             app_key=os.environ["ADZUNA_APP_KEY"],
         ),
-        LeverFetcher(company="dnb", company_name="Dun & Bradstreet"),
+        GreenhouseFetcher(company="sofi", company_name="SoFi"),
+        LeverFetcher(
+            company="dnb",
+            company_name="Dun & Bradstreet",
+            location="Jacksonville - Florida - United States",
+        ),
         PhenomFetcher(base_domain="jobs.citi.com", org_id="287", company_name="Citi"),
-        PhenomFetcher(base_domain="jobs.mayoclinic.org", org_id="33647", company_name="Mayo Clinic"),
+        PhenomFetcher(
+            base_domain="jobs.mayoclinic.org",
+            org_id="33647",
+            company_name="Mayo Clinic",
+        ),
+        PhenomFetcher(
+            base_domain="jobs.mayoclinic.org",
+            org_id="33647",
+            company_name="Mayo Clinic",
+            latitude=27.9506,
+            longitude=-82.4572,
+        ),
         PhenomFetcher(base_domain="jobs.us.pwc.com", org_id="932", company_name="PwC"),
         WorkdayFetcher(
             base_url="https://wd1.myworkdaysite.com",
@@ -74,6 +91,7 @@ def main() -> None:
             company_name="SSC Technologies",
             recruiting_base="https://wd1.myworkdaysite.com/recruiting/ssctech/SSCTechnologies",
             fetch_descriptions=True,
+            location_ids=["b5aa81dc192f01dee656c4c5ce2312b9"],
         ),
         WorkdayFetcher(
             base_url="https://vystarcu.wd1.myworkdayjobs.com",
@@ -83,13 +101,15 @@ def main() -> None:
             recruiting_base="https://vystarcu.wd1.myworkdayjobs.com/Careers",
             search_text="",
             fetch_descriptions=True,
+            location_ids=["9c1a239b35bd4598856e5393b249b8a1"],
         ),
-        BankOfAmericaFetcher(),
+        BankOfAmericaFetcher(location="Jacksonville, FL"),
+        BankOfAmericaFetcher(location="Jacksonville, FL", keywords="Java"),
         IcimsFetcher(base_url="https://jobs.paysafe.com", company_name="Paysafe"),
         IcimsSitemapFetcher(
             base_url="https://careers-fnf.icims.com",
             company_name="FNF",
-            location_filter="jacksonville",
+            location_filter=None,
         ),
     ]
 

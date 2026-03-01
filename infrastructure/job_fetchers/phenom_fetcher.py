@@ -7,18 +7,24 @@ class PhenomFetcher:
     RESULTS_PER_PAGE = 15
 
     def __init__(self, base_domain: str, org_id: str, company_name: str,
-                 keywords: str = "java"):
-        self.base_domain = base_domain
-        self.org_id = org_id
-        self.company_name = company_name
-        self.keywords = keywords
+                 keywords: str = "java",
+                 latitude: float | None = None,
+                 longitude: float | None = None,
+                 radius: int = 50) -> None:
+        self.base_domain: str = base_domain
+        self.org_id: str = org_id
+        self.company_name: str = company_name
+        self.keywords: str = keywords
+        self.latitude: float | None = latitude
+        self.longitude: float | None = longitude
+        self.radius: int = radius
 
     def fetch(self) -> list[Job]:
         jobs: list[Job] = []
         page = 1
 
         while True:
-            params: dict[str, str | int] = {
+            params: dict[str, str | int | float] = {
                 "Keywords": self.keywords,
                 "CurrentPage": page,
                 "RecordsPerPage": self.RESULTS_PER_PAGE,
@@ -28,6 +34,10 @@ class PhenomFetcher:
                 "SortDirection": 0,
                 "ResultsType": 0,
             }
+            if self.latitude is not None and self.longitude is not None:
+                params["Latitude"] = self.latitude
+                params["Longitude"] = self.longitude
+                params["Radius"] = self.radius
             response = requests.get(
                 f"https://{self.base_domain}/search-jobs/results",
                 params=params,
@@ -35,11 +45,6 @@ class PhenomFetcher:
             )
             response.raise_for_status()
             data = response.json()
-
-            if page == 1:
-                print(f"[PhenomFetcher] {self.company_name} response keys: {list(data.keys())}")
-                for k, v in list(data.items())[:4]:
-                    print(f"  {k!r}: {str(v)[:120]}")
 
             results_html = data.get("results", "")
             has_content = data.get("hasContent", True)

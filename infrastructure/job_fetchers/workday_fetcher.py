@@ -10,14 +10,16 @@ class WorkdayFetcher:
 
     def __init__(self, base_url: str, tenant: str, company: str,
                  company_name: str, recruiting_base: str,
-                 search_text: str = "java", fetch_descriptions: bool = False):
-        self.base_url = base_url
-        self.tenant = tenant
-        self.company = company
-        self.company_name = company_name
-        self.recruiting_base = recruiting_base
-        self.search_text = search_text
-        self.fetch_descriptions = fetch_descriptions
+                 search_text: str = "java", fetch_descriptions: bool = False,
+                 location_ids: list[str] | None = None) -> None:
+        self.base_url: str = base_url
+        self.tenant: str = tenant
+        self.company: str = company
+        self.company_name: str = company_name
+        self.recruiting_base: str = recruiting_base
+        self.search_text: str = search_text
+        self.fetch_descriptions: bool = fetch_descriptions
+        self.location_ids: list[str] | None = location_ids
 
     def _fetch_description(self, url: str) -> str:
         try:
@@ -41,14 +43,17 @@ class WorkdayFetcher:
         offset = 0
 
         while True:
+            body: dict[str, object] = {
+                "appliedFacets": {},
+                "limit": self.LIMIT,
+                "offset": offset,
+                "searchText": self.search_text,
+            }
+            if self.location_ids is not None:
+                body["locations"] = self.location_ids
             response = requests.post(
                 f"{self.base_url}/wday/cxs/{self.tenant}/{self.company}/jobs",
-                json={
-                    "appliedFacets": {},
-                    "limit": self.LIMIT,
-                    "offset": offset,
-                    "searchText": self.search_text,
-                },
+                json=body,
                 headers={"Content-Type": "application/json"},
                 timeout=10,
             )

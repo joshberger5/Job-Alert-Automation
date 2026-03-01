@@ -7,7 +7,7 @@ from domain.filtering_policy import FilteringPolicy
 from domain.job import Job
 from domain.scoring_policy import ScoringPolicy
 from application.event_publisher import EventPublisher
-from infrastructure.in_memory_job_repository import InMemoryJobRepository
+from application.job_repository import JobRepository
 
 
 def _filter_reason(job: Job, profile: CandidateProfile) -> str:
@@ -36,13 +36,13 @@ class JobProcessingService:
 
     def __init__(
         self,
-        repository: InMemoryJobRepository,
+        repository: JobRepository,
         scoring_policy: ScoringPolicy,
         filtering_policy: FilteringPolicy,
         profile: CandidateProfile,
         event_publisher: EventPublisher,
     ) -> None:
-        self.repository = repository
+        self.repository: JobRepository = repository
         self.scoring_policy = scoring_policy
         self.filtering_policy = filtering_policy
         self.profile = profile

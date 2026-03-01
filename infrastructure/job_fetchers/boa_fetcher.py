@@ -7,8 +7,9 @@ BOA_BASE = "https://careers.bankofamerica.com"
 class BankOfAmericaFetcher:
     ROWS = 50
 
-    def __init__(self, location: str = "Jacksonville, FL"):
-        self.location = location
+    def __init__(self, location: str = "Jacksonville, FL", keywords: str | None = None) -> None:
+        self.location: str = location
+        self.keywords: str | None = keywords
 
     def fetch(self) -> list[Job]:
         jobs: list[Job] = []
@@ -21,6 +22,8 @@ class BankOfAmericaFetcher:
                 "search": "jobsByLocation",
                 "searchstring": self.location,
             }
+            if self.keywords is not None:
+                params["keywords"] = self.keywords
             response = requests.get(
                 f"{BOA_BASE}/services/jobssearchservlet",
                 params=params,
