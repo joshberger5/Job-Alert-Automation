@@ -1,6 +1,7 @@
 import json
 import re
 import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 from bs4 import BeautifulSoup
@@ -24,6 +25,9 @@ _BASE_HEADERS: dict[str, str] = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 }
 
+_DETAIL_TIMEOUT: int = 8
+_DETAIL_WORKERS: int = 10
+
 
 class IcimsFetcher:
     """Fetches jobs from an iCIMS-powered career portal."""
@@ -36,12 +40,13 @@ class IcimsFetcher:
 
     def fetch(self) -> list[Job]:
         job_stubs: list[tuple[str, str, str]] = self._fetch_all_stubs()
-        jobs: list[Job] = []
-        for job_id, title, relative_url in job_stubs:
+
+        def build_job(stub: tuple[str, str, str]) -> Job:
+            job_id, title, relative_url = stub
             detail_url: str = f"{self.base_url}{relative_url}"
             location, description = self._fetch_detail(detail_url)
             remote: bool | None = True if "remote" in location.lower() else None
-            jobs.append(Job(
+            return Job(
                 id=job_id,
                 title=title,
                 company=self.company_name,
@@ -52,7 +57,16 @@ class IcimsFetcher:
                 required_skills=[],
                 remote=remote,
                 employment_type=None,
-            ))
+            )
+
+        jobs: list[Job] = []
+        with ThreadPoolExecutor(max_workers=_DETAIL_WORKERS) as pool:
+            futures = {pool.submit(build_job, stub): stub for stub in job_stubs}
+            for future in as_completed(futures):
+                try:
+                    jobs.append(future.result())
+                except Exception:
+                    pass
         return jobs
 
     def _fetch_all_stubs(self) -> list[tuple[str, str, str]]:
@@ -92,7 +106,7 @@ class IcimsFetcher:
     def _fetch_detail(self, url: str) -> tuple[str, str]:
         """Returns (location, plain_text_description) for a job detail page."""
         try:
-            response = requests.get(url, headers=_BASE_HEADERS, timeout=15)
+            response = requests.get(url, headers=_BASE_HEADERS, timeout=_DETAIL_TIMEOUT)
             response.raise_for_status()
         except requests.RequestException:
             return "", ""
@@ -129,10 +143,15 @@ class IcimsSitemapFetcher:
     def fetch(self) -> list[Job]:
         job_urls: list[str] = self._fetch_sitemap()
         jobs: list[Job] = []
-        for url in job_urls:
-            job: Job | None = self._fetch_job(url)
-            if job is not None:
-                jobs.append(job)
+        with ThreadPoolExecutor(max_workers=_DETAIL_WORKERS) as pool:
+            futures = {pool.submit(self._fetch_job, url): url for url in job_urls}
+            for future in as_completed(futures):
+                try:
+                    job: Job | None = future.result()
+                    if job is not None:
+                        jobs.append(job)
+                except Exception:
+                    pass
         return jobs
 
     def _fetch_sitemap(self) -> list[str]:
@@ -155,7 +174,7 @@ class IcimsSitemapFetcher:
             response = requests.get(
                 f"{url}?in_iframe=1",
                 headers=_BASE_HEADERS,
-                timeout=15,
+                timeout=_DETAIL_TIMEOUT,
             )
             response.raise_for_status()
         except requests.RequestException:
