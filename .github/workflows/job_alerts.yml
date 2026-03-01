@@ -1,0 +1,50 @@
+name: Job Alerts
+
+on:
+  schedule:
+    - cron: '0 13 * * *'   # 9 AM ET (EDT, UTC-4)
+    - cron: '0 16 * * *'   # 12 PM ET (EDT, UTC-4)
+    - cron: '0 21 * * *'   # 5 PM ET (EDT, UTC-4)
+  workflow_dispatch:        # allow manual runs from GitHub UI
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # needed to commit seen_jobs.json back
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Decode resume
+        run: echo "${{ secrets.RESUME_PDF_BASE64 }}" | base64 -d > resume.pdf
+
+      - name: Run job alerts
+        env:
+          ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
+          ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
+          SMTP_HOST:      ${{ secrets.SMTP_HOST }}
+          SMTP_PORT:      ${{ secrets.SMTP_PORT }}
+          SMTP_USER:      ${{ secrets.SMTP_USER }}
+          SMTP_PASS:      ${{ secrets.SMTP_PASS }}
+          EMAIL_TO:       ${{ secrets.EMAIL_TO }}
+        run: python main.py
+
+      - name: Persist seen jobs
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add -f seen_jobs.json
+          git diff --staged --quiet || git commit -m "chore: update seen_jobs [skip ci]"
+          git push

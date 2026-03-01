@@ -1,11 +1,14 @@
 import json
 import os
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from dotenv import load_dotenv
 
+from domain.candidate_profile import CandidateProfile
 from domain.filtering_policy import FilteringPolicy
+from domain.job import Job
 from domain.scoring_policy import ScoringPolicy
-from domain.events import DomainEvent, JobQualified
 
 from application.job_processing_service import JobProcessingService
 from application.resume_profile_builder import ResumeProfileBuilder
@@ -13,6 +16,7 @@ from application.simple_event_dispatcher import SimpleEventDispatcher
 
 from infrastructure.json_job_repository import JsonJobRepository
 from infrastructure.in_memory_event_publisher import InMemoryEventPublisher
+from infrastructure.email_notifier import EmailNotifier
 from infrastructure.resume.pdf_resume_parser import PdfResumeParser
 from infrastructure.job_fetchers import JobFetcher
 
@@ -27,28 +31,57 @@ from infrastructure.job_fetchers.icims_fetcher import IcimsFetcher, IcimsSitemap
 load_dotenv()
 
 
-def job_qualified_handler(event: DomainEvent) -> None:
-    assert isinstance(event, JobQualified)
-    print(f"\n*** JOB QUALIFIED: {event.url} | Score: {event.score}")
+def _print_profile(profile: CandidateProfile) -> None:
+    core: str = ", ".join(f"{k} ({v})" for k, v in profile.core_skills.items())
+    secondary: str = ", ".join(f"{k} ({v})" for k, v in profile.secondary_skills.items())
+    rows: list[tuple[str, str]] = [
+        ("Locations",  ", ".join(profile.preferred_locations)),
+        ("Remote",     "Yes" if profile.remote_allowed else "No"),
+        ("Salary Min", f"${profile.salary_minimum:,}"),
+        ("Max Exp",    f"{profile.ideal_max_experience_years} years"),
+        ("Contract",   "Yes" if profile.open_to_contract else "No"),
+        ("Core Skills", core),
+        ("Secondary",  secondary),
+        ("Prev Titles", ", ".join(profile.previous_titles)),
+    ]
+    print()
+    print("  Candidate Profile")
+    print("  " + "─" * 64)
+    for label, value in rows:
+        print(f"  {label:<13}  {value}")
+    print("  " + "─" * 64)
+    print()
+
+
+def _fetcher_label(fetcher: JobFetcher) -> str:
+    return getattr(fetcher, "company_name", type(fetcher).__name__)
+
+
+def _run_fetcher(fetcher: JobFetcher) -> tuple[str, list[Job], Exception | None]:
+    label: str = _fetcher_label(fetcher)
+    try:
+        jobs: list[Job] = fetcher.fetch()
+        return label, jobs, None
+    except Exception as e:
+        return label, [], e
 
 
 def main() -> None:
+    start: float = time.monotonic()
+    run_at: datetime = datetime.now()
 
     parser = PdfResumeParser()
-    resume_text = parser.extract_text("resume.pdf")
+    resume_text: str = parser.extract_text("resume.pdf")
 
     builder = ResumeProfileBuilder()
-    profile = builder.build(resume_text)
-
-    print(profile)
+    profile: CandidateProfile = builder.build(resume_text)
+    _print_profile(profile)
 
     repository = JsonJobRepository()
     filtering_policy = FilteringPolicy()
     scoring_policy = ScoringPolicy()
 
     dispatcher = SimpleEventDispatcher()
-    dispatcher.register(JobQualified, job_qualified_handler)
-
     publisher = InMemoryEventPublisher(dispatcher)
 
     service = JobProcessingService(
@@ -56,7 +89,7 @@ def main() -> None:
         scoring_policy=scoring_policy,
         filtering_policy=filtering_policy,
         profile=profile,
-        event_publisher=publisher
+        event_publisher=publisher,
     )
 
     fetchers: list[JobFetcher] = [
@@ -79,7 +112,7 @@ def main() -> None:
         PhenomFetcher(
             base_domain="jobs.mayoclinic.org",
             org_id="33647",
-            company_name="Mayo Clinic",
+            company_name="Mayo Clinic (Tampa)",
             latitude=27.9506,
             longitude=-82.4572,
         ),
@@ -113,32 +146,53 @@ def main() -> None:
         ),
     ]
 
-    all_jobs = []
-    for fetcher in fetchers:
-        fetcher_name = type(fetcher).__name__
-        try:
-            jobs = fetcher.fetch()
-            print(f"[{fetcher_name}] Fetched {len(jobs)} jobs")
+    print(f"  Fetching from {len(fetchers)} sources in parallel...")
+    all_jobs: list[Job] = []
+    with ThreadPoolExecutor(max_workers=len(fetchers)) as pool:
+        futures = {pool.submit(_run_fetcher, f): f for f in fetchers}
+        for future in as_completed(futures):
+            label, jobs, error = future.result()
+            if error:
+                print(f"  [{label}] ERROR: {error}")
+            else:
+                print(f"  [{label}] {len(jobs)} jobs")
             all_jobs.extend(jobs)
-        except Exception as e:
-            print(f"[{fetcher_name}] ERROR: {e}")
 
-    debug_records = service.process(all_jobs)
+    print()
+    debug_records: list[dict] = service.process(all_jobs)
 
+    qualified: list[dict] = [r for r in debug_records if r.get("result") == "qualified"]
     counts: dict[str, int] = {}
     for r in debug_records:
-        counts[r["result"]] = counts.get(r["result"], 0) + 1
-    print(f"[Processing] {counts}")
+        result_key: str = r["result"]
+        counts[result_key] = counts.get(result_key, 0) + 1
 
-    debug_output = {
-        "run_at": datetime.now().isoformat(timespec="seconds"),
+    print(f"  Results: {counts}")
+
+    if qualified:
+        print()
+        for r in qualified:
+            print(f"  *** {r['title']} @ {r['company']} | Score {r['score']} | {r['url']}")
+
+    debug_output: dict = {
+        "run_at": run_at.isoformat(timespec="seconds"),
         "total_fetched": len(all_jobs),
         "summary": counts,
         "jobs": debug_records,
     }
     with open("jobs_debug.json", "w", encoding="utf-8") as f:
         json.dump(debug_output, f, indent=2, default=str)
-    print("[Debug] Wrote jobs_debug.json")
+
+    duration_s: float = time.monotonic() - start
+
+    if os.environ.get("SMTP_HOST"):
+        try:
+            EmailNotifier().send(qualified, run_at, duration_s, len(all_jobs))
+            print("  [Email] Sent")
+        except Exception as e:
+            print(f"  [Email] ERROR: {e}")
+
+    print(f"\n  Done in {duration_s:.1f}s")
 
 
 if __name__ == "__main__":
