@@ -59,7 +59,7 @@ class FilteringPolicy:
         if profile.remote_allowed:
             if job.remote is True and _is_globally_or_us_remote(job.location):
                 return True
-            if job.remote is None and _mentions_remote_work(job):
+            if job.remote is None and _mentions_remote_work(job) and _is_globally_or_us_remote(job.location):
                 return True
 
         # 4. Location check

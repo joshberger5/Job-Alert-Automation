@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from domain.experience_alignment import ExperienceAlignment
 
@@ -8,7 +9,7 @@ class ExperienceRequirement:
 
     _YEAR_TOKENS: frozenset[str] = frozenset({"year", "years", "yrs"})
     _EXPERIENCE_CONTEXT: frozenset[str] = frozenset({"experience", "experiences", "experienced", "exp"})
-    _CONTEXT_WINDOW: int = 5
+    _CONTEXT_WINDOW: int = 8
     _MAX_YEARS: int = 20
 
     @staticmethod
@@ -16,15 +17,17 @@ class ExperienceRequirement:
         tokens: list[str] = job_content.lower().split()
 
         for index, token in enumerate(tokens):
-            digit_str: str = token.rstrip("+")
-            if not digit_str.isdigit():
+            # Accept "15", "15+", "5-10" — extract the leading digit sequence
+            m: re.Match | None = re.match(r'^(\d+)', token)
+            if not m:
                 continue
-            years: int = int(digit_str)
+            years: int = int(m.group(1))
             if years > ExperienceRequirement._MAX_YEARS:
                 continue
             if index + 1 >= len(tokens):
                 continue
-            next_token: str = tokens[index + 1]
+            # Strip punctuation so "years," "years'" "years." all match
+            next_token: str = re.sub(r"[^a-z]", "", tokens[index + 1])
             if next_token not in ExperienceRequirement._YEAR_TOKENS:
                 continue
             window_start: int = max(0, index - ExperienceRequirement._CONTEXT_WINDOW)
