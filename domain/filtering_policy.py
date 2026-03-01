@@ -7,7 +7,10 @@ from domain.experience_alignment import ExperienceAlignment
 from domain.job import Job
 
 
-_US_WORDS: frozenset[str] = frozenset({"us", "usa", "united", "states", "america"})
+_US_WORDS: frozenset[str] = frozenset({
+    "us", "usa", "united", "states", "america",
+    "worldwide", "global", "anywhere",
+})
 
 
 def _is_globally_or_us_remote(location: str) -> bool:

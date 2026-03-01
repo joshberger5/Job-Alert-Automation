@@ -27,6 +27,8 @@ from infrastructure.job_fetchers.phenom_fetcher import PhenomFetcher
 from infrastructure.job_fetchers.workday_fetcher import WorkdayFetcher
 from infrastructure.job_fetchers.boa_fetcher import BankOfAmericaFetcher
 from infrastructure.job_fetchers.icims_fetcher import IcimsFetcher, IcimsSitemapFetcher
+from infrastructure.job_fetchers.remoteok_fetcher import RemoteOKFetcher
+from infrastructure.job_fetchers.weworkremotely_fetcher import WeWorkRemotelyFetcher
 
 load_dotenv()
 
@@ -93,16 +95,36 @@ def main() -> None:
     )
 
     fetchers: list[JobFetcher] = [
+        # ── Adzuna ────────────────────────────────────────────────────────────
         AdzunaFetcher(
             app_id=os.environ["ADZUNA_APP_ID"],
             app_key=os.environ["ADZUNA_APP_KEY"],
         ),
-        GreenhouseFetcher(company="sofi", company_name="SoFi"),
-        LeverFetcher(
-            company="dnb",
-            company_name="Dun & Bradstreet",
-            location="Jacksonville - Florida - United States",
+        AdzunaFetcher(
+            app_id=os.environ["ADZUNA_APP_ID"],
+            app_key=os.environ["ADZUNA_APP_KEY"],
+            keywords="java developer remote",
+            location="United States",
+            max_days_old=3,
         ),
+        # ── Remote-first boards ───────────────────────────────────────────────
+        RemoteOKFetcher(),
+        WeWorkRemotelyFetcher(),
+        # ── Greenhouse ────────────────────────────────────────────────────────
+        GreenhouseFetcher(company="sofi", company_name="SoFi"),
+        GreenhouseFetcher(company="robinhood", company_name="Robinhood"),
+        GreenhouseFetcher(company="brex", company_name="Brex"),
+        GreenhouseFetcher(company="plaid", company_name="Plaid"),
+        GreenhouseFetcher(company="coinbase", company_name="Coinbase"),
+        GreenhouseFetcher(company="doordash", company_name="DoorDash"),
+        GreenhouseFetcher(company="gusto", company_name="Gusto"),
+        GreenhouseFetcher(company="checkr", company_name="Checkr"),
+        # ── Lever ─────────────────────────────────────────────────────────────
+        LeverFetcher(company="dnb", company_name="Dun & Bradstreet"),
+        LeverFetcher(company="netlify", company_name="Netlify"),
+        LeverFetcher(company="greenhouse", company_name="Greenhouse"),
+        LeverFetcher(company="clipboardhealth", company_name="Clipboard Health"),
+        # ── Phenom ────────────────────────────────────────────────────────────
         PhenomFetcher(base_domain="jobs.citi.com", org_id="287", company_name="Citi"),
         PhenomFetcher(
             base_domain="jobs.mayoclinic.org",
@@ -117,6 +139,15 @@ def main() -> None:
             longitude=-82.4572,
         ),
         PhenomFetcher(base_domain="jobs.us.pwc.com", org_id="932", company_name="PwC"),
+        # ── Workday ───────────────────────────────────────────────────────────
+        WorkdayFetcher(
+            base_url="https://fis.wd5.myworkdayjobs.com",
+            tenant="fis",
+            company="SearchJobs",
+            company_name="FIS Global",
+            recruiting_base="https://fis.wd5.myworkdayjobs.com/SearchJobs",
+            search_text="java",
+        ),
         WorkdayFetcher(
             base_url="https://wd1.myworkdaysite.com",
             tenant="ssctech",
@@ -136,8 +167,10 @@ def main() -> None:
             fetch_descriptions=True,
             location_ids=["9c1a239b35bd4598856e5393b249b8a1"],
         ),
+        # ── Bank of America ───────────────────────────────────────────────────
         BankOfAmericaFetcher(location="Jacksonville, FL"),
         BankOfAmericaFetcher(location="Jacksonville, FL", keywords="Java"),
+        # ── iCIMS ─────────────────────────────────────────────────────────────
         IcimsFetcher(base_url="https://jobs.paysafe.com", company_name="Paysafe"),
         IcimsSitemapFetcher(
             base_url="https://careers-fnf.icims.com",

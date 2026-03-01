@@ -21,7 +21,7 @@ class PhenomFetcher:
 
     def fetch(self) -> list[Job]:
         jobs: list[Job] = []
-        page = 1
+        page: int = 1
 
         while True:
             params: dict[str, str | int | float] = {
@@ -44,22 +44,30 @@ class PhenomFetcher:
                 timeout=10,
             )
             response.raise_for_status()
-            data = response.json()
+            data: dict = response.json()
 
-            results_html = data.get("results", "")
-            has_content = data.get("hasContent", True)
-            links = re.findall(r'href="(/job/[^"]+)"', results_html)
+            results_html: str = data.get("results", "")
+            has_content: bool = data.get("hasContent", True)
+
+            if page == 1:
+                top_keys: list[str] = list(data.keys())
+                print(f"  [PhenomFetcher:{self.company_name}] page-1 keys={top_keys} hasContent={has_content} results[:200]={results_html[:200]!r}")
+
+            links: list[str] = re.findall(r'href="(/job/[^"]+)"', results_html)
+
+            if not results_html.strip():
+                print(f"  [PhenomFetcher:{self.company_name}] WARNING: empty results HTML on page {page}")
 
             for href in links:
-                parts = href.strip("/").split("/")
+                parts: list[str] = href.strip("/").split("/")
                 # parts: ["job", city, title-slug, company-id, job-id]
                 if len(parts) < 5:
                     continue
-                job_id = parts[-1]
-                title = parts[-3].replace("-", " ").title()
-                location = parts[1].replace("-", " ").title()
-                url = f"https://{self.base_domain}{href}"
-                remote = True if "remote" in location.lower() else None
+                job_id: str = parts[-1]
+                title: str = parts[-3].replace("-", " ").title()
+                location: str = parts[1].replace("-", " ").title()
+                url: str = f"https://{self.base_domain}{href}"
+                remote: bool | None = True if "remote" in location.lower() else None
 
                 jobs.append(Job(
                     id=job_id,
@@ -74,7 +82,7 @@ class PhenomFetcher:
                     employment_type=None,
                 ))
 
-            if not has_content or len(links) < self.RESULTS_PER_PAGE:
+            if len(links) < self.RESULTS_PER_PAGE:
                 break
             page += 1
 
