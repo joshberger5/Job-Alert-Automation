@@ -1,6 +1,6 @@
 # Job Alert Automation
 
-Scrapes job postings from 19 sources 3× daily, scores them against a candidate profile parsed from a resume PDF, and emails a formatted digest of qualified matches.
+Scrapes job postings from 19 sources 3× daily, scores them against a candidate profile parsed from a resume PDF, optionally filters titles with a Gemini LLM pass, and emails a formatted digest of qualified matches.
 
 ---
 
@@ -21,6 +21,9 @@ SMTP_PORT=587
 SMTP_USER=you@gmail.com
 SMTP_PASS="app password"
 EMAIL_TO=you@example.com
+
+# Optional — enables LLM title filtering (Gemini free tier)
+GEMINI_API_KEY=...
 ```
 
 Place `resume.pdf` in the project root, then:
@@ -85,7 +88,17 @@ Detail-page fetches inside `WorkdayFetcher`, `IcimsFetcher`, and `IcimsSitemapFe
 - **−2** for each skill in `job.required_skills` not present in the candidate's combined skill set (only applies when the fetcher populates `required_skills`; most don't — `RemoteOKFetcher` does via job tags).
 - **Qualifies** if `score ≥ 7` (`ScoringPolicy.MINIMUM_SCORE`).
 
-### 5 — Persistence
+After scoring, each job is recorded as `"qualified"` or `"scored_out"`.
+
+### 5 — LLM Title Filtering (optional)
+
+When `GEMINI_API_KEY` is set, `GeminiTitleFilter` runs a single batch call to `gemini-2.0-flash-lite` (free tier) on all post-filter records (`"qualified"` + `"scored_out"`). The prompt is built from `profile.core_skills` and `profile.ideal_max_experience_years` and asks the model to identify which job titles are genuine software engineering roles for the candidate.
+
+- **Qualified jobs the LLM rejects** are re-marked `"llm_filtered"` and excluded from the email's main section (but still shown in a secondary section).
+- **Scored-out jobs the LLM approves** get `llm_relevant=True` added to their debug record and appear in a third email section.
+- **Fails open** — any API error returns all IDs, so no jobs are silently dropped.
+
+### 6 — Persistence
 
 `JsonJobRepository` loads `seen_jobs.json` on startup and writes it after every `save()` call. Records are never expired — delete the file to reset. Schema:
 
@@ -97,19 +110,50 @@ Detail-page fetches inside `WorkdayFetcher`, `IcimsFetcher`, and `IcimsSitemapFe
 
 Duplicate detection happens before filtering and scoring, so already-seen jobs cost only a dict lookup.
 
-### 6 — Events & Output
+### 7 — Events & Debug Output
 
-`JobProcessingService` emits `JobEvaluated` and `JobQualified` domain events via `InMemoryEventPublisher` → `SimpleEventDispatcher`. Each job's result is recorded in `jobs_debug.json` with full score breakdown, filter reason, and metadata — `result` is one of `"duplicate"`, `"filtered_out"`, `"scored_out"`, `"qualified"`. Qualified jobs are printed to stdout and passed to `EmailNotifier`.
+`JobProcessingService` emits `JobEvaluated` and `JobQualified` domain events via `InMemoryEventPublisher` → `SimpleEventDispatcher`. Each job's result is recorded in `jobs_debug.json` with full score breakdown, filter reason, and metadata. The `result` field is one of:
 
-### 7 — Email
+| Value | Meaning |
+|---|---|
+| `"duplicate"` | Already seen in a previous run — skipped immediately |
+| `"filtered_out"` | Failed `FilteringPolicy` (contract, experience gap, or location) |
+| `"scored_out"` | Passed filtering but `score < MINIMUM_SCORE` |
+| `"qualified"` | Passed filtering and scoring |
+| `"llm_filtered"` | Passed scoring but LLM flagged the title as irrelevant |
 
-`EmailNotifier.send()` builds an HTML email (table-based, inline styles for client compatibility) containing:
+### 8 — Email
 
-- **Header**: qualified job count + run date.
-- **Stats bar**: total jobs scanned, qualified count, wall-clock runtime.
-- **Job cards**: one per qualified job — company, title, location, employment type, salary (if known), score badge (green ≥ 14, blue ≥ 10, amber ≥ 7), "View Job →" link.
+`EmailNotifier.send()` builds an HTML email (table-based, inline styles for client compatibility) with up to three sections:
+
+- **Qualified jobs** — always present when any exist. One card per job: company, title, location, employment type, salary (if known), score badge (green ≥ 14, blue ≥ 10, amber ≥ 7), "View Job →" link. Each section is collapsible.
+- **LLM Rejected** — jobs that scored high enough but were flagged by the LLM title filter. Shown only when `GEMINI_API_KEY` is set and at least one job was re-classified.
+- **Possibly Relevant** — scored-out jobs that the LLM considers worth a look. Shown only when `GEMINI_API_KEY` is set and any such jobs exist.
 
 Sent via SMTP STARTTLS. Skipped entirely if `SMTP_HOST` is not set.
+
+---
+
+## Tests
+
+```bash
+py -m pytest tests/ -v
+```
+
+44 tests across 8 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
+
+| File | Tests | What it covers |
+|---|---|---|
+| `test_adzuna_fetcher.py` | 7 | Field mapping, salary variants (min-only, max-only, absent), remote detection, pagination, single-page stop |
+| `test_greenhouse_fetcher.py` | 3 | HTML stripping from `content`, remote detection, missing/null location |
+| `test_lever_fetcher.py` | 4 | Salary formatting, `location` passed as query param, employment type variants (`contract`, `part-time`, `internship`) |
+| `test_workday_fetcher.py` | 4 | Field mapping with `fetch_descriptions=False`, pagination, remote detection, ld+json extraction with `fetch_descriptions=True` |
+| `test_boa_fetcher.py` | 3 | Field mapping (`family \| lob` description, URL construction), pagination, missing `jcrURL` → `url=None` |
+| `test_remoteok_fetcher.py` | 3 | Metadata element skipped, `location: null` → `"Worldwide"`, `tags: null` → `required_skills=[]` |
+| `test_weworkremotely_fetcher.py` | 4 | Region filtering (`"Europe Only"` skipped), no-colon title fallback, HTML description stripping |
+| `test_job_processing_service.py` | 16 | All four result paths (duplicate, filtered_out, scored_out, qualified); correct `repo.save` args per path; `JobEvaluated` + `JobQualified` events on qualified; only `JobEvaluated` on scored_out; no events on duplicate/filtered; all base record fields; mixed-batch ordering |
+
+Fixtures (JSON, HTML, RSS) live in `tests/fixtures/` — either trimmed real API responses or synthetic data matching the exact schema each fetcher expects.
 
 ---
 
@@ -127,6 +171,12 @@ After each run, `seen_jobs.json` is force-committed back to the repo (`git add -
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | Outbound email (Gmail recommended) |
 | `EMAIL_TO` | Recipient address |
 
+**Optional secrets:**
+
+| Secret | Purpose |
+|---|---|
+| `GEMINI_API_KEY` | Enables LLM title filtering via Gemini 2.0 Flash Lite (free tier) |
+
 ---
 
 ## Architecture
@@ -140,8 +190,11 @@ application/     JobProcessingService (orchestration), ResumeProfileBuilder,
                  JobRepository protocol, EventPublisher ABC.
 
 infrastructure/  All I/O: job fetchers, PdfResumeParser, JsonJobRepository,
-                 EmailNotifier, in-memory event publisher.
+                 EmailNotifier, GeminiTitleFilter, in-memory event publisher.
+
+tests/           pytest suite — one file per fetcher + job processing service.
+                 All HTTP mocked; fixtures in tests/fixtures/.
 
 main.py          Wiring only — constructs all objects, runs fetcher pool,
-                 writes debug output, triggers email.
+                 writes jobs_debug.json, triggers email.
 ```
