@@ -23,7 +23,6 @@ from infrastructure.job_fetchers import JobFetcher
 from infrastructure.job_fetchers.adzuna_fetcher import AdzunaFetcher
 from infrastructure.job_fetchers.greenhouse_fetcher import GreenhouseFetcher
 from infrastructure.job_fetchers.lever_fetcher import LeverFetcher
-from infrastructure.job_fetchers.phenom_fetcher import PhenomFetcher
 from infrastructure.job_fetchers.workday_fetcher import WorkdayFetcher
 from infrastructure.job_fetchers.boa_fetcher import BankOfAmericaFetcher
 from infrastructure.job_fetchers.icims_fetcher import IcimsFetcher, IcimsSitemapFetcher
@@ -115,31 +114,12 @@ def main() -> None:
         GreenhouseFetcher(company="sofi", company_name="SoFi"),
         GreenhouseFetcher(company="robinhood", company_name="Robinhood"),
         GreenhouseFetcher(company="brex", company_name="Brex"),
-        GreenhouseFetcher(company="plaid", company_name="Plaid"),
         GreenhouseFetcher(company="coinbase", company_name="Coinbase"),
-        GreenhouseFetcher(company="doordash", company_name="DoorDash"),
+        GreenhouseFetcher(company="doordashusa", company_name="DoorDash"),
         GreenhouseFetcher(company="gusto", company_name="Gusto"),
         GreenhouseFetcher(company="checkr", company_name="Checkr"),
         # ── Lever ─────────────────────────────────────────────────────────────
         LeverFetcher(company="dnb", company_name="Dun & Bradstreet"),
-        LeverFetcher(company="netlify", company_name="Netlify"),
-        LeverFetcher(company="greenhouse", company_name="Greenhouse"),
-        LeverFetcher(company="clipboardhealth", company_name="Clipboard Health"),
-        # ── Phenom ────────────────────────────────────────────────────────────
-        PhenomFetcher(base_domain="jobs.citi.com", org_id="287", company_name="Citi"),
-        PhenomFetcher(
-            base_domain="jobs.mayoclinic.org",
-            org_id="33647",
-            company_name="Mayo Clinic",
-        ),
-        PhenomFetcher(
-            base_domain="jobs.mayoclinic.org",
-            org_id="33647",
-            company_name="Mayo Clinic (Tampa)",
-            latitude=27.9506,
-            longitude=-82.4572,
-        ),
-        PhenomFetcher(base_domain="jobs.us.pwc.com", org_id="932", company_name="PwC"),
         # ── Workday ───────────────────────────────────────────────────────────
         WorkdayFetcher(
             base_url="https://fis.wd5.myworkdayjobs.com",

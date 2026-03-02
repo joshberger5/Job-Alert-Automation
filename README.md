@@ -1,6 +1,6 @@
 # Job Alert Automation
 
-Scrapes job postings from 27 sources 3× daily, scores them against a candidate profile parsed from a resume PDF, and emails a formatted digest of qualified matches.
+Scrapes job postings from 19 sources 3× daily, scores them against a candidate profile parsed from a resume PDF, and emails a formatted digest of qualified matches.
 
 ---
 
@@ -51,9 +51,8 @@ All fetchers implement the `JobFetcher` protocol (`fetch() -> list[Job]`) and ru
 | Adzuna (remote, national) | `AdzunaFetcher` | Same API, `keywords="java developer remote"`, no location constraint, 3-day window |
 | RemoteOK | `RemoteOKFetcher` | `remoteok.com/api?tags=java` — single JSON array, all results remote |
 | We Work Remotely | `WeWorkRemotelyFetcher` | RSS XML feed — programming category; skips explicitly non-USA regions |
-| SoFi, Robinhood, Brex, Plaid, Coinbase, DoorDash, Gusto, Checkr | `GreenhouseFetcher` | `boards-api.greenhouse.io/v1/boards/{company}/jobs?content=true` — single request, all jobs |
-| Dun & Bradstreet, Netlify, Greenhouse, Clipboard Health | `LeverFetcher` | `api.lever.co/v0/postings/{company}?mode=json` |
-| Citi, Mayo Clinic (×2), PwC | `PhenomFetcher` | `/search-jobs/results` — paginated HTML fragment, regex-parsed for job hrefs; Mayo Clinic has a second instance with lat/lon for Tampa proximity |
+| SoFi, Robinhood, Brex, Coinbase, DoorDash, Gusto, Checkr | `GreenhouseFetcher` | `boards-api.greenhouse.io/v1/boards/{company}/jobs?content=true` — single request, all jobs |
+| Dun & Bradstreet | `LeverFetcher` | `api.lever.co/v0/postings/{company}?mode=json` |
 | FIS Global | `WorkdayFetcher` | POST `/wday/cxs/fis/SearchJobs/jobs` — paginated JSON |
 | SSC Technologies | `WorkdayFetcher` | POST `/wday/cxs/ssctech/SSCTechnologies/jobs` — descriptions fetched from job pages via ld+json, **parallelized** |
 | VyStar Credit Union | `WorkdayFetcher` | Same as above |
