@@ -202,6 +202,7 @@ def main() -> None:
     # ─────────────────────────────────────────────────────────────────────────
 
     qualified: list[dict] = [r for r in debug_records if r.get("result") == "qualified"]
+    llm_filtered: list[dict] = [r for r in debug_records if r.get("result") == "llm_filtered"]
     llm_relevant: list[dict] = [r for r in debug_records if r.get("llm_relevant")]
     counts: dict[str, int] = {}
     for r in debug_records:
@@ -233,6 +234,7 @@ def main() -> None:
             EmailNotifier().send(
                 qualified, run_at, duration_s, len(all_jobs),
                 llm_relevant_jobs=llm_relevant or None,
+                llm_filtered_jobs=llm_filtered or None,
             )
             print("  [Email] Sent")
         except Exception as e:

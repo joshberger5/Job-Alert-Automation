@@ -89,22 +89,26 @@ def _job_card(job: dict) -> str:
 </table>"""
 
 
-def _llm_section(jobs: list[dict]) -> str:
+def _section(
+    comment: str,
+    heading: str,
+    subtext: str,
+    jobs: list[dict],
+) -> str:
     if not jobs:
         return ""
     cards: str = "\n".join(_job_card(j) for j in jobs)
     return f"""
-        <!-- LLM-RELEVANT SECTION -->
+        <!-- {comment} -->
         <tr>
           <td style="padding:12px 24px 4px;">
             <p style="margin:0;color:#64748b;font-size:11px;font-weight:600;
                       letter-spacing:0.8px;text-transform:uppercase;
                       border-top:1px solid #e2e8f0;padding-top:20px;">
-              Possibly Relevant &mdash; scored below threshold
+              {heading}
             </p>
             <p style="margin:4px 0 14px;color:#94a3b8;font-size:11px;">
-              These passed location/remote filtering and the LLM title check,
-              but didn&rsquo;t reach the scoring minimum.
+              {subtext}
             </p>
             {cards}
           </td>
@@ -117,6 +121,7 @@ def _build_html(
     duration_s: float,
     total_fetched: int,
     llm_relevant_jobs: list[dict] | None = None,
+    llm_filtered_jobs: list[dict] | None = None,
 ) -> str:
     n: int = len(jobs)
     s: str = "s" if n != 1 else ""
@@ -136,7 +141,24 @@ def _build_html(
     else:
         cards_html = "\n".join(_job_card(j) for j in jobs)
 
-    llm_html: str = _llm_section(llm_relevant_jobs or [])
+    llm_rejected_html: str = _section(
+        comment="LLM-FILTERED SECTION",
+        heading="LLM Rejected &mdash; scored but flagged as irrelevant",
+        subtext=(
+            "These reached the scoring minimum but the LLM considered the title "
+            "outside your field. Review to catch false rejections."
+        ),
+        jobs=llm_filtered_jobs or [],
+    )
+    llm_relevant_html: str = _section(
+        comment="LLM-RELEVANT SECTION",
+        heading="Possibly Relevant &mdash; scored below threshold",
+        subtext=(
+            "These passed location/remote filtering and the LLM title check, "
+            "but didn&rsquo;t reach the scoring minimum."
+        ),
+        jobs=llm_relevant_jobs or [],
+    )
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -194,7 +216,9 @@ def _build_html(
           </td>
         </tr>
 
-        {llm_html}
+        {llm_rejected_html}
+
+        {llm_relevant_html}
 
         <!-- FOOTER -->
         <tr>
@@ -229,6 +253,7 @@ class EmailNotifier:
         duration_s: float,
         total_fetched: int,
         llm_relevant_jobs: list[dict] | None = None,
+        llm_filtered_jobs: list[dict] | None = None,
     ) -> None:
         n: int = len(qualified_jobs)
         s: str = "s" if n != 1 else ""
@@ -236,7 +261,8 @@ class EmailNotifier:
         subject: str = f"Job Alert: {n} qualified job{s} \u2014 {date_str}"
 
         html: str = _build_html(
-            qualified_jobs, run_at, duration_s, total_fetched, llm_relevant_jobs
+            qualified_jobs, run_at, duration_s, total_fetched,
+            llm_relevant_jobs, llm_filtered_jobs,
         )
 
         msg = MIMEMultipart("alternative")
