@@ -29,6 +29,7 @@ from infrastructure.job_fetchers.boa_fetcher import BankOfAmericaFetcher
 from infrastructure.job_fetchers.icims_fetcher import IcimsFetcher, IcimsSitemapFetcher
 from infrastructure.job_fetchers.remoteok_fetcher import RemoteOKFetcher
 from infrastructure.job_fetchers.weworkremotely_fetcher import WeWorkRemotelyFetcher
+from infrastructure.llm_title_filter import GeminiTitleFilter
 
 load_dotenv()
 
@@ -201,13 +202,35 @@ def main() -> None:
     print()
     debug_records: list[dict] = service.process(all_jobs)
 
+    # ── LLM title relevance check ────────────────────────────────────────────
+    # Runs on all post-filter records (qualified + scored_out) in one batch.
+    # Qualified jobs the LLM rejects are marked "llm_filtered" and excluded
+    # from the email. Scored-out jobs the LLM considers relevant are flagged
+    # with llm_relevant=True in the debug record for inspection.
+    _post_filter: list[dict] = [
+        r for r in debug_records if r.get("result") in ("qualified", "scored_out")
+    ]
+    gemini_key: str | None = os.environ.get("GEMINI_API_KEY")
+    if gemini_key and _post_filter:
+        _llm: GeminiTitleFilter = GeminiTitleFilter(api_key=gemini_key)
+        _approved_ids: set[str] = _llm.filter_by_title(_post_filter, profile)
+        for r in debug_records:
+            if r.get("result") == "qualified" and r["id"] not in _approved_ids:
+                r["result"] = "llm_filtered"
+            elif r.get("result") == "scored_out" and r["id"] in _approved_ids:
+                r["llm_relevant"] = True
+    # ─────────────────────────────────────────────────────────────────────────
+
     qualified: list[dict] = [r for r in debug_records if r.get("result") == "qualified"]
+    llm_relevant: list[dict] = [r for r in debug_records if r.get("llm_relevant")]
     counts: dict[str, int] = {}
     for r in debug_records:
         result_key: str = r["result"]
         counts[result_key] = counts.get(result_key, 0) + 1
 
     print(f"  Results: {counts}")
+    if llm_relevant:
+        print(f"  LLM-relevant (scored_out): {len(llm_relevant)}")
 
     if qualified:
         print()
@@ -227,7 +250,10 @@ def main() -> None:
 
     if os.environ.get("SMTP_HOST"):
         try:
-            EmailNotifier().send(qualified, run_at, duration_s, len(all_jobs))
+            EmailNotifier().send(
+                qualified, run_at, duration_s, len(all_jobs),
+                llm_relevant_jobs=llm_relevant or None,
+            )
             print("  [Email] Sent")
         except Exception as e:
             print(f"  [Email] ERROR: {e}")

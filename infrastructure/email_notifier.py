@@ -10,7 +10,9 @@ def _score_color(score: int) -> str:
         return "#16a34a"
     if score >= 10:
         return "#2563eb"
-    return "#d97706"
+    if score >= 7:
+        return "#d97706"
+    return "#94a3b8"
 
 
 def _fmt_duration(seconds: float) -> str:
@@ -87,11 +89,34 @@ def _job_card(job: dict) -> str:
 </table>"""
 
 
+def _llm_section(jobs: list[dict]) -> str:
+    if not jobs:
+        return ""
+    cards: str = "\n".join(_job_card(j) for j in jobs)
+    return f"""
+        <!-- LLM-RELEVANT SECTION -->
+        <tr>
+          <td style="padding:12px 24px 4px;">
+            <p style="margin:0;color:#64748b;font-size:11px;font-weight:600;
+                      letter-spacing:0.8px;text-transform:uppercase;
+                      border-top:1px solid #e2e8f0;padding-top:20px;">
+              Possibly Relevant &mdash; scored below threshold
+            </p>
+            <p style="margin:4px 0 14px;color:#94a3b8;font-size:11px;">
+              These passed location/remote filtering and the LLM title check,
+              but didn&rsquo;t reach the scoring minimum.
+            </p>
+            {cards}
+          </td>
+        </tr>"""
+
+
 def _build_html(
     jobs: list[dict],
     run_at: datetime,
     duration_s: float,
     total_fetched: int,
+    llm_relevant_jobs: list[dict] | None = None,
 ) -> str:
     n: int = len(jobs)
     s: str = "s" if n != 1 else ""
@@ -110,6 +135,8 @@ def _build_html(
 </table>"""
     else:
         cards_html = "\n".join(_job_card(j) for j in jobs)
+
+    llm_html: str = _llm_section(llm_relevant_jobs or [])
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -167,6 +194,8 @@ def _build_html(
           </td>
         </tr>
 
+        {llm_html}
+
         <!-- FOOTER -->
         <tr>
           <td style="padding:8px 0 28px;text-align:center;">
@@ -199,13 +228,16 @@ class EmailNotifier:
         run_at: datetime,
         duration_s: float,
         total_fetched: int,
+        llm_relevant_jobs: list[dict] | None = None,
     ) -> None:
         n: int = len(qualified_jobs)
         s: str = "s" if n != 1 else ""
         date_str: str = run_at.strftime("%b %d, %Y")
         subject: str = f"Job Alert: {n} qualified job{s} \u2014 {date_str}"
 
-        html: str = _build_html(qualified_jobs, run_at, duration_s, total_fetched)
+        html: str = _build_html(
+            qualified_jobs, run_at, duration_s, total_fetched, llm_relevant_jobs
+        )
 
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
