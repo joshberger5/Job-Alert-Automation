@@ -1,0 +1,24 @@
+[
+  {
+    "id": "6590549e-d893-4e0e-8934-dda77ef05223",
+    "text": "Account Executive II, SLED (R-18831)",
+    "categories": {
+      "commitment": "Employee: Full Time",
+      "location": "Remote - United States"
+    },
+    "salaryRange": {"currency": "USD", "min": 123100, "max": 206800},
+    "descriptionPlain": "Shape the Future with Dun & Bradstreet.\n\nThe Public Sector Job Family is responsible for selling data solutions.",
+    "hostedUrl": "https://jobs.lever.co/dnb/6590549e-d893-4e0e-8934-dda77ef05223"
+  },
+  {
+    "id": "dd0078e7-1f61-447e-ad00-c07aacd49b7d",
+    "text": "Account Executive III, Tier 1 (R-18818)",
+    "categories": {
+      "commitment": "Employee: Full Time",
+      "location": "Remote - United States"
+    },
+    "salaryRange": {"currency": "USD", "min": 151700, "max": 254900},
+    "descriptionPlain": "Shape the Future with Dun & Bradstreet.\n\nThe Tier 1 Account Executive III drives enterprise sales.",
+    "hostedUrl": "https://jobs.lever.co/dnb/dd0078e7-1f61-447e-ad00-c07aacd49b7d"
+  }
+]

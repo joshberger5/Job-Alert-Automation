@@ -1,0 +1,29 @@
+{
+  "results": [
+    {
+      "id": "1234567890",
+      "title": "Senior Java Developer",
+      "company": {"display_name": "Acme Corp"},
+      "location": {"display_name": "Jacksonville, FL"},
+      "description": "We are looking for a senior Java developer.",
+      "salary_min": 90000,
+      "salary_max": 120000,
+      "redirect_url": "https://api.adzuna.com/v1/api/jobs/us/details/1234567890",
+      "contract_type": "permanent",
+      "contract_time": "full_time"
+    },
+    {
+      "id": "9876543210",
+      "title": "Java Backend Engineer",
+      "company": {"display_name": "Tech Startup"},
+      "location": {"display_name": "Dallas, TX"},
+      "description": "Backend engineer role.",
+      "salary_min": 110000,
+      "salary_max": 150000,
+      "redirect_url": "https://api.adzuna.com/v1/api/jobs/us/details/9876543210",
+      "contract_type": null,
+      "contract_time": "full_time"
+    }
+  ],
+  "count": 2
+}

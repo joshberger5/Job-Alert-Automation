@@ -1,0 +1,19 @@
+{
+  "jobsList": [
+    {
+      "postingTitle": "Software Engineer II",
+      "jcrURL": "/en-us/details/24102906/software-engineer-ii",
+      "family": "Technology",
+      "lob": "Global Technology & Operations",
+      "location": "Jacksonville, FL"
+    },
+    {
+      "postingTitle": "Senior Data Engineer",
+      "jcrURL": "/en-us/details/24099871/senior-data-engineer",
+      "family": "Technology",
+      "lob": "Global Technology & Operations",
+      "location": "Jacksonville, FL"
+    }
+  ],
+  "totalJobsCount": 2
+}

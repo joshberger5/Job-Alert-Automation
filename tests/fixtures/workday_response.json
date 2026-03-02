@@ -1,0 +1,21 @@
+{
+  "total": 2,
+  "jobPostings": [
+    {
+      "title": "Software Engineer I",
+      "externalPath": "/job/Jacksonville-FL/Software-Engineer_R001",
+      "locationsText": "Jacksonville, FL",
+      "postedOn": "Posted 30+ Days Ago",
+      "bulletFields": ["R001"]
+    },
+    {
+      "title": "Backend Engineer",
+      "externalPath": "/job/Jacksonville-FL/Backend-Engineer_R002",
+      "locationsText": "Jacksonville, FL",
+      "postedOn": "Posted 15 Days Ago",
+      "bulletFields": ["R002"]
+    }
+  ],
+  "facets": [],
+  "userAuthenticated": false
+}

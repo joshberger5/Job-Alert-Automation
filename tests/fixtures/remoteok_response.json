@@ -1,0 +1,26 @@
+[
+  {
+    "last_updated": 1772312414,
+    "legal": "Please link back to Remote OK."
+  },
+  {
+    "id": "1130565",
+    "slug": "remote-early-career-software-engineer-anduril-1130565",
+    "company": "Anduril Industries",
+    "position": "Early Career Software Engineer",
+    "tags": ["java", "python", "docker"],
+    "description": "<p><strong>Required:</strong> Java or Go proficiency.</p>",
+    "location": "Bellevue",
+    "url": "https://remoteok.com/remote-jobs/remote-early-career-software-engineer-anduril-1130565"
+  },
+  {
+    "id": "1130515",
+    "slug": "remote-software-engineer-ui-brave-1130515",
+    "company": "Brave",
+    "position": "Software Engineer UI",
+    "tags": ["javascript", "react", "css"],
+    "description": "<p>Build complex <strong>web apps</strong> with React.</p>",
+    "location": "Anywhere",
+    "url": "https://remoteok.com/remote-jobs/remote-software-engineer-ui-brave-1130515"
+  }
+]

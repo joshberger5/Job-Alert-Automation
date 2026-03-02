@@ -1,0 +1,19 @@
+{
+  "jobs": [
+    {
+      "id": 7619826003,
+      "title": "Analyst Operations Strategy",
+      "location": {"name": "TX - Frisco"},
+      "absolute_url": "https://sofi.com/careers/job/7619826003?gh_jid=7619826003",
+      "content": "<p><strong>The role:</strong></p>\n<p>At SoFi, we help people reach financial independence. The Analyst will develop <em>operational strategies</em> for the home loans business.</p>"
+    },
+    {
+      "id": 7593033003,
+      "title": "Appraisal Orders Analyst III",
+      "location": {"name": "Frisco, TX"},
+      "absolute_url": "https://sofi.com/careers/job/7593033003?gh_jid=7593033003",
+      "content": "<p>The Appraisal Orders Analyst supports <strong>internal loan teams</strong> by managing appraisal workflows.</p>"
+    }
+  ],
+  "meta": {"total": 2}
+}
