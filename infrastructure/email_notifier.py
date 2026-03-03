@@ -89,42 +89,29 @@ def _job_card(job: dict) -> str:
 </table>"""
 
 
-_SUMMARY_STYLE: str = (
-    "cursor:pointer;"
-    "padding:16px 0 12px;"
-    "font-size:11px;font-weight:700;color:#475569;"
-    "letter-spacing:0.8px;text-transform:uppercase;"
-    "border:none;background:none;"
-    "list-style:none;-webkit-appearance:none;"
-)
-
-
 def _section(
     comment: str,
     heading: str,
     subtext: str,
     jobs: list[dict],
-    open_by_default: bool = False,
 ) -> str:
     if not jobs:
         return ""
     n: int = len(jobs)
     s: str = "s" if n != 1 else ""
     cards: str = "\n".join(_job_card(j) for j in jobs)
-    open_attr: str = " open" if open_by_default else ""
     return f"""
         <!-- {comment} -->
         <tr>
-          <td style="padding:0 24px 4px;">
-            <details{open_attr}>
-              <summary style="{_SUMMARY_STYLE}">
-                {heading}
-                &nbsp;<span style="color:#94a3b8;font-weight:400;text-transform:none;
-                                   letter-spacing:0;">({n} job{s})</span>
-              </summary>
-              <p style="margin:0 0 14px;color:#94a3b8;font-size:11px;">{subtext}</p>
-              {cards}
-            </details>
+          <td style="padding:20px 24px 4px;border-top:2px solid #e2e8f0;">
+            <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#475569;
+                      letter-spacing:0.8px;text-transform:uppercase;">
+              {heading}
+              &nbsp;<span style="color:#94a3b8;font-weight:400;text-transform:none;
+                                 letter-spacing:0;">({n} job{s})</span>
+            </p>
+            <p style="margin:0 0 12px;color:#94a3b8;font-size:11px;">{subtext}</p>
+            {cards}
           </td>
         </tr>"""
 
@@ -154,14 +141,13 @@ def _build_html(
 </table>"""
     else:
         inner: str = "\n".join(_job_card(j) for j in jobs)
-        cards_html = f"""<details open>
-  <summary style="{_SUMMARY_STYLE}padding-top:4px;border-top:none;">
-    Qualified Jobs
-    &nbsp;<span style="color:#94a3b8;font-weight:400;text-transform:none;
-                       letter-spacing:0;">({n} job{s})</span>
-  </summary>
-  {inner}
-</details>"""
+        cards_html = f"""<p style="margin:0 0 14px;font-size:11px;font-weight:700;color:#475569;
+          letter-spacing:0.8px;text-transform:uppercase;">
+  Qualified Jobs
+  &nbsp;<span style="color:#94a3b8;font-weight:400;text-transform:none;
+                     letter-spacing:0;">({n} job{s})</span>
+</p>
+{inner}"""
 
     llm_rejected_html: str = _section(
         comment="LLM-FILTERED SECTION",
