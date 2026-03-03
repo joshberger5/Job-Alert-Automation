@@ -28,6 +28,7 @@ from infrastructure.job_fetchers.boa_fetcher import BankOfAmericaFetcher
 from infrastructure.job_fetchers.icims_fetcher import IcimsFetcher, IcimsSitemapFetcher
 from infrastructure.job_fetchers.remoteok_fetcher import RemoteOKFetcher
 from infrastructure.job_fetchers.weworkremotely_fetcher import WeWorkRemotelyFetcher
+from infrastructure.keyword_title_filter import KeywordTitleFilter
 from infrastructure.llm_title_filter import GeminiTitleFilter
 
 load_dotenv()
@@ -182,18 +183,29 @@ def main() -> None:
     print()
     debug_records: list[dict] = service.process(all_jobs)
 
-    # ── LLM title relevance check ────────────────────────────────────────────
-    # Runs on all post-filter records (qualified + scored_out) in one batch.
-    # Qualified jobs the LLM rejects are marked "llm_filtered" and excluded
-    # from the email. Scored-out jobs the LLM considers relevant are flagged
-    # with llm_relevant=True in the debug record for inspection.
+    # ── Keyword title filter (always runs — no API needed) ───────────────────
     _post_filter: list[dict] = [
         r for r in debug_records if r.get("result") in ("qualified", "scored_out")
     ]
+    _kw_filter: KeywordTitleFilter = KeywordTitleFilter()
+    _kw_approved_ids: set[str] = _kw_filter.filter_by_title(_post_filter, profile)
+    for r in debug_records:
+        if r.get("result") == "qualified" and r["id"] not in _kw_approved_ids:
+            r["result"] = "llm_filtered"
+
+    # ── LLM title relevance check (optional — runs if GEMINI_API_KEY is set) ─
+    # Runs only on keyword-approved records to conserve API quota.
+    # Qualified jobs the LLM rejects are marked "llm_filtered" and excluded
+    # from the email. Scored-out jobs the LLM considers relevant are flagged
+    # with llm_relevant=True in the debug record for inspection.
+    _llm_candidates: list[dict] = [
+        r for r in debug_records
+        if r.get("result") in ("qualified", "scored_out") and r["id"] in _kw_approved_ids
+    ]
     gemini_key: str | None = os.environ.get("GEMINI_API_KEY")
-    if gemini_key and _post_filter:
+    if gemini_key and _llm_candidates:
         _llm: GeminiTitleFilter = GeminiTitleFilter(api_key=gemini_key)
-        _approved_ids: set[str] = _llm.filter_by_title(_post_filter, profile)
+        _approved_ids: set[str] = _llm.filter_by_title(_llm_candidates, profile)
         for r in debug_records:
             if r.get("result") == "qualified" and r["id"] not in _approved_ids:
                 r["result"] = "llm_filtered"
