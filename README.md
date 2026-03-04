@@ -42,7 +42,7 @@ py main.py
 
 - Locating the **Technical Skills** section and splitting it into categories. The first category (e.g. Languages) becomes `core_skills` with weight **4**; all remaining categories become `secondary_skills` with weight **2**.
 - Scanning the **Experience** section for job titles by finding lines that immediately precede date lines.
-- Hardcoding all other profile fields (`preferred_locations`, `remote_allowed`, `salary_minimum`, `ideal_max_experience_years`, `open_to_contract`) directly in `ResumeProfileBuilder.build()`.
+- Hardcoding all other profile fields (`preferred_locations`, `remote_allowed`, `ideal_max_experience_years`, `open_to_contract`) directly in `ResumeProfileBuilder.build()`.
 
 ### 2 — Fetching
 
@@ -140,7 +140,7 @@ Sent via SMTP STARTTLS. Skipped entirely if `SMTP_HOST` is not set.
 py -m pytest tests/ -v
 ```
 
-44 tests across 8 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
+80 tests across 12 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
 
 | File | Tests | What it covers |
 |---|---|---|
@@ -152,6 +152,10 @@ py -m pytest tests/ -v
 | `test_remoteok_fetcher.py` | 3 | Metadata element skipped, `location: null` → `"Worldwide"`, `tags: null` → `required_skills=[]` |
 | `test_weworkremotely_fetcher.py` | 4 | Region filtering (`"Europe Only"` skipped), no-colon title fallback, HTML description stripping |
 | `test_job_processing_service.py` | 16 | All four result paths (duplicate, filtered_out, scored_out, qualified); correct `repo.save` args per path; `JobEvaluated` + `JobQualified` events on qualified; only `JobEvaluated` on scored_out; no events on duplicate/filtered; all base record fields; mixed-batch ordering |
+| `test_scoring_policy.py` | 9 | Word-boundary skill matching (Java ≠ JavaScript, C ≠ account), missing-skill penalties, `qualifies()` at/above/below threshold |
+| `test_experience_requirement.py` | 10 | Year-phrase parsing (trailing punctuation, `+` suffix, range), `UNKNOWN` when absent, gap classification (`WITHIN_IDEAL_RANGE`, `MODERATE_GAP`, `LARGE_GAP`) |
+| `test_keyword_title_filter.py` | 6 | Rejection fragments (`data scientist`, `product manager`), case-insensitivity, approved engineering titles, custom fragment override |
+| `test_filtering_policy.py` | 11 | Contract filter, experience gap filter, remote=True/None/Europe logic, preferred-location substring match |
 
 Fixtures (JSON, HTML, RSS) live in `tests/fixtures/` — either trimmed real API responses or synthetic data matching the exact schema each fetcher expects.
 
