@@ -4,6 +4,8 @@ from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from application.job_record import JobRecord
+
 
 def _score_color(score: int) -> str:
     if score >= 14:
@@ -21,7 +23,7 @@ def _fmt_duration(seconds: float) -> str:
     return f"{seconds / 60:.1f}m"
 
 
-def _job_card(job: dict) -> str:
+def _job_card(job: JobRecord) -> str:
     title: str = job.get("title", "Untitled")
     company: str = job.get("company", "")
     location: str = job.get("location", "")
@@ -93,7 +95,7 @@ def _section(
     comment: str,
     heading: str,
     subtext: str,
-    jobs: list[dict],
+    jobs: list[JobRecord],
 ) -> str:
     if not jobs:
         return ""
@@ -117,12 +119,12 @@ def _section(
 
 
 def _build_html(
-    jobs: list[dict],
+    jobs: list[JobRecord],
     run_at: datetime,
     duration_s: float,
     total_fetched: int,
-    llm_relevant_jobs: list[dict] | None = None,
-    llm_filtered_jobs: list[dict] | None = None,
+    llm_relevant_jobs: list[JobRecord] | None = None,
+    llm_filtered_jobs: list[JobRecord] | None = None,
 ) -> str:
     n: int = len(jobs)
     s: str = "s" if n != 1 else ""
@@ -256,12 +258,12 @@ class EmailNotifier:
 
     def send(
         self,
-        qualified_jobs: list[dict],
+        qualified_jobs: list[JobRecord],
         run_at: datetime,
         duration_s: float,
         total_fetched: int,
-        llm_relevant_jobs: list[dict] | None = None,
-        llm_filtered_jobs: list[dict] | None = None,
+        llm_relevant_jobs: list[JobRecord] | None = None,
+        llm_filtered_jobs: list[JobRecord] | None = None,
     ) -> None:
         n: int = len(qualified_jobs)
         s: str = "s" if n != 1 else ""

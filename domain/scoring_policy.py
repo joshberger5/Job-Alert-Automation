@@ -1,3 +1,5 @@
+import re
+
 from domain.candidate_profile import CandidateProfile
 from domain.job import Job
 
@@ -38,12 +40,12 @@ class ScoringPolicy:
         score = 0
 
         for skill, weight in profile.core_skills.items():
-            if skill.lower() in job_content:
+            if re.search(r'\b' + re.escape(skill.lower()) + r'\b', job_content):
                 score += weight
                 breakdown[f"core:{skill}"] = weight
 
         for skill, weight in profile.secondary_skills.items():
-            if skill.lower() in job_content:
+            if re.search(r'\b' + re.escape(skill.lower()) + r'\b', job_content):
                 score += weight
                 breakdown[f"secondary:{skill}"] = weight
 

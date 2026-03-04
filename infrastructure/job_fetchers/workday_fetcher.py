@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 from domain.job import Job
+from infrastructure.job_fetchers._utils import infer_remote
 
 _DETAIL_TIMEOUT: int = 8
 _DETAIL_WORKERS: int = 10
@@ -94,7 +95,7 @@ class WorkdayFetcher:
             bullet_fields: list = item.get("bulletFields") or []
             job_id: str = bullet_fields[0] if bullet_fields else ""
             locations_text: str = item.get("locationsText", "")
-            remote: bool | None = True if "remote" in locations_text.lower() else None
+            remote: bool | None = infer_remote(locations_text)
             description: str = descriptions.get(url, "") if self.fetch_descriptions else ""
 
             jobs.append(Job(

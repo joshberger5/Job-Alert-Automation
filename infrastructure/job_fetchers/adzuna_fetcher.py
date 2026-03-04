@@ -1,9 +1,11 @@
 import requests
 from domain.job import Job
+from infrastructure.job_fetchers._utils import infer_remote
 
 
 class AdzunaFetcher:
     BASE_URL = "https://api.adzuna.com/v1/api/jobs/us/search"
+    company_name: str = "Adzuna"
 
     def __init__(
         self,
@@ -56,7 +58,7 @@ class AdzunaFetcher:
                     salary = None
 
                 location_display = item.get("location", {}).get("display_name", "")
-                remote = True if location_display and "remote" in location_display.lower() else None
+                remote: bool | None = infer_remote(location_display)
 
                 contract_type = item.get("contract_type") or ""
                 contract_time = item.get("contract_time") or ""

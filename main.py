@@ -11,8 +11,10 @@ from domain.job import Job
 from domain.scoring_policy import ScoringPolicy
 
 from application.job_processing_service import JobProcessingService
+from application.job_record import JobRecord
 from application.resume_profile_builder import ResumeProfileBuilder
 from application.simple_event_dispatcher import SimpleEventDispatcher
+from application.title_filter_service import TitleFilterService
 
 from infrastructure.json_job_repository import JsonJobRepository
 from infrastructure.in_memory_event_publisher import InMemoryEventPublisher
@@ -40,12 +42,10 @@ def _print_profile(profile: CandidateProfile) -> None:
     rows: list[tuple[str, str]] = [
         ("Locations",  ", ".join(profile.preferred_locations)),
         ("Remote",     "Yes" if profile.remote_allowed else "No"),
-        ("Salary Min", f"${profile.salary_minimum:,}"),
         ("Max Exp",    f"{profile.ideal_max_experience_years} years"),
         ("Contract",   "Yes" if profile.open_to_contract else "No"),
         ("Core Skills", core),
         ("Secondary",  secondary),
-        ("Prev Titles", ", ".join(profile.previous_titles)),
     ]
     print()
     print("  Candidate Profile")
@@ -57,7 +57,7 @@ def _print_profile(profile: CandidateProfile) -> None:
 
 
 def _fetcher_label(fetcher: JobFetcher) -> str:
-    return getattr(fetcher, "company_name", type(fetcher).__name__)
+    return fetcher.company_name
 
 
 def _run_fetcher(fetcher: JobFetcher) -> tuple[str, list[Job], Exception | None]:
@@ -181,41 +181,16 @@ def main() -> None:
             all_jobs.extend(jobs)
 
     print()
-    debug_records: list[dict] = service.process(all_jobs)
+    debug_records: list[JobRecord] = service.process(all_jobs)
 
-    # ── Keyword title filter (always runs — no API needed) ───────────────────
-    _post_filter: list[dict] = [
-        r for r in debug_records if r.get("result") in ("qualified", "scored_out")
-    ]
-    _kw_filter: KeywordTitleFilter = KeywordTitleFilter()
-    _kw_approved_ids: set[str] = _kw_filter.filter_by_title(_post_filter, profile)
-    for r in debug_records:
-        if r.get("result") == "qualified" and r["id"] not in _kw_approved_ids:
-            r["result"] = "llm_filtered"
-
-    # ── LLM title relevance check (optional — runs if GEMINI_API_KEY is set) ─
-    # Runs only on keyword-approved records to conserve API quota.
-    # Qualified jobs the LLM rejects are marked "llm_filtered" and excluded
-    # from the email. Scored-out jobs the LLM considers relevant are flagged
-    # with llm_relevant=True in the debug record for inspection.
-    _llm_candidates: list[dict] = [
-        r for r in debug_records
-        if r.get("result") in ("qualified", "scored_out") and r["id"] in _kw_approved_ids
-    ]
     gemini_key: str | None = os.environ.get("GEMINI_API_KEY")
-    if gemini_key and _llm_candidates:
-        _llm: GeminiTitleFilter = GeminiTitleFilter(api_key=gemini_key)
-        _approved_ids: set[str] = _llm.filter_by_title(_llm_candidates, profile)
-        for r in debug_records:
-            if r.get("result") == "qualified" and r["id"] not in _approved_ids:
-                r["result"] = "llm_filtered"
-            elif r.get("result") == "scored_out" and r["id"] in _approved_ids:
-                r["llm_relevant"] = True
-    # ─────────────────────────────────────────────────────────────────────────
+    llm_filter: GeminiTitleFilter | None = GeminiTitleFilter(api_key=gemini_key) if gemini_key else None
+    filter_svc: TitleFilterService = TitleFilterService(KeywordTitleFilter(), llm_filter)
+    debug_records = filter_svc.apply(debug_records, profile)
 
-    qualified: list[dict] = [r for r in debug_records if r.get("result") == "qualified"]
-    llm_filtered: list[dict] = [r for r in debug_records if r.get("result") == "llm_filtered"]
-    llm_relevant: list[dict] = [r for r in debug_records if r.get("llm_relevant")]
+    qualified: list[JobRecord] = [r for r in debug_records if r.get("result") == "qualified"]
+    llm_filtered: list[JobRecord] = [r for r in debug_records if r.get("result") == "llm_filtered"]
+    llm_relevant: list[JobRecord] = [r for r in debug_records if r.get("llm_relevant")]
     counts: dict[str, int] = {}
     for r in debug_records:
         result_key: str = r["result"]

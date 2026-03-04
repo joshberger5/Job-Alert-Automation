@@ -1,5 +1,6 @@
 import requests
 from domain.job import Job
+from infrastructure.job_fetchers._utils import infer_remote
 
 
 class LeverFetcher:
@@ -39,7 +40,7 @@ class LeverFetcher:
             categories = item.get("categories") or {}
 
             location_str = categories.get("location", "")
-            remote = True if location_str and "remote" in location_str.lower() else None
+            remote: bool | None = infer_remote(location_str)
 
             commitment = (categories.get("commitment") or "").lower()
             if "full" in commitment:

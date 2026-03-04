@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from domain.candidate_profile import CandidateProfile
+from application.job_record import JobRecord
 
 # Lowercase substrings matched against job titles (case-insensitive).
 # A title containing ANY of these fragments is rejected.
@@ -73,7 +74,7 @@ class KeywordTitleFilter:
         )
 
     def filter_by_title(
-        self, records: list[dict], profile: CandidateProfile
+        self, records: list[JobRecord], profile: CandidateProfile
     ) -> set[str]:
         """Return the set of job IDs whose titles do not match any rejected fragment."""
         approved_ids: set[str] = set()

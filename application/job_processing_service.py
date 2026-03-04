@@ -7,6 +7,7 @@ from domain.filtering_policy import FilteringPolicy
 from domain.job import Job
 from domain.scoring_policy import ScoringPolicy
 from application.event_publisher import EventPublisher
+from application.job_record import JobRecord
 from application.job_repository import JobRepository
 
 
@@ -48,14 +49,14 @@ class JobProcessingService:
         self.profile = profile
         self.event_publisher = event_publisher
 
-    def process(self, jobs: Iterable[Job]) -> list[dict]:
+    def process(self, jobs: Iterable[Job]) -> list[JobRecord]:
 
         emitted_events: list[DomainEvent] = []
-        debug_records: list[dict] = []
+        debug_records: list[JobRecord] = []
 
         for job in jobs:
 
-            record: dict = {
+            record: JobRecord = {
                 "id": job.id,
                 "title": job.title,
                 "company": job.company,

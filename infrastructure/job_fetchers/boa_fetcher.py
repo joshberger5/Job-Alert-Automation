@@ -1,11 +1,13 @@
 import requests
 from domain.job import Job
+from infrastructure.job_fetchers._utils import infer_remote
 
 BOA_BASE = "https://careers.bankofamerica.com"
 
 
 class BankOfAmericaFetcher:
     ROWS = 50
+    company_name: str = "Bank of America"
 
     def __init__(self, location: str = "Jacksonville, FL", keywords: str | None = None) -> None:
         self.location: str = location
@@ -43,7 +45,7 @@ class BankOfAmericaFetcher:
                 description = " | ".join(filter(None, [family, lob]))
 
                 location = item.get("location", "")
-                remote = True if "remote" in location.lower() else None
+                remote: bool | None = infer_remote(location)
 
                 jobs.append(Job(
                     id=job_id,

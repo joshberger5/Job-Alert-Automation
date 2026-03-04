@@ -7,6 +7,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from domain.job import Job
+from infrastructure.job_fetchers._utils import infer_remote
 
 
 _EMPLOYMENT_TYPE_MAP: dict[str, str] = {
@@ -46,7 +47,7 @@ class IcimsFetcher:
             job_id, title, relative_url = stub
             detail_url: str = f"{self.base_url}{relative_url}"
             location, description = self._fetch_detail(detail_url)
-            remote: bool | None = True if "remote" in location.lower() else None
+            remote: bool | None = infer_remote(location)
             return Job(
                 id=job_id,
                 title=title,

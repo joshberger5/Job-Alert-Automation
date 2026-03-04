@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from domain.job import Job
+from infrastructure.job_fetchers._utils import infer_remote
 
 
 class GreenhouseFetcher:
@@ -27,7 +28,7 @@ class GreenhouseFetcher:
             location_obj: dict = item.get("location") or {}
             location: str = location_obj.get("name", "")
             url: str = item.get("absolute_url", "")
-            remote: bool | None = True if "remote" in location.lower() else None
+            remote: bool | None = infer_remote(location)
 
             content_html: str = item.get("content", "") or ""
             description: str = BeautifulSoup(content_html, "html.parser").get_text(

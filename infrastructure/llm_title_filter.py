@@ -6,6 +6,7 @@ import re
 import requests
 
 from domain.candidate_profile import CandidateProfile
+from application.job_record import JobRecord
 
 _GEMINI_URL: str = (
     "https://generativelanguage.googleapis.com/v1beta/models"
@@ -13,7 +14,7 @@ _GEMINI_URL: str = (
 )
 
 
-def _build_prompt(records: list[dict], profile: CandidateProfile) -> str:
+def _build_prompt(records: list[JobRecord], profile: CandidateProfile) -> str:
     core: str = ", ".join(profile.core_skills.keys())
     max_exp: int = profile.ideal_max_experience_years
     titles_block: str = "\n".join(
@@ -43,7 +44,7 @@ class GeminiTitleFilter:
         self._api_key: str = api_key
 
     def filter_by_title(
-        self, records: list[dict], profile: CandidateProfile
+        self, records: list[JobRecord], profile: CandidateProfile
     ) -> set[str]:
         """Return the set of job IDs from *records* the LLM considers relevant.
 
