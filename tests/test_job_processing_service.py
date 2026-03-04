@@ -43,11 +43,9 @@ def _make_profile() -> CandidateProfile:
     return CandidateProfile(
         preferred_locations=["Jacksonville"],
         remote_allowed=True,
-        salary_minimum=60000,
         ideal_max_experience_years=3,
         core_skills={"java": 4},
         secondary_skills={"python": 2},
-        previous_titles=["Software Engineer"],
         open_to_contract=False,
     )
 
