@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 from infrastructure.job_fetchers.greenhouse_fetcher import GreenhouseFetcher
@@ -16,7 +17,7 @@ def _mock_response(data: dict[str, object], status: int = 200) -> MagicMock:
 
 
 def _load_fixture() -> dict[str, object]:
-    return json.loads((FIXTURES / "greenhouse_response.json").read_text())
+    return cast(dict[str, object], json.loads((FIXTURES / "greenhouse_response.json").read_text()))
 
 
 def test_happy_path() -> None:

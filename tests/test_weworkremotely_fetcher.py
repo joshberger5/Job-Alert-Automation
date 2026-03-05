@@ -1,6 +1,7 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from domain.job import Job
 from infrastructure.job_fetchers.weworkremotely_fetcher import WeWorkRemotelyFetcher
 
 FIXTURES: Path = Path(__file__).parent / "fixtures"
@@ -88,7 +89,7 @@ def test_html_description() -> None:
         jobs = WeWorkRemotelyFetcher().fetch()
 
     # GoFasti item description has HTML entities that BS4 decodes and strips
-    gofasti_jobs: list = [j for j in jobs if j.company == "GoFasti"]
+    gofasti_jobs: list[Job] = [j for j in jobs if j.company == "GoFasti"]
     assert len(gofasti_jobs) == 1
     assert "<" not in gofasti_jobs[0].description
     assert "web applications" in gofasti_jobs[0].description

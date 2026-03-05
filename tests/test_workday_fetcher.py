@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 from infrastructure.job_fetchers.workday_fetcher import WorkdayFetcher
@@ -27,7 +28,7 @@ def _mock_html(html: str, status: int = 200) -> MagicMock:
 
 
 def _load_fixture() -> dict[str, object]:
-    return json.loads((FIXTURES / "workday_response.json").read_text())
+    return cast(dict[str, object], json.loads((FIXTURES / "workday_response.json").read_text()))
 
 
 def _make_fetcher(fetch_descriptions: bool = False) -> WorkdayFetcher:

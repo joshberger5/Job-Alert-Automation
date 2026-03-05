@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 from infrastructure.job_fetchers.remoteok_fetcher import RemoteOKFetcher
@@ -16,7 +17,7 @@ def _mock_response(data: list[object], status: int = 200) -> MagicMock:
 
 
 def _load_fixture() -> list[object]:
-    return json.loads((FIXTURES / "remoteok_response.json").read_text())
+    return cast(list[object], json.loads((FIXTURES / "remoteok_response.json").read_text()))
 
 
 def test_happy_path() -> None:

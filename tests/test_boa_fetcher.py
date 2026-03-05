@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 from infrastructure.job_fetchers.boa_fetcher import BankOfAmericaFetcher
@@ -18,7 +19,7 @@ def _mock_response(data: dict[str, object], status: int = 200) -> MagicMock:
 
 
 def _load_fixture() -> dict[str, object]:
-    return json.loads((FIXTURES / "boa_response.json").read_text())
+    return cast(dict[str, object], json.loads((FIXTURES / "boa_response.json").read_text()))
 
 
 def _make_listing(i: int) -> dict[str, object]:

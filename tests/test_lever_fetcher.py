@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 from infrastructure.job_fetchers.lever_fetcher import LeverFetcher
@@ -16,7 +17,7 @@ def _mock_response(data: list[dict[str, object]], status: int = 200) -> MagicMoc
 
 
 def _load_fixture() -> list[dict[str, object]]:
-    return json.loads((FIXTURES / "lever_response.json").read_text())
+    return cast(list[dict[str, object]], json.loads((FIXTURES / "lever_response.json").read_text()))
 
 
 def _make_item(
