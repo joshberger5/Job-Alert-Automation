@@ -49,7 +49,7 @@ class ExperienceRequirement:
         if self.required_years <= ideal_max_years:
             return ExperienceAlignment.WITHIN_IDEAL_RANGE
 
-        if self.required_years <= ideal_max_years + 2:
+        if self.required_years <= ideal_max_years + 4:
             return ExperienceAlignment.MODERATE_GAP
 
         return ExperienceAlignment.LARGE_GAP
