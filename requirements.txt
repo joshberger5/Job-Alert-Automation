@@ -5,3 +5,6 @@ python-dotenv
 PyYAML
 pytest
 mypy
+types-requests
+types-PyYAML
+types-beautifulsoup4

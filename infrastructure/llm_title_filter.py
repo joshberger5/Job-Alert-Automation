@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from typing import Any
 
 import requests
 
@@ -66,14 +67,14 @@ class GeminiTitleFilter:
                 timeout=20,
             )
             response.raise_for_status()
-            data: dict = response.json()
+            data: dict[str, Any] = response.json()
 
             raw_text: str = (
                 data["candidates"][0]["content"]["parts"][0]["text"]
             )
 
             # LLMs sometimes wrap output in markdown fences — extract the array
-            match: re.Match | None = re.search(r"\[[\d,\s]*\]", raw_text)
+            match: re.Match[str] | None = re.search(r"\[[\d,\s]*\]", raw_text)
             if not match:
                 print(
                     f"  [LLM] WARNING: unexpected response format — "

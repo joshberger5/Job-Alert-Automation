@@ -2,6 +2,7 @@ import re
 import html as html_module
 import json as _json
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any
 
 import requests
 from domain.job import Job
@@ -46,7 +47,7 @@ class WorkdayFetcher:
 
     def fetch(self) -> list[Job]:
         # Collect all postings first (pagination is sequential)
-        raw_postings: list[tuple[dict, str | None]] = []
+        raw_postings: list[tuple[dict[str, Any], str | None]] = []
         offset = 0
 
         while True:
@@ -92,7 +93,7 @@ class WorkdayFetcher:
 
         jobs: list[Job] = []
         for item, url in raw_postings:
-            bullet_fields: list = item.get("bulletFields") or []
+            bullet_fields: list[Any] = item.get("bulletFields") or []
             job_id: str = bullet_fields[0] if bullet_fields else ""
             locations_text: str = item.get("locationsText", "")
             remote: bool | None = infer_remote(locations_text)

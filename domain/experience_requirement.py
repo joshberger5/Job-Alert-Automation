@@ -18,7 +18,7 @@ class ExperienceRequirement:
 
         for index, token in enumerate(tokens):
             # Accept "15", "15+", "5-10" — extract the leading digit sequence
-            m: re.Match | None = re.match(r'^(\d+)', token)
+            m: re.Match[str] | None = re.match(r'^(\d+)', token)
             if not m:
                 continue
             years: int = int(m.group(1))

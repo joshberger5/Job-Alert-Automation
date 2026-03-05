@@ -1,3 +1,5 @@
+from typing import Any
+
 import requests
 from bs4 import BeautifulSoup
 
@@ -19,13 +21,13 @@ class GreenhouseFetcher:
             timeout=15,
         )
         response.raise_for_status()
-        data: dict = response.json()
+        data: dict[str, Any] = response.json()
 
         jobs: list[Job] = []
         for item in data.get("jobs", []):
             job_id: str = str(item.get("id", ""))
             title: str = item.get("title", "")
-            location_obj: dict = item.get("location") or {}
+            location_obj: dict[str, Any] = item.get("location") or {}
             location: str = location_obj.get("name", "")
             url: str = item.get("absolute_url", "")
             remote: bool | None = infer_remote(location)

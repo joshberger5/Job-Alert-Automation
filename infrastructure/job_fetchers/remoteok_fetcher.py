@@ -1,3 +1,5 @@
+from typing import Any
+
 import requests
 from bs4 import BeautifulSoup
 
@@ -19,7 +21,7 @@ class RemoteOKFetcher:
             timeout=15,
         )
         response.raise_for_status()
-        items: list = response.json()
+        items: list[Any] = response.json()
 
         jobs: list[Job] = []
         # First element is metadata — skip it

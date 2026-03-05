@@ -2,9 +2,10 @@ import json
 import re
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 from domain.job import Job
 from infrastructure.job_fetchers._utils import infer_remote
@@ -94,7 +95,7 @@ class IcimsFetcher:
             if not tiles:
                 break
             for tile in tiles:
-                relative_url: str = tile["data-url"]
+                relative_url: str = str(tile["data-url"])
                 anchor = tile.select_one("a.jobTitle-link")
                 title: str = anchor.get_text(strip=True) if anchor else ""
                 id_match = re.search(r"/(\d+)/?$", relative_url)
@@ -184,11 +185,11 @@ class IcimsSitemapFetcher:
 
         soup: BeautifulSoup = BeautifulSoup(response.text, "html.parser")
         ld_tag = soup.find("script", {"type": "application/ld+json"})
-        if not ld_tag or not ld_tag.string:
+        if not isinstance(ld_tag, Tag) or not ld_tag.string:
             return None
 
         try:
-            data: dict = json.loads(ld_tag.string)
+            data: dict[str, Any] = json.loads(ld_tag.string)
         except json.JSONDecodeError:
             return None
 
@@ -227,13 +228,13 @@ class IcimsSitemapFetcher:
         )
 
     @staticmethod
-    def _extract_location(data: dict) -> str:
-        locations: list[dict] | dict = data.get("jobLocation", [])
+    def _extract_location(data: dict[str, Any]) -> str:
+        locations: list[dict[str, Any]] | dict[str, Any] = data.get("jobLocation", [])
         if isinstance(locations, dict):
             locations = [locations]
         if not locations:
             return ""
-        addr: dict = locations[0].get("address", {})
+        addr: dict[str, Any] = locations[0].get("address", {})
         city: str = addr.get("addressLocality", "")
         state: str = addr.get("addressRegion", "")
         country: str = addr.get("addressCountry", "")

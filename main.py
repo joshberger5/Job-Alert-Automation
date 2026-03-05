@@ -205,7 +205,7 @@ def main() -> None:
         for r in qualified:
             print(f"  *** {r['title']} @ {r['company']} | Score {r['score']} | {r['url']}")
 
-    debug_output: dict = {
+    debug_output: dict[str, object] = {
         "run_at": run_at.isoformat(timespec="seconds"),
         "total_fetched": len(all_jobs),
         "summary": counts,

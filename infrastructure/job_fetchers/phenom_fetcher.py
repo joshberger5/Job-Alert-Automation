@@ -1,4 +1,6 @@
 import re
+from typing import Any
+
 import requests
 from domain.job import Job
 
@@ -44,7 +46,7 @@ class PhenomFetcher:
                 timeout=10,
             )
             response.raise_for_status()
-            data: dict = response.json()
+            data: dict[str, Any] = response.json()
 
             results_html: str = data.get("results", "")
             has_content: bool = data.get("hasContent", True)

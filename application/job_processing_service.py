@@ -91,7 +91,7 @@ class JobProcessingService:
 
             emitted_events.append(JobEvaluated(job.id, score, qualified))
             if qualified:
-                emitted_events.append(JobQualified(job.id, score, job.url))
+                emitted_events.append(JobQualified(job.id, score, job.url or ""))
 
             debug_records.append(record)
 
