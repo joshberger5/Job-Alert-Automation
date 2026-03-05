@@ -205,6 +205,8 @@ def main() -> None:
         for r in qualified:
             print(f"  *** {r['title']} @ {r['company']} | Score {r['score']} | {r['url']}")
 
+    repository.flush()
+
     debug_output: dict[str, object] = {
         "run_at": run_at.isoformat(timespec="seconds"),
         "total_fetched": len(all_jobs),

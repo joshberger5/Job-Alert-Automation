@@ -31,6 +31,9 @@ class JsonJobRepository:
                 "score": score,
                 "qualified": qualified,
             }
+
+    def flush(self) -> None:
+        """Write accumulated in-memory state to disk. Call once per run."""
         with open(self._path, "w", encoding="utf-8") as f:
             json.dump(self._storage, f, indent=2)
 
