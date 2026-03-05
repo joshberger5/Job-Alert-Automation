@@ -51,7 +51,7 @@ All fetchers implement the `JobFetcher` protocol (`fetch() -> list[Job]`) and ru
 | Source | Class | API Mechanism |
 |---|---|---|
 | Adzuna (local) | `AdzunaFetcher` | REST JSON — paginated, filters by keyword + location |
-| Adzuna (remote, national) | `AdzunaFetcher` | Same API, `keywords="java developer remote"`, no location constraint, 3-day window |
+| Adzuna (remote, national) | `AdzunaFetcher` | Same API, `keywords="java remote"`, no location constraint, 3-day window |
 | RemoteOK | `RemoteOKFetcher` | `remoteok.com/api?tags=java` — single JSON array, all results remote |
 | We Work Remotely | `WeWorkRemotelyFetcher` | RSS XML feed — programming category; skips explicitly non-USA regions |
 | SoFi, Robinhood, Brex, Coinbase, DoorDash, Gusto, Checkr | `GreenhouseFetcher` | `boards-api.greenhouse.io/v1/boards/{company}/jobs?content=true` — single request, all jobs |

@@ -104,7 +104,7 @@ def main() -> None:
         AdzunaFetcher(
             app_id=os.environ["ADZUNA_APP_ID"],
             app_key=os.environ["ADZUNA_APP_KEY"],
-            keywords="java developer remote",
+            keywords="java remote",
             location="United States",
             max_days_old=3,
         ),
