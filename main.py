@@ -21,19 +21,13 @@ from infrastructure.in_memory_event_publisher import InMemoryEventPublisher
 from infrastructure.email_notifier import EmailNotifier
 from infrastructure.resume.pdf_resume_parser import PdfResumeParser
 from infrastructure.job_fetchers import JobFetcher
-
-from infrastructure.job_fetchers.adzuna_fetcher import AdzunaFetcher
-from infrastructure.job_fetchers.greenhouse_fetcher import GreenhouseFetcher
-from infrastructure.job_fetchers.lever_fetcher import LeverFetcher
-from infrastructure.job_fetchers.workday_fetcher import WorkdayFetcher
-from infrastructure.job_fetchers.boa_fetcher import BankOfAmericaFetcher
-from infrastructure.job_fetchers.icims_fetcher import IcimsFetcher, IcimsSitemapFetcher
-from infrastructure.job_fetchers.remoteok_fetcher import RemoteOKFetcher
-from infrastructure.job_fetchers.weworkremotely_fetcher import WeWorkRemotelyFetcher
+from infrastructure.fetcher_registry import build_fetchers
 from infrastructure.keyword_title_filter import KeywordTitleFilter
 from infrastructure.llm_title_filter import GeminiTitleFilter
 
 load_dotenv()
+
+_FETCHER_TIMEOUT: int = 120  # seconds per fetcher before giving up
 
 
 def _print_profile(profile: CandidateProfile) -> None:
@@ -69,132 +63,122 @@ def _run_fetcher(fetcher: JobFetcher) -> tuple[str, list[Job], Exception | None]
         return label, [], e
 
 
-def main() -> None:
-    start: float = time.monotonic()
-    run_at: datetime = datetime.now()
-
-    parser = PdfResumeParser()
+def _build_profile() -> CandidateProfile:
+    parser: PdfResumeParser = PdfResumeParser()
     resume_text: str = parser.extract_text("resume.pdf")
+    builder: ResumeProfileBuilder = ResumeProfileBuilder()
+    return builder.build(resume_text)
 
-    builder = ResumeProfileBuilder()
-    profile: CandidateProfile = builder.build(resume_text)
-    _print_profile(profile)
 
-    repository = JsonJobRepository()
-    filtering_policy = FilteringPolicy()
-    scoring_policy = ScoringPolicy()
-
-    dispatcher = SimpleEventDispatcher()
-    publisher = InMemoryEventPublisher(dispatcher)
-
-    service = JobProcessingService(
+def _build_services(
+    profile: CandidateProfile,
+) -> tuple[JobProcessingService, JsonJobRepository]:
+    repository: JsonJobRepository = JsonJobRepository()
+    filtering_policy: FilteringPolicy = FilteringPolicy()
+    scoring_policy: ScoringPolicy = ScoringPolicy()
+    dispatcher: SimpleEventDispatcher = SimpleEventDispatcher()
+    publisher: InMemoryEventPublisher = InMemoryEventPublisher(dispatcher)
+    service: JobProcessingService = JobProcessingService(
         repository=repository,
         scoring_policy=scoring_policy,
         filtering_policy=filtering_policy,
         profile=profile,
         event_publisher=publisher,
     )
+    return service, repository
 
-    fetchers: list[JobFetcher] = [
-        # ── Adzuna ────────────────────────────────────────────────────────────
-        AdzunaFetcher(
-            app_id=os.environ["ADZUNA_APP_ID"],
-            app_key=os.environ["ADZUNA_APP_KEY"],
-        ),
-        AdzunaFetcher(
-            app_id=os.environ["ADZUNA_APP_ID"],
-            app_key=os.environ["ADZUNA_APP_KEY"],
-            keywords="java remote",
-            location="United States",
-            max_days_old=3,
-        ),
-        # ── Remote-first boards ───────────────────────────────────────────────
-        RemoteOKFetcher(),
-        WeWorkRemotelyFetcher(),
-        # ── Greenhouse ────────────────────────────────────────────────────────
-        GreenhouseFetcher(company="sofi", company_name="SoFi"),
-        GreenhouseFetcher(company="robinhood", company_name="Robinhood"),
-        GreenhouseFetcher(company="brex", company_name="Brex"),
-        GreenhouseFetcher(company="coinbase", company_name="Coinbase"),
-        GreenhouseFetcher(company="doordashusa", company_name="DoorDash"),
-        GreenhouseFetcher(company="gusto", company_name="Gusto"),
-        GreenhouseFetcher(company="checkr", company_name="Checkr"),
-        # ── Lever ─────────────────────────────────────────────────────────────
-        LeverFetcher(company="dnb", company_name="Dun & Bradstreet"),
-        # ── Workday ───────────────────────────────────────────────────────────
-        WorkdayFetcher(
-            base_url="https://fis.wd5.myworkdayjobs.com",
-            tenant="fis",
-            company="SearchJobs",
-            company_name="FIS Global",
-            recruiting_base="https://fis.wd5.myworkdayjobs.com/SearchJobs",
-            search_text="java",
-        ),
-        WorkdayFetcher(
-            base_url="https://wd1.myworkdaysite.com",
-            tenant="ssctech",
-            company="SSCTechnologies",
-            company_name="SSC Technologies",
-            recruiting_base="https://wd1.myworkdaysite.com/recruiting/ssctech/SSCTechnologies",
-            fetch_descriptions=True,
-            location_ids=["b5aa81dc192f01dee656c4c5ce2312b9"],
-        ),
-        WorkdayFetcher(
-            base_url="https://vystarcu.wd1.myworkdayjobs.com",
-            tenant="vystarcu",
-            company="Careers",
-            company_name="VyStar Credit Union",
-            recruiting_base="https://vystarcu.wd1.myworkdayjobs.com/Careers",
-            search_text="",
-            fetch_descriptions=True,
-            location_ids=["9c1a239b35bd4598856e5393b249b8a1"],
-        ),
-        # ── Bank of America ───────────────────────────────────────────────────
-        BankOfAmericaFetcher(location="Jacksonville, FL"),
-        BankOfAmericaFetcher(location="Jacksonville, FL", keywords="Java"),
-        # ── iCIMS ─────────────────────────────────────────────────────────────
-        IcimsFetcher(base_url="https://jobs.paysafe.com", company_name="Paysafe"),
-        IcimsSitemapFetcher(
-            base_url="https://careers-fnf.icims.com",
-            company_name="FNF",
-            location_filter=None,
-        ),
-    ]
 
-    _FETCHER_TIMEOUT: int = 120  # seconds per fetcher before giving up
-
-    print(f"  Fetching from {len(fetchers)} sources in parallel...")
+def _fetch_jobs(fetchers: list[JobFetcher], timeout: int) -> list[Job]:
     all_jobs: list[Job] = []
     with ThreadPoolExecutor(max_workers=len(fetchers)) as pool:
         futures = {pool.submit(_run_fetcher, f): f for f in fetchers}
         for future in as_completed(futures):
             try:
-                label, jobs, error = future.result(timeout=_FETCHER_TIMEOUT)
+                label, jobs, error = future.result(timeout=timeout)
             except TimeoutError:
                 label = _fetcher_label(futures[future])
-                print(f"  [{label}] TIMEOUT (>{_FETCHER_TIMEOUT}s) — skipped")
+                print(f"  [{label}] TIMEOUT (>{timeout}s) — skipped")
                 continue
             if error:
                 print(f"  [{label}] ERROR: {error}")
             else:
                 print(f"  [{label}] {len(jobs)} jobs")
             all_jobs.extend(jobs)
+    return all_jobs
 
-    print()
-    debug_records: list[JobRecord] = service.process(all_jobs)
 
+def _apply_filters(
+    records: list[JobRecord],
+    profile: CandidateProfile,
+) -> tuple[list[JobRecord], list[JobRecord], list[JobRecord], dict[str, int]]:
     gemini_key: str | None = os.environ.get("GEMINI_API_KEY")
     llm_filter: GeminiTitleFilter | None = GeminiTitleFilter(api_key=gemini_key) if gemini_key else None
     filter_svc: TitleFilterService = TitleFilterService(KeywordTitleFilter(), llm_filter)
-    debug_records = filter_svc.apply(debug_records, profile)
+    filtered: list[JobRecord] = filter_svc.apply(records, profile)
 
-    qualified: list[JobRecord] = [r for r in debug_records if r.get("result") == "qualified"]
-    llm_filtered: list[JobRecord] = [r for r in debug_records if r.get("result") == "llm_filtered"]
-    llm_relevant: list[JobRecord] = [r for r in debug_records if r.get("llm_relevant")]
+    qualified: list[JobRecord] = [r for r in filtered if r.get("result") == "qualified"]
+    llm_filtered: list[JobRecord] = [r for r in filtered if r.get("result") == "llm_filtered"]
+    llm_relevant: list[JobRecord] = [r for r in filtered if r.get("llm_relevant")]
     counts: dict[str, int] = {}
-    for r in debug_records:
+    for r in filtered:
         result_key: str = r["result"]
         counts[result_key] = counts.get(result_key, 0) + 1
+
+    return qualified, llm_filtered, llm_relevant, counts
+
+
+def _write_debug_json(
+    records: list[JobRecord],
+    run_at: datetime,
+    total_fetched: int,
+    counts: dict[str, int],
+) -> None:
+    debug_output: dict[str, object] = {
+        "run_at": run_at.isoformat(timespec="seconds"),
+        "total_fetched": total_fetched,
+        "summary": counts,
+        "jobs": records,
+    }
+    with open("jobs_debug.json", "w", encoding="utf-8") as f:
+        json.dump(debug_output, f, indent=2, default=str)
+
+
+def _send_email_notification(
+    qualified: list[JobRecord],
+    run_at: datetime,
+    duration_s: float,
+    total_fetched: int,
+    llm_relevant: list[JobRecord],
+    llm_filtered: list[JobRecord],
+) -> None:
+    if not os.environ.get("SMTP_HOST"):
+        return
+    try:
+        EmailNotifier().send(
+            qualified, run_at, duration_s, total_fetched,
+            llm_relevant_jobs=llm_relevant or None,
+            llm_filtered_jobs=llm_filtered or None,
+        )
+        print("  [Email] Sent")
+    except Exception as e:
+        print(f"  [Email] ERROR: {e}")
+
+
+def main() -> None:
+    start: float = time.monotonic()
+    run_at: datetime = datetime.now()
+
+    profile: CandidateProfile = _build_profile()
+    _print_profile(profile)
+
+    service, repository = _build_services(profile)
+    fetchers: list[JobFetcher] = build_fetchers()
+    print(f"  Fetching from {len(fetchers)} sources in parallel...")
+    all_jobs: list[Job] = _fetch_jobs(fetchers, timeout=_FETCHER_TIMEOUT)
+
+    print()
+    records: list[JobRecord] = service.process(all_jobs)
+    qualified, llm_filtered, llm_relevant, counts = _apply_filters(records, profile)
 
     print(f"  Results: {counts}")
     if llm_relevant:
@@ -206,29 +190,10 @@ def main() -> None:
             print(f"  *** {r['title']} @ {r['company']} | Score {r['score']} | {r['url']}")
 
     repository.flush()
-
-    debug_output: dict[str, object] = {
-        "run_at": run_at.isoformat(timespec="seconds"),
-        "total_fetched": len(all_jobs),
-        "summary": counts,
-        "jobs": debug_records,
-    }
-    with open("jobs_debug.json", "w", encoding="utf-8") as f:
-        json.dump(debug_output, f, indent=2, default=str)
+    _write_debug_json(records, run_at, len(all_jobs), counts)
 
     duration_s: float = time.monotonic() - start
-
-    if os.environ.get("SMTP_HOST"):
-        try:
-            EmailNotifier().send(
-                qualified, run_at, duration_s, len(all_jobs),
-                llm_relevant_jobs=llm_relevant or None,
-                llm_filtered_jobs=llm_filtered or None,
-            )
-            print("  [Email] Sent")
-        except Exception as e:
-            print(f"  [Email] ERROR: {e}")
-
+    _send_email_notification(qualified, run_at, duration_s, len(all_jobs), llm_relevant, llm_filtered)
     print(f"\n  Done in {duration_s:.1f}s")
 
 
