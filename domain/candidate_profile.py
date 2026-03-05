@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List
 
 
@@ -11,5 +11,6 @@ class CandidateProfile:
 
     core_skills: Dict[str, int]
     secondary_skills: Dict[str, int]
+    tertiary_skills: Dict[str, int] = field(default_factory=dict)
 
     open_to_contract: bool = False

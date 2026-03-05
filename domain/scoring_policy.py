@@ -17,7 +17,7 @@ class ScoringPolicy:
         total_score += self._calculate_skill_score(
             job_content,
             profile,
-            breakdown
+            breakdown,
         )
 
         total_score += self._calculate_missing_skill_penalty(
@@ -49,6 +49,11 @@ class ScoringPolicy:
                 score += weight
                 breakdown[f"secondary:{skill}"] = weight
 
+        for skill, weight in profile.tertiary_skills.items():
+            if re.search(r'\b' + re.escape(skill.lower()) + r'\b', job_content):
+                score += weight
+                breakdown[f"tertiary:{skill}"] = weight
+
         return score
 
     def _calculate_missing_skill_penalty(
@@ -65,6 +70,7 @@ class ScoringPolicy:
             for skill in (
                 list(profile.core_skills.keys())
                 + list(profile.secondary_skills.keys())
+                + list(profile.tertiary_skills.keys())
             )
         }
 

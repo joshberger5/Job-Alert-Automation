@@ -2,5 +2,6 @@ requests
 beautifulsoup4
 pdfminer.six
 python-dotenv
+PyYAML
 pytest
 mypy
