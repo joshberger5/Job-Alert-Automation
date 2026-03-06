@@ -56,18 +56,18 @@ def test_within_ideal_range_below_max() -> None:
 
 
 def test_moderate_gap() -> None:
-    """4 years required vs ideal_max=3 → MODERATE_GAP (4 ≤ 3+2)."""
+    """4 years required vs ideal_max=3 → MODERATE_GAP (4 ≤ 3+4)."""
     req: ExperienceRequirement = _req("4 years experience required.")
     assert req.alignment_with(3) == ExperienceAlignment.MODERATE_GAP
 
 
 def test_moderate_gap_upper_bound() -> None:
-    """5 years required vs ideal_max=3 → MODERATE_GAP (5 ≤ 3+2)."""
-    req: ExperienceRequirement = _req("5 years experience required.")
+    """7 years required vs ideal_max=3 → MODERATE_GAP (7 ≤ 3+4)."""
+    req: ExperienceRequirement = _req("7 years experience required.")
     assert req.alignment_with(3) == ExperienceAlignment.MODERATE_GAP
 
 
 def test_large_gap() -> None:
-    """6 years required vs ideal_max=3 → LARGE_GAP (6 > 3+2)."""
-    req: ExperienceRequirement = _req("6 years experience required.")
+    """8 years required vs ideal_max=3 → LARGE_GAP (8 > 3+4)."""
+    req: ExperienceRequirement = _req("8 years experience required.")
     assert req.alignment_with(3) == ExperienceAlignment.LARGE_GAP
