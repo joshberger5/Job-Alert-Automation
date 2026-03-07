@@ -97,11 +97,19 @@ def _section(
     subtext: str,
     jobs: list[JobRecord],
 ) -> str:
-    if not jobs:
-        return ""
     n: int = len(jobs)
     s: str = "s" if n != 1 else ""
-    cards: str = "\n".join(_job_card(j) for j in jobs)
+    if jobs:
+        body: str = "\n".join(_job_card(j) for j in jobs)
+    else:
+        body = """<table width="100%" cellpadding="0" cellspacing="0"
+       style="background:white;border-radius:8px;border:1px solid #e2e8f0;">
+  <tr>
+    <td style="padding:24px;text-align:center;">
+      <p style="margin:0;color:#64748b;font-size:14px;">No jobs in this section.</p>
+    </td>
+  </tr>
+</table>"""
     return f"""
         <!-- {comment} -->
         <tr>
@@ -113,7 +121,7 @@ def _section(
                                  letter-spacing:0;">({n} job{s})</span>
             </p>
             <p style="margin:0 0 12px;color:#94a3b8;font-size:11px;">{subtext}</p>
-            {cards}
+            {body}
           </td>
         </tr>"""
 
