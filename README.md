@@ -1,6 +1,6 @@
 # Job Alert Automation
 
-Scrapes job postings from 19 sources 3× daily, scores them against a candidate profile parsed from a resume PDF, optionally filters titles with a Gemini LLM pass, and emails a formatted digest of qualified matches.
+Scrapes job postings from 19 sources 3× daily, scores them against a candidate profile parsed from a LaTeX resume, optionally filters titles with a Gemini LLM pass, and emails a formatted digest of qualified matches.
 
 ---
 
@@ -26,7 +26,16 @@ EMAIL_TO=you@example.com
 GEMINI_API_KEY=...
 ```
 
-Place `resume.pdf` in the project root, then:
+Place `resume.tex` in the project root. Edit `candidate_profile.yaml` to set your preferences:
+
+```yaml
+preferred_locations:
+  - Jacksonville
+remote_allowed: true
+open_to_contract: false
+```
+
+Then:
 
 ```bash
 py main.py
@@ -38,11 +47,12 @@ py main.py
 
 ### 1 — Profile Extraction
 
-`PdfResumeParser` (pdfminer) extracts raw text from `resume.pdf`. `ResumeProfileBuilder` then constructs a `CandidateProfile` by:
+`LatexResumeParser` strips LaTeX markup from `resume.tex` to produce plain text. `ResumeProfileBuilder` then constructs a `CandidateProfile` by:
 
 - Locating the **Technical Skills** section and splitting it into categories. The first category (e.g. Languages) becomes `core_skills` with weight **4**; all remaining categories become `secondary_skills` with weight **2**.
-- Scanning the **Experience** section for job titles by finding lines that immediately precede date lines.
-- Hardcoding all other profile fields (`preferred_locations`, `remote_allowed`, `ideal_max_experience_years`, `open_to_contract`) directly in `ResumeProfileBuilder.build()`.
+- Scanning the **Experience** and **Projects** sections for capitalized tokens not already in the skill lists and not in a stop-word list. These become `tertiary_skills` with weight **1** (e.g. `Docker`, `Node.js`, `ES6`).
+- Calculating `ideal_max_experience_years` by summing date-range durations found in the **Experience** section (total months ÷ 12, rounded down).
+- Loading `preferred_locations`, `remote_allowed`, and `open_to_contract` from `candidate_profile.yaml` in the project root.
 
 ### 2 — Fetching
 
@@ -84,7 +94,7 @@ Detail-page fetches inside `WorkdayFetcher`, `IcimsFetcher`, and `IcimsSitemapFe
 
 `ScoringPolicy.evaluate()` operates on `"{title} {description}".lower()`:
 
-- **+weight** for each skill found in content (`core_skills` weight 4, `secondary_skills` weight 2).
+- **+weight** for each skill found in content (`core_skills` weight 4, `secondary_skills` weight 2, `tertiary_skills` weight 1).
 - **−2** for each skill in `job.required_skills` not present in the candidate's combined skill set (only applies when the fetcher populates `required_skills`; most don't — `RemoteOKFetcher` does via job tags).
 - **Qualifies** if `score ≥ 7` (`ScoringPolicy.MINIMUM_SCORE`).
 
@@ -193,7 +203,7 @@ domain/          Core logic — Job, CandidateProfile, FilteringPolicy,
 application/     JobProcessingService (orchestration), ResumeProfileBuilder,
                  JobRepository protocol, EventPublisher ABC.
 
-infrastructure/  All I/O: job fetchers, PdfResumeParser, JsonJobRepository,
+infrastructure/  All I/O: job fetchers, LatexResumeParser, JsonJobRepository,
                  EmailNotifier, GeminiTitleFilter, in-memory event publisher.
 
 tests/           pytest suite — one file per fetcher + job processing service.
