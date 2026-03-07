@@ -19,7 +19,7 @@ from application.title_filter_service import TitleFilterService
 from infrastructure.json_job_repository import JsonJobRepository
 from infrastructure.in_memory_event_publisher import InMemoryEventPublisher
 from infrastructure.email_notifier import EmailNotifier
-from infrastructure.resume.pdf_resume_parser import PdfResumeParser
+from infrastructure.resume.latex_resume_parser import LatexResumeParser
 from infrastructure.job_fetchers import JobFetcher
 from infrastructure.fetcher_registry import build_fetchers
 from infrastructure.keyword_title_filter import KeywordTitleFilter
@@ -64,8 +64,8 @@ def _run_fetcher(fetcher: JobFetcher) -> tuple[str, list[Job], Exception | None]
 
 
 def _build_profile() -> CandidateProfile:
-    parser: PdfResumeParser = PdfResumeParser()
-    resume_text: str = parser.extract_text("resume.pdf")
+    parser: LatexResumeParser = LatexResumeParser()
+    resume_text: str = parser.extract_text("resume.tex")
     builder: ResumeProfileBuilder = ResumeProfileBuilder()
     return builder.build(resume_text)
 
