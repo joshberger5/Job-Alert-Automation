@@ -11873,5 +11873,415 @@
     "first_seen": "2026-03-07T11:23:04",
     "score": 0,
     "qualified": false
+  },
+  "ahu-technologies-senior-directory-infrastructure-engineer": {
+    "first_seen": "2026-03-07T17:17:52",
+    "score": 0,
+    "qualified": false
+  },
+  "mobena-frontend-engineer": {
+    "first_seen": "2026-03-07T17:17:52",
+    "score": 2,
+    "qualified": false
+  },
+  "everest-clinical-research-clinical-trial-web-application-developer-2": {
+    "first_seen": "2026-03-07T17:17:52",
+    "score": 7,
+    "qualified": true
+  },
+  "hatch-innovations-canada-full-stack-web-developer-electronic-arts-ea260130": {
+    "first_seen": "2026-03-07T17:17:52",
+    "score": 0,
+    "qualified": false
+  },
+  "5657617745": {
+    "first_seen": "2026-03-07T17:17:52",
+    "score": 0,
+    "qualified": false
+  },
+  "5657661970": {
+    "first_seen": "2026-03-07T17:17:52",
+    "score": 0,
+    "qualified": false
+  },
+  "JR0304902": {
+    "first_seen": "2026-03-07T17:17:52",
+    "score": 0,
+    "qualified": false
+  },
+  "mole-street-consultant": {
+    "first_seen": "2026-03-07T22:26:53",
+    "score": 1,
+    "qualified": false
+  },
+  "5658084591": {
+    "first_seen": "2026-03-07T22:26:53",
+    "score": 0,
+    "qualified": false
+  },
+  "5658080347": {
+    "first_seen": "2026-03-07T22:26:53",
+    "score": 0,
+    "qualified": false
+  },
+  "5658116336": {
+    "first_seen": "2026-03-07T22:26:53",
+    "score": 0,
+    "qualified": false
+  },
+  "5657808213": {
+    "first_seen": "2026-03-07T22:26:53",
+    "score": 0,
+    "qualified": false
+  },
+  "5658113930": {
+    "first_seen": "2026-03-07T22:26:53",
+    "score": 0,
+    "qualified": false
+  },
+  "7593061003": {
+    "first_seen": "2026-03-07T22:26:53",
+    "score": 1,
+    "qualified": false
+  },
+  "5658327559": {
+    "first_seen": "2026-03-08T11:24:35",
+    "score": 0,
+    "qualified": false
+  },
+  "5658327701": {
+    "first_seen": "2026-03-08T11:24:35",
+    "score": 0,
+    "qualified": false
+  },
+  "5658328211": {
+    "first_seen": "2026-03-08T11:24:35",
+    "score": 0,
+    "qualified": false
+  },
+  "5658327695": {
+    "first_seen": "2026-03-08T11:24:35",
+    "score": 0,
+    "qualified": false
+  },
+  "5658328052": {
+    "first_seen": "2026-03-08T11:24:35",
+    "score": 0,
+    "qualified": false
+  },
+  "varicent-web-application-engineer-remote-mexico-only": {
+    "first_seen": "2026-03-08T17:19:49",
+    "score": 11,
+    "qualified": true
+  },
+  "agility-technologies-web-developer-react-angular-responsive-accessible-web-application": {
+    "first_seen": "2026-03-08T17:19:49",
+    "score": 0,
+    "qualified": false
+  },
+  "cyberpuerta-frontend-web-developer": {
+    "first_seen": "2026-03-08T17:19:49",
+    "score": 2,
+    "qualified": false
+  },
+  "digital-resource-web-developer": {
+    "first_seen": "2026-03-08T17:19:49",
+    "score": 3,
+    "qualified": false
+  },
+  "steady-vision-web-developer": {
+    "first_seen": "2026-03-08T17:19:49",
+    "score": 2,
+    "qualified": false
+  },
+  "lemon-io-senior-java-full-stack-developer": {
+    "first_seen": "2026-03-08T17:19:49",
+    "score": 0,
+    "qualified": false
+  },
+  "proxify-ab-senior-next-js-developer-5": {
+    "first_seen": "2026-03-08T17:19:49",
+    "score": 0,
+    "qualified": false
+  },
+  "sanctuary-computer-senior-data-engineer-1": {
+    "first_seen": "2026-03-08T17:19:49",
+    "score": 0,
+    "qualified": false
+  },
+  "coin-market-cap-senior-web-developer": {
+    "first_seen": "2026-03-08T17:19:49",
+    "score": 0,
+    "qualified": false
+  },
+  "ahu-technologies-cnc-operator-king-of-prussia-pa": {
+    "first_seen": "2026-03-08T17:19:49",
+    "score": 1,
+    "qualified": false
+  },
+  "5658137861": {
+    "first_seen": "2026-03-08T17:19:49",
+    "score": 0,
+    "qualified": false
+  },
+  "5658557494": {
+    "first_seen": "2026-03-08T17:19:49",
+    "score": 0,
+    "qualified": false
+  },
+  "5658557488": {
+    "first_seen": "2026-03-08T17:19:49",
+    "score": 0,
+    "qualified": false
+  },
+  "5658557153": {
+    "first_seen": "2026-03-08T17:19:49",
+    "score": 0,
+    "qualified": false
+  },
+  "5658592137": {
+    "first_seen": "2026-03-08T17:19:49",
+    "score": 0,
+    "qualified": false
+  },
+  "5658609446": {
+    "first_seen": "2026-03-08T17:19:49",
+    "score": 0,
+    "qualified": false
+  },
+  "akamai-senior-software-engineer": {
+    "first_seen": "2026-03-08T22:27:31",
+    "score": 0,
+    "qualified": false
+  },
+  "5658832249": {
+    "first_seen": "2026-03-08T22:27:31",
+    "score": 0,
+    "qualified": false
+  },
+  "5658825698": {
+    "first_seen": "2026-03-08T22:27:31",
+    "score": 0,
+    "qualified": false
+  },
+  "5658825859": {
+    "first_seen": "2026-03-08T22:27:31",
+    "score": 4,
+    "qualified": false
+  },
+  "5658825683": {
+    "first_seen": "2026-03-08T22:27:31",
+    "score": 0,
+    "qualified": false
+  },
+  "5658825853": {
+    "first_seen": "2026-03-08T22:27:31",
+    "score": 0,
+    "qualified": false
+  },
+  "5658825777": {
+    "first_seen": "2026-03-08T22:27:31",
+    "score": 5,
+    "qualified": false
+  },
+  "5658635469": {
+    "first_seen": "2026-03-08T22:27:31",
+    "score": 0,
+    "qualified": false
+  },
+  "5658682490": {
+    "first_seen": "2026-03-08T22:27:31",
+    "score": 0,
+    "qualified": false
+  },
+  "5658674171": {
+    "first_seen": "2026-03-08T22:27:31",
+    "score": 0,
+    "qualified": false
+  },
+  "5658891375": {
+    "first_seen": "2026-03-09T11:36:39",
+    "score": 2,
+    "qualified": false
+  },
+  "2d0e28ff-c0f5-4b97-b8a4-d6c4c8cff779": {
+    "first_seen": "2026-03-09T11:36:39",
+    "score": 0,
+    "qualified": false
+  },
+  "5659190788": {
+    "first_seen": "2026-03-09T11:36:39",
+    "score": 0,
+    "qualified": false
+  },
+  "5659191003": {
+    "first_seen": "2026-03-09T11:36:39",
+    "score": 0,
+    "qualified": false
+  },
+  "5659030909": {
+    "first_seen": "2026-03-09T11:36:39",
+    "score": 0,
+    "qualified": false
+  },
+  "5659191478": {
+    "first_seen": "2026-03-09T11:36:39",
+    "score": 0,
+    "qualified": false
+  },
+  "5659191026": {
+    "first_seen": "2026-03-09T11:36:39",
+    "score": 0,
+    "qualified": false
+  },
+  "5658882243": {
+    "first_seen": "2026-03-09T11:36:39",
+    "score": 0,
+    "qualified": false
+  },
+  "5658634369": {
+    "first_seen": "2026-03-09T11:36:39",
+    "score": 0,
+    "qualified": false
+  },
+  "5658633958": {
+    "first_seen": "2026-03-09T11:36:39",
+    "score": 0,
+    "qualified": false
+  },
+  "5658634030": {
+    "first_seen": "2026-03-09T11:36:39",
+    "score": 0,
+    "qualified": false
+  },
+  "5658915647": {
+    "first_seen": "2026-03-09T11:36:39",
+    "score": 0,
+    "qualified": false
+  },
+  "5659086728": {
+    "first_seen": "2026-03-09T11:36:39",
+    "score": 0,
+    "qualified": false
+  },
+  "JR0302014": {
+    "first_seen": "2026-03-09T11:36:39",
+    "score": 0,
+    "qualified": false
+  },
+  "JR0305186": {
+    "first_seen": "2026-03-09T11:36:39",
+    "score": 0,
+    "qualified": false
+  },
+  "JR0301880": {
+    "first_seen": "2026-03-09T11:36:39",
+    "score": 0,
+    "qualified": false
+  },
+  "1371263800": {
+    "first_seen": "2026-03-09T11:36:39",
+    "score": 0,
+    "qualified": false
+  },
+  "1371273700": {
+    "first_seen": "2026-03-09T11:36:39",
+    "score": 0,
+    "qualified": false
+  },
+  "/en-us/job-detail/26008275/credit-officer-ii-dealer-financial-services-multiple-locations": {
+    "first_seen": "2026-03-09T18:02:13",
+    "score": 0,
+    "qualified": false
+  },
+  "a2dfa70c-4e67-44d5-a6f6-6a88505c8da1": {
+    "first_seen": "2026-03-09T18:02:13",
+    "score": 0,
+    "qualified": false
+  },
+  "6116a124-0972-49de-b66b-0148edd24335": {
+    "first_seen": "2026-03-09T18:02:13",
+    "score": 0,
+    "qualified": false
+  },
+  "981546c0-af7a-4d1b-a7db-14c891f4ac75": {
+    "first_seen": "2026-03-09T18:02:13",
+    "score": 0,
+    "qualified": false
+  },
+  "7654714003": {
+    "first_seen": "2026-03-09T18:02:13",
+    "score": 0,
+    "qualified": false
+  },
+  "7656423003": {
+    "first_seen": "2026-03-09T18:02:13",
+    "score": 0,
+    "qualified": false
+  },
+  "7595641003": {
+    "first_seen": "2026-03-09T18:02:13",
+    "score": 0,
+    "qualified": false
+  },
+  "7656419003": {
+    "first_seen": "2026-03-09T18:02:13",
+    "score": 0,
+    "qualified": false
+  },
+  "7694499": {
+    "first_seen": "2026-03-09T18:02:13",
+    "score": 2,
+    "qualified": false
+  },
+  "7683742": {
+    "first_seen": "2026-03-09T18:02:13",
+    "score": 2,
+    "qualified": false
+  },
+  "7685208": {
+    "first_seen": "2026-03-09T18:02:13",
+    "score": 10,
+    "qualified": true
+  },
+  "JR0303743": {
+    "first_seen": "2026-03-09T18:02:13",
+    "score": 0,
+    "qualified": false
+  },
+  "JR0305180": {
+    "first_seen": "2026-03-09T18:02:13",
+    "score": 0,
+    "qualified": false
+  },
+  "JR0304379": {
+    "first_seen": "2026-03-09T18:02:13",
+    "score": 0,
+    "qualified": false
+  },
+  "3354": {
+    "first_seen": "2026-03-09T18:02:13",
+    "score": 0,
+    "qualified": false
+  },
+  "7695276": {
+    "first_seen": "2026-03-09T18:02:13",
+    "score": 0,
+    "qualified": false
+  },
+  "7689215": {
+    "first_seen": "2026-03-09T18:02:13",
+    "score": 0,
+    "qualified": false
+  },
+  "7644458": {
+    "first_seen": "2026-03-09T18:02:13",
+    "score": 0,
+    "qualified": false
+  },
+  "1371309500": {
+    "first_seen": "2026-03-09T18:02:13",
+    "score": 0,
+    "qualified": false
   }
 }
