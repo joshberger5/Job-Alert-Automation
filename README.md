@@ -1,6 +1,6 @@
 # Job Alert Automation
 
-Scrapes job postings from 19 sources 3× daily, scores them against a candidate profile parsed from a LaTeX resume, optionally filters titles with a Gemini LLM pass, and emails a formatted digest of qualified matches.
+Scrapes job postings from 23 sources 3× daily, scores them against a candidate profile parsed from a LaTeX resume, optionally filters titles with a Gemini LLM pass, and emails a formatted digest of qualified matches.
 
 ---
 
@@ -62,13 +62,17 @@ All fetchers implement the `JobFetcher` protocol (`fetch() -> list[Job]`) and ru
 |---|---|---|
 | Adzuna (local) | `AdzunaFetcher` | REST JSON — paginated, filters by keyword + location |
 | Adzuna (remote, national) | `AdzunaFetcher` | Same API, `keywords="java remote"`, no location constraint, 3-day window |
+| Adzuna (similar) | `AdzunaSimilarFetcher` | Collects seed job URLs from Adzuna, then scrapes the "Similar jobs" section from each detail page in parallel; deduplicates by job ID |
 | RemoteOK | `RemoteOKFetcher` | `remoteok.com/api?tags=java` — single JSON array, all results remote |
 | We Work Remotely | `WeWorkRemotelyFetcher` | RSS XML feed — programming category; skips explicitly non-USA regions |
 | SoFi, Robinhood, Brex, Coinbase, DoorDash, Gusto, Checkr | `GreenhouseFetcher` | `boards-api.greenhouse.io/v1/boards/{company}/jobs?content=true` — single request, all jobs |
 | Dun & Bradstreet | `LeverFetcher` | `api.lever.co/v0/postings/{company}?mode=json` |
+| Allstate | `WorkdayFetcher` | POST `allstate.wd5.myworkdayjobs.com/…/jobs` — descriptions fetched via ld+json, **parallelized** |
+| GEICO | `WorkdayFetcher` | POST `geico.wd1.myworkdayjobs.com/…/jobs` — descriptions fetched via ld+json, **parallelized** |
 | FIS Global | `WorkdayFetcher` | POST `/wday/cxs/fis/SearchJobs/jobs` — paginated JSON |
 | SSC Technologies | `WorkdayFetcher` | POST `/wday/cxs/ssctech/SSCTechnologies/jobs` — descriptions fetched from job pages via ld+json, **parallelized** |
 | VyStar Credit Union | `WorkdayFetcher` | Same as above |
+| Landstar System | `LandstarFetcher` | POST `jobs.dayforcehcm.com/api/geo/landstar/jobposting/search` (Ceridian Dayforce) — paginated JSON; salary extracted from description text |
 | Bank of America (×2) | `BankOfAmericaFetcher` | `/services/jobssearchservlet` — one instance location-only, one with `keywords=Java`; deduplication handles overlap |
 | Paysafe | `IcimsFetcher` | HTML scrape of `/tile-search-results/` (paginated, capped at 300 jobs); detail page per job, **parallelized** |
 | FNF | `IcimsSitemapFetcher` | Parses `sitemap.xml` for job URLs, fetches `?in_iframe=1` on each to read ld+json, **parallelized** |
@@ -150,7 +154,7 @@ Sent via SMTP STARTTLS. Skipped entirely if `SMTP_HOST` is not set.
 py -m pytest tests/ -v
 ```
 
-80 tests across 12 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
+109 tests across 14 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
 
 | File | Tests | What it covers |
 |---|---|---|
@@ -166,6 +170,8 @@ py -m pytest tests/ -v
 | `test_experience_requirement.py` | 10 | Year-phrase parsing (trailing punctuation, `+` suffix, range), `UNKNOWN` when absent, gap classification (`WITHIN_IDEAL_RANGE`, `MODERATE_GAP`, `LARGE_GAP`) |
 | `test_keyword_title_filter.py` | 6 | Rejection fragments (`data scientist`, `product manager`), case-insensitivity, approved engineering titles, custom fragment override |
 | `test_filtering_policy.py` | 11 | Contract filter, experience gap filter, remote=True/None/Europe logic, preferred-location substring match |
+| `test_landstar_fetcher.py` | 19 | Field mapping, salary (annual + hourly→annual conversion, absent), remote detection (`hasVirtualLocation`, title, description), multi-location formatting, pagination, error handling |
+| `test_adzuna_similar_fetcher.py` | 10 | Job extraction from "Similar jobs" section, ID/salary/URL parsing, cross-seed deduplication, graceful degradation on HTTP errors and missing section |
 
 Fixtures (JSON, HTML, RSS) live in `tests/fixtures/` — either trimmed real API responses or synthetic data matching the exact schema each fetcher expects.
 
