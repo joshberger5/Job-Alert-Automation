@@ -2,7 +2,9 @@ import os
 
 from infrastructure.job_fetchers import JobFetcher
 from infrastructure.job_fetchers.adzuna_fetcher import AdzunaFetcher
+from infrastructure.job_fetchers.adzuna_similar_fetcher import AdzunaSimilarFetcher
 from infrastructure.job_fetchers.greenhouse_fetcher import GreenhouseFetcher
+from infrastructure.job_fetchers.landstar_fetcher import LandstarFetcher
 from infrastructure.job_fetchers.lever_fetcher import LeverFetcher
 from infrastructure.job_fetchers.workday_fetcher import WorkdayFetcher
 from infrastructure.job_fetchers.boa_fetcher import BankOfAmericaFetcher
@@ -25,6 +27,10 @@ def build_fetchers() -> list[JobFetcher]:
             location="United States",
             max_days_old=3,
         ),
+        AdzunaSimilarFetcher(
+            app_id=os.environ["ADZUNA_APP_ID"],
+            app_key=os.environ["ADZUNA_APP_KEY"],
+        ),
         # ── Remote-first boards ───────────────────────────────────────────────
         RemoteOKFetcher(),
         WeWorkRemotelyFetcher(),
@@ -39,6 +45,22 @@ def build_fetchers() -> list[JobFetcher]:
         # ── Lever ─────────────────────────────────────────────────────────────
         LeverFetcher(company="dnb", company_name="Dun & Bradstreet"),
         # ── Workday ───────────────────────────────────────────────────────────
+        WorkdayFetcher(
+            base_url="https://allstate.wd5.myworkdayjobs.com",
+            tenant="allstate",
+            company="allstate_careers",
+            company_name="Allstate",
+            recruiting_base="https://allstate.wd5.myworkdayjobs.com/allstate_careers",
+            fetch_descriptions=True,
+        ),
+        WorkdayFetcher(
+            base_url="https://geico.wd1.myworkdayjobs.com",
+            tenant="geico",
+            company="External",
+            company_name="GEICO",
+            recruiting_base="https://geico.wd1.myworkdayjobs.com/External",
+            fetch_descriptions=True,
+        ),
         WorkdayFetcher(
             base_url="https://fis.wd5.myworkdayjobs.com",
             tenant="fis",
@@ -66,6 +88,8 @@ def build_fetchers() -> list[JobFetcher]:
             fetch_descriptions=True,
             location_ids=["9c1a239b35bd4598856e5393b249b8a1"],
         ),
+        # ── Landstar System ──────────────────────────────────────────────────
+        LandstarFetcher(),
         # ── Bank of America ───────────────────────────────────────────────────
         BankOfAmericaFetcher(location="Jacksonville, FL"),
         BankOfAmericaFetcher(location="Jacksonville, FL", keywords="Java"),
