@@ -13238,5 +13238,210 @@
     "first_seen": "2026-03-10T17:42:52",
     "score": 0,
     "qualified": false
+  },
+  "5660501004": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 8,
+    "qualified": true
+  },
+  "5660962417": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 5,
+    "qualified": false
+  },
+  "5660962421": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 1,
+    "qualified": false
+  },
+  "5660580654": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "5660665625": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "5660954407": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "5660559337": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "5660518394": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "5660526617": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "5660573589": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "5660935665": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "5660580098": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "5660950868": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 2,
+    "qualified": false
+  },
+  "5660665456": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "5660639747": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "5660541219": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "5660926014": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "5661041266": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 1,
+    "qualified": false
+  },
+  "5660597976": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "5660677021": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "5660537193": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "5660541139": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "7685121": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "7695745": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "7700773": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "8457349002": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 2,
+    "qualified": false
+  },
+  "8457370002": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 2,
+    "qualified": false
+  },
+  "R27431": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 15,
+    "qualified": true
+  },
+  "7659981003": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "7646437003": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "7701657": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 5,
+    "qualified": false
+  },
+  "7701847": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 3,
+    "qualified": false
+  },
+  "7701837": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 6,
+    "qualified": false
+  },
+  "7701990": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "7695942": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "7701852": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "7701395": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "R0011627": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 6,
+    "qualified": false
+  },
+  "R0011378": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "R0062973": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
+  },
+  "R0062732": {
+    "first_seen": "2026-03-10T22:31:33",
+    "score": 0,
+    "qualified": false
   }
 }
