@@ -11,6 +11,7 @@ def _make_profile(
     remote_allowed: bool = True,
     ideal_max_experience_years: int = 3,
     open_to_contract: bool = False,
+    minimum_salary: int = 0,
 ) -> CandidateProfile:
     return CandidateProfile(
         preferred_locations=preferred_locations if preferred_locations is not None else ["Jacksonville"],
@@ -19,6 +20,7 @@ def _make_profile(
         core_skills={"java": 4},
         secondary_skills={},
         open_to_contract=open_to_contract,
+        minimum_salary=minimum_salary,
     )
 
 
@@ -27,6 +29,7 @@ def _make_job(
     description: str = "Java developer role.",
     remote: bool | None = None,
     employment_type: str | None = "full-time",
+    salary: str | None = None,
 ) -> Job:
     return Job(
         id="test-1",
@@ -36,6 +39,7 @@ def _make_job(
         description=description,
         remote=remote,
         employment_type=employment_type,
+        salary=salary,
     )
 
 
@@ -139,3 +143,48 @@ def test_no_match_location_not_remote_filtered() -> None:
         remote_allowed=True,
     )
     assert _POLICY.allows(job, profile) is False
+
+
+# ---------------------------------------------------------------------------
+# Salary floor filter
+# ---------------------------------------------------------------------------
+
+
+def test_salary_filter_rejects_job_below_minimum() -> None:
+    """salary_max=$80,000 < minimum_salary=85000 → filtered out."""
+    job: Job = _make_job(location="Jacksonville, FL", salary="$60,000 - $80,000")
+    profile: CandidateProfile = _make_profile(minimum_salary=85000)
+    assert _POLICY.allows(job, profile) is False
+
+
+def test_salary_filter_passes_job_above_minimum() -> None:
+    """salary_max=$120,000 >= minimum_salary=85000 → allowed."""
+    job: Job = _make_job(location="Remote", remote=True, salary="$90,000 - $120,000")
+    profile: CandidateProfile = _make_profile(
+        remote_allowed=True,
+        preferred_locations=[],
+        minimum_salary=85000,
+    )
+    assert _POLICY.allows(job, profile) is True
+
+
+def test_salary_filter_passes_job_with_no_salary() -> None:
+    """salary=None → salary filter skipped (fail-open on missing data)."""
+    job: Job = _make_job(location="Remote", remote=True, salary=None)
+    profile: CandidateProfile = _make_profile(
+        remote_allowed=True,
+        preferred_locations=[],
+        minimum_salary=85000,
+    )
+    assert _POLICY.allows(job, profile) is True
+
+
+def test_salary_filter_skipped_when_minimum_zero() -> None:
+    """minimum_salary=0 (default) → salary check not applied even for low-salary job."""
+    job: Job = _make_job(location="Remote", remote=True, salary="$50,000 - $60,000")
+    profile: CandidateProfile = _make_profile(
+        remote_allowed=True,
+        preferred_locations=[],
+        minimum_salary=0,
+    )
+    assert _POLICY.allows(job, profile) is True
