@@ -5,6 +5,7 @@ import re
 from domain.candidate_profile import CandidateProfile
 from domain.experience_alignment import ExperienceAlignment
 from domain.job import Job
+from domain.salary_range import SalaryRange
 
 
 _US_WORDS: frozenset[str] = frozenset({
@@ -49,6 +50,12 @@ class FilteringPolicy:
         # 1. Contract filter
         if not profile.open_to_contract and job.employment_type == "contract":
             return False
+
+        # 1.5. Salary floor filter
+        if profile.minimum_salary > 0:
+            salary_range: SalaryRange = job.salary_range()
+            if salary_range.maximum is not None and salary_range.maximum < profile.minimum_salary:
+                return False
 
         # 2. Experience gap filter (skip when ideal_max not set)
         if profile.ideal_max_experience_years > 0:
