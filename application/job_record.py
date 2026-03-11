@@ -17,3 +17,4 @@ class JobRecord(TypedDict, total=False):
     score_breakdown: dict[str, int]
     qualified: bool
     llm_relevant: bool
+    feedback_multiplier: float
