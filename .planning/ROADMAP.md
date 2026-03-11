@@ -10,7 +10,7 @@ This roadmap covers four parallel feature branches that enhance the existing job
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Scoring & Profile** - Move candidate config to YAML and implement salary filter, tertiary skill cleanup, feedback scoring, and experience gap fix
+- [x] **Phase 1: Scoring & Profile** - Move candidate config to YAML and implement salary filter, tertiary skill cleanup, feedback scoring, and experience gap fix (completed 2026-03-11)
 - [ ] **Phase 2: Fetchers** - Add JSearch and Oracle fetchers, verify three new ATS targets, and harden all fetchers with retry, timeouts, and correct cron schedule
 - [ ] **Phase 3: Feedback Loop** - Wire vote buttons in email, implement feedback.yml workflow, add vote archival, and integrate feedback bias into scoring
 - [ ] **Phase 4: Email Enhancements** - Sort jobs by score, always-send, failed fetcher section, possibly relevant section, debug JSON commit, run summary, weekly pattern summary, and missing key warnings
@@ -90,7 +90,7 @@ Phases execute in order: 1 → 2 → 3 → 4 (Phase 1 and Phase 2 can run in par
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Scoring & Profile | 3/5 | In Progress|  |
+| 1. Scoring & Profile | 5/5 | Complete   | 2026-03-11 |
 | 2. Fetchers | 0/7 | Planned | - |
 | 3. Feedback Loop | 0/TBD | Not started | - |
 | 4. Email Enhancements | 0/TBD | Not started | - |

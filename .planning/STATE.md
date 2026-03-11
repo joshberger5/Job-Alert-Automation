@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-scoring-and-profile/01-03-PLAN.md
-last_updated: "2026-03-11T21:18:37.428Z"
+stopped_at: Completed 01-scoring-and-profile/01-05-PLAN.md
+last_updated: "2026-03-11T21:29:12.884Z"
 last_activity: 2026-03-09 — Roadmap created
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 12
-  completed_plans: 3
+  completed_plans: 5
   percent: 0
 ---
 
@@ -53,6 +53,8 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-scoring-and-profile P02 | 3min | 2 tasks | 5 files |
 | Phase 01-scoring-and-profile P01 | 4 | 2 tasks | 3 files |
 | Phase 01-scoring-and-profile P03 | 12min | 1 tasks | 3 files |
+| Phase 01-scoring-and-profile P04 | 9min | 2 tasks | 2 files |
+| Phase 01-scoring-and-profile P05 | 12min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -70,6 +72,11 @@ Recent decisions affecting current work:
 - [Phase 01-scoring-and-profile]: Import guard pattern for not-yet-implemented modules: try/except import + autouse fixture prevents collection abort
 - [Phase 01-scoring-and-profile]: Salary filter uses explicit maximum is not None and maximum < minimum_salary (not meets_minimum()) to preserve fail-open on missing salary data
 - [Phase 01-scoring-and-profile]: minimum_salary=0 disables salary floor filtering entirely; salary check inserted as 1.5 between contract and experience gap filters
+- [Phase 01-scoring-and-profile]: Used Counter (not set) for token collection to enable frequency filtering at O(n) cost
+- [Phase 01-scoring-and-profile]: Separated _load_taxonomy as module-level function for direct patching in tests without create=True
+- [Phase 01-scoring-and-profile]: cache.get(t, True) default implements fail-open: uncached tokens always kept in tertiary_skills
+- [Phase 01-scoring-and-profile]: FeedbackBiasService.apply() returns 3-tuple (final_score, breakdown, clamped_multiplier) for single-call multiplier access
+- [Phase 01-scoring-and-profile]: FeedbackBiasService defaults to FeedbackBiasService() in JobProcessingService.__init__() for backward compatibility
 
 ### Pending Todos
 
@@ -81,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-11T21:18:37.418Z
-Stopped at: Completed 01-scoring-and-profile/01-03-PLAN.md
+Last session: 2026-03-11T21:29:12.872Z
+Stopped at: Completed 01-scoring-and-profile/01-05-PLAN.md
 Resume file: None
