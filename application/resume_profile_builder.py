@@ -16,10 +16,13 @@ from domain.candidate_profile import CandidateProfile
 _CONFIG_PATH: Path = Path(__file__).parent.parent / "candidate_profile.yaml"
 
 
-class _ProfileConfig(TypedDict):
+class _ProfileConfig(TypedDict, total=False):
     preferred_locations: list[str]
     remote_allowed: bool
     open_to_contract: bool
+    minimum_salary: int
+    feedback_thumbs_down_reasons: list[str]
+    feedback_thumbs_up_reasons: list[str]
 
 
 # ---------------------------------------------------------------------------
@@ -147,7 +150,10 @@ class ResumeProfileBuilder:
             core_skills=core_skills,
             secondary_skills=secondary_skills,
             tertiary_skills=tertiary_skills,
-            open_to_contract=config['open_to_contract'],
+            open_to_contract=config.get('open_to_contract', False),
+            minimum_salary=config.get('minimum_salary', 0),
+            feedback_thumbs_down_reasons=config.get('feedback_thumbs_down_reasons', []),
+            feedback_thumbs_up_reasons=config.get('feedback_thumbs_up_reasons', []),
         )
 
     def _load_config(self) -> _ProfileConfig:
