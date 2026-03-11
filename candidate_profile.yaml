@@ -3,3 +3,18 @@ preferred_locations:
   - Jacksonville Beach
 remote_allowed: true
 open_to_contract: false
+minimum_salary: 85000
+feedback_thumbs_down_reasons:
+  - Too senior
+  - Too junior
+  - Wrong tech stack
+  - Bad company
+  - Contract/not permanent
+  - Wrong location
+  - Not relevant title
+feedback_thumbs_up_reasons:
+  - Great tech stack
+  - Right level
+  - Good company
+  - Interesting domain
+  - Great pay
