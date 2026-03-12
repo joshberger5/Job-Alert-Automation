@@ -18,10 +18,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-09)
+See: .planning/PROJECT.md (updated 2026-03-11)
 
 **Core value:** Surface relevant job postings from every configured source, filtered and scored against the user's actual skills, before the jobs go stale — with zero manual effort.
-**Current focus:** Phase 1 — Scoring & Profile
+**Current focus:** Phase 2 — Fetchers
 
 ## Current Position
 
@@ -30,7 +30,7 @@ Plan: 0 of TBD in current phase
 Status: Ready to plan
 Last activity: 2026-03-09 — Roadmap created
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [████████░░░░░░░░░░░░] 5/12 plans (42%)
 
 ## Performance Metrics
 
@@ -88,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-11T21:29:12.872Z
-Stopped at: Completed 01-scoring-and-profile/01-05-PLAN.md
+Last session: 2026-03-11
+Stopped at: Phase 1 complete, ready to plan Phase 2 (fetchers)
 Resume file: None
