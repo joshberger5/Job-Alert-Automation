@@ -31,8 +31,24 @@ Place `resume.tex` in the project root. Edit `candidate_profile.yaml` to set you
 ```yaml
 preferred_locations:
   - Jacksonville
+  - Jacksonville Beach
 remote_allowed: true
 open_to_contract: false
+minimum_salary: 85000          # 0 = no salary filter
+feedback_thumbs_down_reasons:  # reason tags used in the feedback UI
+  - Too senior
+  - Too junior
+  - Wrong tech stack
+  - Bad company
+  - Contract/not permanent
+  - Wrong location
+  - Not relevant title
+feedback_thumbs_up_reasons:
+  - Great tech stack
+  - Right level
+  - Good company
+  - Interesting domain
+  - Great pay
 ```
 
 Then:
@@ -50,9 +66,9 @@ py main.py
 `LatexResumeParser` strips LaTeX markup from `resume.tex` to produce plain text. `ResumeProfileBuilder` then constructs a `CandidateProfile` by:
 
 - Locating the **Technical Skills** section and splitting it into categories. The first category (e.g. Languages) becomes `core_skills` with weight **4**; all remaining categories become `secondary_skills` with weight **2**.
-- Scanning the **Experience** and **Projects** sections for capitalized tokens not already in the skill lists and not in a stop-word list. These become `tertiary_skills` with weight **1** (e.g. `Docker`, `Node.js`, `ES6`).
+- Scanning the **Experience** and **Projects** sections for capitalized tokens, then applying two filters: (1) **frequency gate** — tokens appearing only once are dropped; (2) **taxonomy gate** — tokens are checked against `infrastructure/tech_taxonomy.yaml` (61 curated tech terms). Taxonomy hits are always included. Unknown tokens are optionally classified by Gemini (when `GEMINI_API_KEY` is set) and cached in `infrastructure/tertiary_cache.json`; without a key, unknown tokens are kept (fail-open). Survivors become `tertiary_skills` with weight **1**.
 - Calculating `ideal_max_experience_years` by summing date-range durations found in the **Experience** section (total months ÷ 12, rounded down).
-- Loading `preferred_locations`, `remote_allowed`, and `open_to_contract` from `candidate_profile.yaml` in the project root.
+- Loading all preferences from `candidate_profile.yaml`: `preferred_locations`, `remote_allowed`, `open_to_contract`, `minimum_salary`, `feedback_thumbs_down_reasons`, `feedback_thumbs_up_reasons`.
 
 ### 2 — Fetching
 
@@ -84,15 +100,16 @@ Detail-page fetches inside `WorkdayFetcher`, `IcimsFetcher`, and `IcimsSitemapFe
 `FilteringPolicy.allows()` evaluates each job in order; first failing check eliminates the job:
 
 1. **Contract filter** — rejected if `employment_type == "contract"` and `open_to_contract` is False.
-2. **Experience gap filter** — `ExperienceRequirement.from_job_content()` tokenizes `"{title} {description}"` and finds the first number followed by a year token (`year`, `years`, `yrs`) within an 8-token window of the word `experience`. Handles `"15+"`, `"5-10 years"`, `"years,"`, `"years'"` etc. via leading-digit regex and punctuation stripping. Classified against `ideal_max_experience_years`:
+2. **Salary floor filter** — if `minimum_salary > 0`, rejected when `salary_max` is known and below the floor. Jobs with no salary listed always pass (fail-open on missing data).
+3. **Experience gap filter** — `ExperienceRequirement.from_job_content()` tokenizes `"{title} {description}"` and finds the first number followed by a year token (`year`, `years`, `yrs`) within an 8-token window of the word `experience`. Handles `"15+"`, `"5-10 years"`, `"years,"`, `"years'"` etc. via leading-digit regex and punctuation stripping. Classified against `ideal_max_experience_years`:
    - `≤ max` → `WITHIN_IDEAL_RANGE` (pass)
-   - `≤ max + 2` → `MODERATE_GAP` (reject)
-   - `> max + 2` → `LARGE_GAP` (reject)
+   - `≤ max + 4` → `MODERATE_GAP` (reject)
+   - `> max + 4` → `LARGE_GAP` (reject)
    - Not found → `UNKNOWN` (pass — benefit of the doubt)
-3. **Remote check** — passes if:
+4. **Remote check** — passes if:
    - `job.remote is True` **and** the location is US-accessible (strips "remote", checks remaining words against `{"us", "usa", "united", "states", "america", "worldwide", "global", "anywhere"}`; empty location passes), **or**
    - `job.remote is None` **and** the description/location contains an explicit remote phrase (`"fully remote"`, `"100% remote"`, `"work from home"`, etc.) **and** the location is US-accessible (prevents foreign on-site jobs from slipping through via description phrasing).
-4. **Location check** — passes if any `preferred_locations` substring appears in `job.location` (case-insensitive).
+5. **Location check** — passes if any `preferred_locations` substring appears in `job.location` (case-insensitive).
 
 ### 4 — Scoring
 
@@ -102,7 +119,7 @@ Detail-page fetches inside `WorkdayFetcher`, `IcimsFetcher`, and `IcimsSitemapFe
 - **−2** for each skill in `job.required_skills` not present in the candidate's combined skill set (only applies when the fetcher populates `required_skills`; most don't — `RemoteOKFetcher` does via job tags).
 - **Qualifies** if `score ≥ 7` (`ScoringPolicy.MINIMUM_SCORE`).
 
-After scoring, each job is recorded as `"qualified"` or `"scored_out"`.
+After scoring, `FeedbackBiasService` applies a personal multiplier derived from feedback vote history (`feedback.json`). Reason tokens with ≥ 3 net votes contribute `net_votes × 0.5` to the multiplier, clamped to `[0.5, 2.0]`. The adjusted score determines `"qualified"` or `"scored_out"`, and `feedback_multiplier` is written to `jobs_debug.json`.
 
 ### 5 — LLM Title Filtering (optional)
 
@@ -154,7 +171,7 @@ Sent via SMTP STARTTLS. Skipped entirely if `SMTP_HOST` is not set.
 py -m pytest tests/ -v
 ```
 
-109 tests across 14 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
+131 tests across 16 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
 
 | File | Tests | What it covers |
 |---|---|---|
@@ -165,13 +182,15 @@ py -m pytest tests/ -v
 | `test_boa_fetcher.py` | 3 | Field mapping (`family \| lob` description, URL construction), pagination, missing `jcrURL` → `url=None` |
 | `test_remoteok_fetcher.py` | 3 | Metadata element skipped, `location: null` → `"Worldwide"`, `tags: null` → `required_skills=[]` |
 | `test_weworkremotely_fetcher.py` | 4 | Region filtering (`"Europe Only"` skipped), no-colon title fallback, HTML description stripping |
-| `test_job_processing_service.py` | 16 | All four result paths (duplicate, filtered_out, scored_out, qualified); correct `repo.save` args per path; `JobEvaluated` + `JobQualified` events on qualified; only `JobEvaluated` on scored_out; no events on duplicate/filtered; all base record fields; mixed-batch ordering |
+| `test_job_processing_service.py` | 17 | All four result paths (duplicate, filtered_out, scored_out, qualified); correct `repo.save` args per path; `JobEvaluated` + `JobQualified` events on qualified; `feedback_multiplier` on scored records; mixed-batch ordering |
 | `test_scoring_policy.py` | 9 | Word-boundary skill matching (Java ≠ JavaScript, C ≠ account), missing-skill penalties, `qualifies()` at/above/below threshold |
-| `test_experience_requirement.py` | 10 | Year-phrase parsing (trailing punctuation, `+` suffix, range), `UNKNOWN` when absent, gap classification (`WITHIN_IDEAL_RANGE`, `MODERATE_GAP`, `LARGE_GAP`) |
+| `test_experience_requirement.py` | 12 | Year-phrase parsing (trailing punctuation, `+` suffix, range), `UNKNOWN` when absent, gap classification (`WITHIN_IDEAL_RANGE`, `MODERATE_GAP`, `LARGE_GAP`), boundary cases at `ideal_max+4` and `ideal_max+5` |
 | `test_keyword_title_filter.py` | 6 | Rejection fragments (`data scientist`, `product manager`), case-insensitivity, approved engineering titles, custom fragment override |
-| `test_filtering_policy.py` | 11 | Contract filter, experience gap filter, remote=True/None/Europe logic, preferred-location substring match |
+| `test_filtering_policy.py` | 15 | Contract filter, salary floor (below/above/missing/disabled), experience gap filter, remote=True/None/Europe logic, preferred-location substring match |
 | `test_landstar_fetcher.py` | 19 | Field mapping, salary (annual + hourly→annual conversion, absent), remote detection (`hasVirtualLocation`, title, description), multi-location formatting, pagination, error handling |
 | `test_adzuna_similar_fetcher.py` | 10 | Job extraction from "Similar jobs" section, ID/salary/URL parsing, cross-seed deduplication, graceful degradation on HTTP errors and missing section |
+| `test_resume_profile_builder.py` | 6 | `minimum_salary` and reason tags loaded from YAML; taxonomy-gated tertiary extraction (single-occurrence excluded, taxonomy hit included, fail-open when no Gemini key) |
+| `test_feedback_bias_service.py` | 9 | No-file → multiplier 1.0; below-threshold token skipped; at-threshold token applied; min/max clamp (0.5/2.0); score delta in breakdown |
 
 Fixtures (JSON, HTML, RSS) live in `tests/fixtures/` — either trimmed real API responses or synthetic data matching the exact schema each fetcher expects.
 
