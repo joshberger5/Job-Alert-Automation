@@ -10,6 +10,7 @@ from domain.filtering_policy import FilteringPolicy
 from domain.job import Job
 from domain.scoring_policy import ScoringPolicy
 
+from application.feedback_bias_service import FeedbackBiasService
 from application.job_processing_service import JobProcessingService
 from application.job_record import JobRecord
 from application.resume_profile_builder import ResumeProfileBuilder
@@ -84,6 +85,7 @@ def _build_services(
         filtering_policy=filtering_policy,
         profile=profile,
         event_publisher=publisher,
+        feedback_bias_service=FeedbackBiasService(),
     )
     return service, repository
 

@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 from application.event_publisher import EventPublisher
+from application.feedback_bias_service import FeedbackBiasService
 from application.job_processing_service import JobProcessingService
 from application.job_record import JobRecord
 from application.job_repository import JobRepository
@@ -317,3 +318,32 @@ def test_mixed_batch_returns_record_per_job() -> None:
     assert results[1] == "filtered_out"
     assert results[2] == "qualified"
     assert results[3] == "scored_out"
+
+
+# ---------------------------------------------------------------------------
+# FeedbackBiasService integration
+# ---------------------------------------------------------------------------
+
+
+def test_scored_record_has_feedback_multiplier() -> None:
+    """A scored (non-duplicate, non-filtered) record must carry a feedback_multiplier float."""
+    # Use a no-op FeedbackBiasService (no feedback.json) — multiplier will be 1.0
+    bias_svc: FeedbackBiasService = FeedbackBiasService()
+    r: MagicMock = _make_repo()
+    f: MagicMock = _make_filtering()
+    s: MagicMock = _make_scoring(score=10)
+    p: MagicMock = _make_publisher()
+    svc: JobProcessingService = JobProcessingService(
+        repository=r,
+        scoring_policy=s,
+        filtering_policy=f,
+        profile=_make_profile(),
+        event_publisher=p,
+        feedback_bias_service=bias_svc,
+    )
+
+    records: list[JobRecord] = svc.process([_make_job()])
+
+    assert "feedback_multiplier" in records[0]
+    assert isinstance(records[0]["feedback_multiplier"], float)
+    assert records[0]["feedback_multiplier"] == 1.0

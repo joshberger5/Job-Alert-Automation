@@ -14,3 +14,6 @@ class CandidateProfile:
     tertiary_skills: Dict[str, int] = field(default_factory=dict)
 
     open_to_contract: bool = False
+    minimum_salary: int = 0
+    feedback_thumbs_down_reasons: List[str] = field(default_factory=list)
+    feedback_thumbs_up_reasons: List[str] = field(default_factory=list)
