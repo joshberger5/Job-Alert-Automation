@@ -17,3 +17,15 @@ jobs_debug.json
 
 # Persistent job history (delete to reset)
 seen_jobs.json
+
+# Trash folder (moved files, never committed)
+/trash/
+
+# Claude Code context checkpoint (session-local, never committed)
+_context_checkpoint.md
+
+# Tertiary skill Gemini classification cache (rebuilt automatically, contains resume hash)
+infrastructure/tertiary_cache.json
+
+# GSD planning docs (local-only)
+.planning/

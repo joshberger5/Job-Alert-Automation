@@ -7,6 +7,7 @@ from domain.filtering_policy import FilteringPolicy
 from domain.job import Job
 from domain.scoring_policy import ScoringPolicy
 from application.event_publisher import EventPublisher
+from application.feedback_bias_service import FeedbackBiasService
 from application.job_record import JobRecord
 from application.job_repository import JobRepository
 
@@ -42,12 +43,14 @@ class JobProcessingService:
         filtering_policy: FilteringPolicy,
         profile: CandidateProfile,
         event_publisher: EventPublisher,
+        feedback_bias_service: FeedbackBiasService | None = None,
     ) -> None:
         self.repository: JobRepository = repository
         self.scoring_policy = scoring_policy
         self.filtering_policy = filtering_policy
         self.profile = profile
         self.event_publisher = event_publisher
+        self._feedback_bias: FeedbackBiasService = feedback_bias_service or FeedbackBiasService()
 
     def process(self, jobs: Iterable[Job]) -> list[JobRecord]:
 
@@ -81,13 +84,20 @@ class JobProcessingService:
                 continue
 
             score, breakdown = self.scoring_policy.evaluate(job, self.profile)
-            qualified = self.scoring_policy.qualifies(score)
-            self.repository.save(job, score, qualified)
+            final_score: int
+            final_breakdown: dict[str, int]
+            bias_multiplier: float
+            final_score, final_breakdown, bias_multiplier = self._feedback_bias.apply(
+                score, job.description + " " + job.title, breakdown
+            )
+            qualified: bool = self.scoring_policy.qualifies(final_score)
+            self.repository.save(job, final_score, qualified)
 
             record["result"] = "qualified" if qualified else "scored_out"
-            record["score"] = score
-            record["score_breakdown"] = breakdown
+            record["score"] = final_score
+            record["score_breakdown"] = final_breakdown
             record["qualified"] = qualified
+            record["feedback_multiplier"] = bias_multiplier
 
             emitted_events.append(JobEvaluated(job.id, score, qualified))
             if qualified:

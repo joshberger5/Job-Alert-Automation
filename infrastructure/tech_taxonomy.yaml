@@ -1,0 +1,66 @@
+# Tech taxonomy — curated list of known technical tokens for tertiary skill validation.
+# Format: flat list[str], all lowercase.
+# Taxonomy hit = token is always included as a tertiary skill.
+# Gemini LLM is consulted for tokens NOT in this list (optional; falls back to keep-all).
+tokens:
+  - java
+  - python
+  - javascript
+  - typescript
+  - kotlin
+  - scala
+  - go
+  - rust
+  - sql
+  - nosql
+  - spring
+  - hibernate
+  - maven
+  - gradle
+  - docker
+  - kubernetes
+  - terraform
+  - ansible
+  - jenkins
+  - git
+  - github
+  - gitlab
+  - jira
+  - confluence
+  - aws
+  - gcp
+  - azure
+  - s3
+  - ec2
+  - rds
+  - lambda
+  - kafka
+  - rabbitmq
+  - redis
+  - elasticsearch
+  - postgres
+  - postgresql
+  - mysql
+  - mongodb
+  - oracle
+  - graphql
+  - rest
+  - grpc
+  - linux
+  - bash
+  - pytest
+  - junit
+  - mockito
+  - react
+  - angular
+  - node.js
+  - nextjs
+  - webpack
+  - nginx
+  - tomcat
+  - intellij
+  - vscode
+  - datadog
+  - splunk
+  - prometheus
+  - grafana

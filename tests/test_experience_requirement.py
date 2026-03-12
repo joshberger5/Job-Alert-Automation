@@ -71,3 +71,20 @@ def test_large_gap() -> None:
     """8 years required vs ideal_max=3 → LARGE_GAP (8 > 3+4)."""
     req: ExperienceRequirement = _req("8 years experience required.")
     assert req.alignment_with(3) == ExperienceAlignment.LARGE_GAP
+
+
+# ---------------------------------------------------------------------------
+# SCORE-05: boundary cases — ideal_max+5 and ideal_max+3
+# ---------------------------------------------------------------------------
+
+
+def test_large_gap_when_required_is_ideal_max_plus_five() -> None:
+    """8 years required vs ideal_max=3 (ideal_max+5=8 > 3+4=7) → LARGE_GAP."""
+    req: ExperienceRequirement = ExperienceRequirement(required_years=8)
+    assert req.alignment_with(3) == ExperienceAlignment.LARGE_GAP
+
+
+def test_moderate_gap_when_required_is_ideal_max_plus_three() -> None:
+    """6 years required vs ideal_max=3 (ideal_max+3=6 <= 3+4=7) → MODERATE_GAP."""
+    req: ExperienceRequirement = ExperienceRequirement(required_years=6)
+    assert req.alignment_with(3) == ExperienceAlignment.MODERATE_GAP

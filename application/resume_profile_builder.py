@@ -1,9 +1,14 @@
+import hashlib
+import json
 import math
+import os
 import re
+from collections import Counter
 from datetime import date
 from pathlib import Path
-from typing import TypedDict, cast
+from typing import Any, TypedDict, cast
 
+import requests
 import yaml
 
 from domain.candidate_profile import CandidateProfile
@@ -14,12 +19,23 @@ from domain.candidate_profile import CandidateProfile
 # ---------------------------------------------------------------------------
 
 _CONFIG_PATH: Path = Path(__file__).parent.parent / "candidate_profile.yaml"
+_TAXONOMY_PATH: Path = Path(__file__).parent.parent / "infrastructure" / "tech_taxonomy.yaml"
+_CACHE_PATH: Path = Path(__file__).parent.parent / "infrastructure" / "tertiary_cache.json"
+_RESUME_PATH: Path = Path(__file__).parent.parent / "resume.tex"
+
+_GEMINI_URL: str = (
+    "https://generativelanguage.googleapis.com/v1beta/models"
+    "/gemini-2.0-flash-lite:generateContent"
+)
 
 
-class _ProfileConfig(TypedDict):
+class _ProfileConfig(TypedDict, total=False):
     preferred_locations: list[str]
     remote_allowed: bool
     open_to_contract: bool
+    minimum_salary: int
+    feedback_thumbs_down_reasons: list[str]
+    feedback_thumbs_up_reasons: list[str]
 
 
 # ---------------------------------------------------------------------------
@@ -121,6 +137,113 @@ _STOP_WORDS: frozenset[str] = frozenset({
 
 
 # ---------------------------------------------------------------------------
+# Taxonomy and cache helpers
+# ---------------------------------------------------------------------------
+
+def _load_taxonomy() -> frozenset[str]:
+    """Load the tech token taxonomy from tech_taxonomy.yaml.
+
+    Returns a frozenset of lowercase tokens. Returns frozenset() on any error
+    (fail-open: empty taxonomy means all tokens go through the keep/Gemini path).
+    """
+    try:
+        with open(_TAXONOMY_PATH, 'r') as f:
+            data: dict[str, Any] = yaml.safe_load(f)
+        return frozenset(data["tokens"])
+    except Exception:
+        return frozenset()
+
+
+def _get_resume_hash() -> str | None:
+    """Return MD5 hex digest of resume.tex content, or None on error."""
+    try:
+        content: bytes = _RESUME_PATH.read_bytes()
+        return hashlib.md5(content).hexdigest()
+    except Exception:
+        return None
+
+
+def _load_classification_cache(resume_hash: str | None) -> dict[str, bool]:
+    """Load Gemini classification cache from disk.
+
+    Returns {} if the cache file does not exist, resume_hash is None, or the
+    stored hash does not match the current resume hash (cache invalidated).
+    """
+    if resume_hash is None:
+        return {}
+    try:
+        if not _CACHE_PATH.exists():
+            return {}
+        with open(_CACHE_PATH, 'r') as f:
+            raw: dict[str, Any] = json.load(f)
+        if raw.get("resume_hash") != resume_hash:
+            return {}
+        classifications: dict[str, bool] = raw.get("classifications", {})
+        return classifications
+    except Exception:
+        return {}
+
+
+def _save_classification_cache(
+    resume_hash: str | None,
+    classifications: dict[str, bool],
+) -> None:
+    """Persist classification cache to disk. Silently ignores write errors."""
+    try:
+        payload: dict[str, Any] = {
+            "resume_hash": resume_hash or "",
+            "classifications": classifications,
+        }
+        with open(_CACHE_PATH, 'w') as f:
+            json.dump(payload, f, indent=2)
+    except Exception:
+        pass
+
+
+def _gemini_classify_batch(tokens: list[str]) -> dict[str, bool]:
+    """Call Gemini to classify tokens as tech (True) or non-tech (False).
+
+    If GEMINI_API_KEY is not set, returns all True (keep all).
+    Fails open — any exception returns all True so no tokens are silently dropped.
+    """
+    api_key: str | None = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return {t: True for t in tokens}
+
+    prompt: str = (
+        "Classify each of the following tokens as a technical skill (true) "
+        "or not a technical skill (false). "
+        "A technical skill is a programming language, framework, library, "
+        "tool, platform, protocol, or technology used in software development. "
+        f"Tokens: {tokens}. "
+        'Return ONLY a JSON object mapping each token to true or false, '
+        'e.g. {"docker": true, "meeting": false}. '
+        "No explanation, no markdown."
+    )
+
+    try:
+        response = requests.post(
+            _GEMINI_URL,
+            params={"key": api_key},
+            json={
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {"temperature": 0},
+            },
+            timeout=20,
+        )
+        response.raise_for_status()
+        data: dict[str, Any] = response.json()
+        raw_text: str = data["candidates"][0]["content"]["parts"][0]["text"]
+        # Strip markdown fences if present
+        raw_text = re.sub(r"```[a-z]*\n?", "", raw_text).strip()
+        result: dict[str, bool] = json.loads(raw_text)
+        # Ensure all requested tokens are present; default missing ones to True
+        return {t: result.get(t, True) for t in tokens}
+    except Exception:
+        return {t: True for t in tokens}
+
+
+# ---------------------------------------------------------------------------
 # Builder
 # ---------------------------------------------------------------------------
 
@@ -147,7 +270,10 @@ class ResumeProfileBuilder:
             core_skills=core_skills,
             secondary_skills=secondary_skills,
             tertiary_skills=tertiary_skills,
-            open_to_contract=config['open_to_contract'],
+            open_to_contract=config.get('open_to_contract', False),
+            minimum_salary=config.get('minimum_salary', 0),
+            feedback_thumbs_down_reasons=config.get('feedback_thumbs_down_reasons', []),
+            feedback_thumbs_up_reasons=config.get('feedback_thumbs_up_reasons', []),
         )
 
     def _load_config(self) -> _ProfileConfig:
@@ -189,7 +315,7 @@ class ResumeProfileBuilder:
             return []
 
         combined: str = '\n'.join(extra_text_parts)
-        tokens: set[str] = set()
+        token_counts: Counter[str] = Counter()
 
         for raw in re.findall(r'[\w+#.-]+', combined):
             lower: str = raw.lower()
@@ -201,9 +327,29 @@ class ResumeProfileBuilder:
                 or re.search(r'\d', raw)        # e.g. ES6, Python3
                 or raw[0].isupper()             # e.g. Docker, PostgreSQL
             ):
-                tokens.add(lower)
+                token_counts[lower] += 1
 
-        return sorted(tokens)
+        # Frequency filter: discard single-occurrence tokens (noise)
+        candidates: list[str] = [t for t, c in token_counts.items() if c >= 2]
+
+        # Taxonomy gate
+        taxonomy: frozenset[str] = _load_taxonomy()
+        resume_hash: str | None = _get_resume_hash()
+        cache: dict[str, bool] = _load_classification_cache(resume_hash)
+
+        known_in_taxonomy: list[str] = [t for t in candidates if t in taxonomy]
+        unknown: list[str] = [t for t in candidates if t not in taxonomy]
+
+        # Classify unknowns via Gemini (or fail-open if no API key)
+        to_classify: list[str] = [t for t in unknown if t not in cache]
+        if to_classify:
+            new_classifications: dict[str, bool] = _gemini_classify_batch(to_classify)
+            cache.update(new_classifications)
+            _save_classification_cache(resume_hash, cache)
+
+        keep_unknown: list[str] = [t for t in unknown if cache.get(t, True)]
+        result: list[str] = sorted(set(known_in_taxonomy) | set(keep_unknown))
+        return result
 
     def _calculate_experience_years(self, resume_text: str) -> int:
         experience_match: re.Match[str] | None = _EXPERIENCE_SECTION.search(resume_text)
