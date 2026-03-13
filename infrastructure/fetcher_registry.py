@@ -2,6 +2,7 @@ import os
 
 from infrastructure.job_fetchers import JobFetcher
 from infrastructure.job_fetchers.adzuna_fetcher import AdzunaFetcher
+from infrastructure.job_fetchers.oracle_fetcher import OracleFetcher
 from infrastructure.job_fetchers.adzuna_similar_fetcher import AdzunaSimilarFetcher
 from infrastructure.job_fetchers.greenhouse_fetcher import GreenhouseFetcher
 from infrastructure.job_fetchers.landstar_fetcher import LandstarFetcher
@@ -100,6 +101,34 @@ def build_fetchers() -> tuple[list[JobFetcher], list[str]]:
             base_url="https://careers-fnf.icims.com",
             company_name="FNF",
             location_filter=None,
+        ),
+        # ── Oracle Cloud ──────────────────────────────────────────────────────
+        OracleFetcher(
+            base_url="https://jpmc.fa.oraclecloud.com",
+            site_id="CX_1001",
+            company_name="JPMorgan Chase",
+            keyword="java",
+        ),
+        OracleFetcher(
+            base_url="https://fa-eowa-saasfaprod1.fa.ocs.oraclecloud.com",
+            site_id="CSXCareers",
+            company_name="CSX",
+            keyword="java",
+        ),
+        OracleFetcher(
+            base_url="https://fa-etum-saasfaprod1.fa.ocs.oraclecloud.com",
+            site_id="floridablue",
+            company_name="Florida Blue",
+            keyword="java",
+        ),
+        # ── Availity (Workday) ────────────────────────────────────────────────
+        WorkdayFetcher(
+            base_url="https://availity.wd1.myworkdayjobs.com",
+            tenant="availity",
+            company="Availity_Careers_US",
+            company_name="Availity",
+            recruiting_base="https://availity.wd1.myworkdayjobs.com/Availity_Careers_US",
+            fetch_descriptions=True,
         ),
     ]
 
