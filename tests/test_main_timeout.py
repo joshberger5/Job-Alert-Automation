@@ -1,4 +1,4 @@
-"""Tests for _fetch_jobs 3-tuple return and timeout handling (red until Plan 02-02)."""
+"""Tests for _fetch_jobs 3-tuple return and timeout handling."""
 from unittest.mock import MagicMock, patch
 
 from main import _fetch_jobs
@@ -7,10 +7,14 @@ from domain.job import Job
 
 
 def test_fetch_jobs_returns_tuple() -> None:
-    """_fetch_jobs returns a 3-tuple (jobs, failures, warnings) after Plan 02."""
-    result: object = _fetch_jobs([], timeout=30)
-    assert isinstance(result, tuple), "_fetch_jobs must return a 3-tuple"
-    assert len(result) == 3  # type: ignore[arg-type]
+    """_fetch_jobs returns a 3-tuple (jobs, failures, warnings)."""
+    all_jobs: list[Job]
+    failures: list[FetcherFailure]
+    fetch_warnings: list[str]
+    all_jobs, failures, fetch_warnings = _fetch_jobs([], timeout=30)
+    assert isinstance(all_jobs, list)
+    assert isinstance(failures, list)
+    assert isinstance(fetch_warnings, list)
 
 
 def test_fetch_jobs_timeout_marked_failed() -> None:
@@ -27,13 +31,11 @@ def test_fetch_jobs_timeout_marked_failed() -> None:
         mock_pool.submit.return_value = mock_future
 
         with patch("main.as_completed", return_value=[mock_future]):
-            result: object = _fetch_jobs([mock_fetcher], timeout=1)
+            all_jobs: list[Job]
+            failures: list[FetcherFailure]
+            fetch_warnings: list[str]
+            all_jobs, failures, fetch_warnings = _fetch_jobs([mock_fetcher], timeout=1)
 
-    assert isinstance(result, tuple), "_fetch_jobs must return a 3-tuple"
-    all_jobs: list[Job]
-    failures: list[FetcherFailure]
-    warnings: list[str]
-    all_jobs, failures, warnings = result  # type: ignore[misc]
     assert any(f.get("error") == "TIMEOUT" for f in failures), (
         "Timed-out fetcher must produce FetcherFailure with error='TIMEOUT'"
     )

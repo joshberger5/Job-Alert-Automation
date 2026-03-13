@@ -15,7 +15,8 @@ _FIXTURE_PATH: Path = Path(__file__).parent / "fixtures" / "jsearch_response.jso
 
 def _load_fixture() -> dict[str, object]:
     with open(_FIXTURE_PATH, encoding="utf-8") as f:
-        return json.load(f)  # type: ignore[return-value]
+        result: dict[str, object] = json.load(f)
+        return result
 
 
 def _mock_response(data: dict[str, object]) -> MagicMock:
