@@ -2,9 +2,11 @@ name: Job Alerts
 
 on:
   schedule:
-    - cron: '0 11 * * *'   # 6 AM ET (EST, UTC-5)  → change to '0 10 * * *' after DST (Mar 8)
-    - cron: '0 17 * * *'   # 12 PM ET (EST, UTC-5) → change to '0 16 * * *' after DST (Mar 8)
-    - cron: '0 22 * * *'   # 5 PM ET (EST, UTC-5)  → change to '0 21 * * *' after DST (Mar 8)
+    # EDT (UTC-4, active Mar–Nov): 6 AM, 12 PM, 5 PM ET
+    # Next DST adjustment: November 2026 — remove EDT entry, keep EST entry
+    - cron: '0 10,16,21 * * *'
+    # EST (UTC-5, active Nov–Mar): 6 AM, 12 PM, 5 PM ET (inactive during EDT)
+    - cron: '0 11,17,22 * * *'
   workflow_dispatch:        # allow manual runs from GitHub UI
 
 jobs:
@@ -37,8 +39,9 @@ jobs:
         env:
           ADZUNA_APP_ID:  ${{ secrets.ADZUNA_APP_ID }}
           ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          SMTP_HOST:      ${{ secrets.SMTP_HOST }}
+          GEMINI_API_KEY:   ${{ secrets.GEMINI_API_KEY }}
+          JSEARCH_API_KEY:  ${{ secrets.JSEARCH_API_KEY }}
+          SMTP_HOST:        ${{ secrets.SMTP_HOST }}
           SMTP_PORT:      ${{ secrets.SMTP_PORT }}
           SMTP_USER:      ${{ secrets.SMTP_USER }}
           SMTP_PASS:      ${{ secrets.SMTP_PASS }}

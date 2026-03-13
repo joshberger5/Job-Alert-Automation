@@ -1,6 +1,6 @@
 # Job Alert Automation
 
-Scrapes job postings from 23 sources 3× daily, scores them against a candidate profile parsed from a LaTeX resume, optionally filters titles with a Gemini LLM pass, and emails a formatted digest of qualified matches.
+Scrapes job postings from 27 sources (up to 29 with optional JSearch) 3× daily, scores them against a candidate profile parsed from a LaTeX resume, optionally filters titles with a Gemini LLM pass, and emails a formatted digest of qualified matches.
 
 ---
 
@@ -24,6 +24,9 @@ EMAIL_TO=you@example.com
 
 # Optional — enables LLM title filtering (Gemini free tier)
 GEMINI_API_KEY=...
+
+# Optional — enables JSearch/RapidAPI fetcher (2 additional sources)
+JSEARCH_API_KEY=...
 ```
 
 Place `resume.tex` in the project root. Edit `candidate_profile.yaml` to set your preferences:
@@ -72,7 +75,7 @@ py main.py
 
 ### 2 — Fetching
 
-All fetchers implement the `JobFetcher` protocol (`fetch() -> list[Job]`) and run **concurrently** via `ThreadPoolExecutor`. Each has a 120-second wall-clock timeout; a hung fetcher is skipped without blocking the rest.
+All fetchers implement the `JobFetcher` protocol (`fetch() -> list[Job]`) and run **concurrently** via `ThreadPoolExecutor`. Each has a 120-second wall-clock timeout; a hung fetcher is skipped without blocking the rest. Each fetcher is attempted up to **2 times** before being recorded as a `FetcherFailure` and skipped. Fetcher wiring lives in `infrastructure/fetcher_registry.py`.
 
 | Source | Class | API Mechanism |
 |---|---|---|
@@ -92,8 +95,10 @@ All fetchers implement the `JobFetcher` protocol (`fetch() -> list[Job]`) and ru
 | Bank of America (×2) | `BankOfAmericaFetcher` | `/services/jobssearchservlet` — one instance location-only, one with `keywords=Java`; deduplication handles overlap |
 | Paysafe | `IcimsFetcher` | HTML scrape of `/tile-search-results/` (paginated, capped at 300 jobs); detail page per job, **parallelized** |
 | FNF | `IcimsSitemapFetcher` | Parses `sitemap.xml` for job URLs, fetches `?in_iframe=1` on each to read ld+json, **parallelized** |
+| JPMorgan Chase, CSX, Florida Blue | `OracleFetcher` | Oracle Cloud HCM ICE REST endpoint (`/hcmRestApi/resources/…/recruitingICEJobRequisitions`); detail page per job for description, **parallelized** |
+| JSearch (local + remote) | `JSearchFetcher` | RapidAPI JSearch endpoint — **optional**, only wired when `JSEARCH_API_KEY` is set; 3-day recency window |
 
-Detail-page fetches inside `WorkdayFetcher`, `IcimsFetcher`, and `IcimsSitemapFetcher` use `ThreadPoolExecutor(max_workers=10)` with an 8-second per-request timeout.
+Detail-page fetches inside `WorkdayFetcher`, `IcimsFetcher`, `IcimsSitemapFetcher`, and `OracleFetcher` use `ThreadPoolExecutor(max_workers=10)` with a **12-second** per-request timeout and a **120-second** batch cap.
 
 ### 3 — Filtering
 
@@ -171,7 +176,7 @@ Sent via SMTP STARTTLS. Skipped entirely if `SMTP_HOST` is not set.
 py -m pytest tests/ -v
 ```
 
-131 tests across 16 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
+148 tests across 22 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
 
 | File | Tests | What it covers |
 |---|---|---|
@@ -191,6 +196,12 @@ py -m pytest tests/ -v
 | `test_adzuna_similar_fetcher.py` | 10 | Job extraction from "Similar jobs" section, ID/salary/URL parsing, cross-seed deduplication, graceful degradation on HTTP errors and missing section |
 | `test_resume_profile_builder.py` | 6 | `minimum_salary` and reason tags loaded from YAML; taxonomy-gated tertiary extraction (single-occurrence excluded, taxonomy hit included, fail-open when no Gemini key) |
 | `test_feedback_bias_service.py` | 9 | No-file → multiplier 1.0; below-threshold token skipped; at-threshold token applied; min/max clamp (0.5/2.0); score delta in breakdown |
+| `test_oracle_fetcher.py` | 3 | Field mapping from ICE REST response, detail-page description extraction, pagination |
+| `test_jsearch_fetcher.py` | 3 | Field mapping, `job_is_remote` handling, salary formatting |
+| `test_fetcher_result.py` | 2 | `FetcherFailure` TypedDict field presence and types |
+| `test_main_retry.py` | 4 | `_run_fetcher` succeeds on first attempt, retries once on failure, records failure after 2 attempts |
+| `test_detail_timeout.py` | 3 | `_DETAIL_TIMEOUT == 12` in `WorkdayFetcher`, `IcimsFetcher`, `AdzunaSimilarFetcher` |
+| `test_main_timeout.py` | 2 | `_fetch_jobs` returns 3-tuple; timed-out fetcher recorded as failure |
 
 Fixtures (JSON, HTML, RSS) live in `tests/fixtures/` — either trimmed real API responses or synthetic data matching the exact schema each fetcher expects.
 
@@ -215,6 +226,7 @@ After each run, `seen_jobs.json` is force-committed back to the repo (`git add -
 | Secret | Purpose |
 |---|---|
 | `GEMINI_API_KEY` | Enables LLM title filtering via Gemini 2.0 Flash Lite (free tier) |
+| `JSEARCH_API_KEY` | Enables JSearch/RapidAPI fetcher (2 additional sources) |
 
 ---
 

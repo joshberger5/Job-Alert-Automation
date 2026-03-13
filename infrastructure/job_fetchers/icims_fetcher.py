@@ -1,7 +1,7 @@
 import json
 import re
 import xml.etree.ElementTree as ET
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import Future, ThreadPoolExecutor, wait
 from typing import Any
 
 import requests
@@ -27,7 +27,8 @@ _BASE_HEADERS: dict[str, str] = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 }
 
-_DETAIL_TIMEOUT: int = 8
+_DETAIL_TIMEOUT: int = 12
+_DETAIL_BATCH_TIMEOUT: int = 120
 _DETAIL_WORKERS: int = 10
 
 
@@ -64,10 +65,15 @@ class IcimsFetcher:
 
         jobs: list[Job] = []
         with ThreadPoolExecutor(max_workers=_DETAIL_WORKERS) as pool:
-            futures = {pool.submit(build_job, stub): stub for stub in job_stubs}
-            for future in as_completed(futures):
+            future_to_stub: dict[Future[Job], tuple[str, str, str]] = {
+                pool.submit(build_job, stub): stub for stub in job_stubs
+            }
+            done, not_done = wait(future_to_stub, timeout=_DETAIL_BATCH_TIMEOUT)
+            for f in not_done:
+                f.cancel()
+            for f in done:
                 try:
-                    jobs.append(future.result())
+                    jobs.append(f.result())
                 except Exception:
                     pass
         return jobs
@@ -147,10 +153,15 @@ class IcimsSitemapFetcher:
         job_urls: list[str] = self._fetch_sitemap()
         jobs: list[Job] = []
         with ThreadPoolExecutor(max_workers=_DETAIL_WORKERS) as pool:
-            futures = {pool.submit(self._fetch_job, url): url for url in job_urls}
-            for future in as_completed(futures):
+            future_to_url: dict[Future[Job | None], str] = {
+                pool.submit(self._fetch_job, url): url for url in job_urls
+            }
+            done, not_done = wait(future_to_url, timeout=_DETAIL_BATCH_TIMEOUT)
+            for f in not_done:
+                f.cancel()
+            for f in done:
                 try:
-                    job: Job | None = future.result()
+                    job: Job | None = f.result()
                     if job is not None:
                         jobs.append(job)
                 except Exception:

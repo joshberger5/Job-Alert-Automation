@@ -21,7 +21,7 @@ HTML pattern confirmed from live Adzuna detail pages:
 
 import logging
 import re
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import Future, ThreadPoolExecutor, wait
 
 import requests
 from typing import cast
@@ -33,7 +33,8 @@ from infrastructure.job_fetchers._utils import infer_remote
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-_DETAIL_TIMEOUT: int = 10
+_DETAIL_TIMEOUT: int = 12
+_DETAIL_BATCH_TIMEOUT: int = 120
 _DETAIL_WORKERS: int = 10
 
 
@@ -62,11 +63,19 @@ class AdzunaSimilarFetcher:
 
         similar_jobs: dict[str, Job] = {}
         with ThreadPoolExecutor(max_workers=_DETAIL_WORKERS) as executor:
-            futures = {executor.submit(self._scrape_similar, url): url for url in seed_urls}
-            for future in as_completed(futures):
-                for job in future.result():
-                    if job.id not in similar_jobs:
-                        similar_jobs[job.id] = job
+            future_to_url: dict[Future[list[Job]], str] = {
+                executor.submit(self._scrape_similar, url): url for url in seed_urls
+            }
+            done, not_done = wait(future_to_url, timeout=_DETAIL_BATCH_TIMEOUT)
+            for f in not_done:
+                f.cancel()
+            for f in done:
+                try:
+                    for job in f.result():
+                        if job.id not in similar_jobs:
+                            similar_jobs[job.id] = job
+                except Exception:
+                    pass
 
         return list(similar_jobs.values())
 
