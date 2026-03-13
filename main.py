@@ -205,6 +205,8 @@ def main() -> None:
     warnings: list[str] = pre_warnings + fetch_warnings
     for fail in fetch_failures:
         print(f"  [{fail['company']}] FAILED: {fail.get('error', 'unknown')} (attempts: {fail.get('attempts', '?')})")
+    for warning in warnings:
+        print(f"  [WARNING] {warning}")
 
     print()
     records: list[JobRecord] = service.process(all_jobs)
