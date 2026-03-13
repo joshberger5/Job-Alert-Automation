@@ -106,7 +106,7 @@ def build_fetchers() -> tuple[list[JobFetcher], list[str]]:
     jsearch_key: str | None = os.environ.get("JSEARCH_API_KEY")
     if jsearch_key:
         try:
-            from infrastructure.job_fetchers.jsearch_fetcher import JSearchFetcher  # type: ignore[import-not-found]
+            from infrastructure.job_fetchers.jsearch_fetcher import JSearchFetcher
             fetchers_list.extend([
                 JSearchFetcher(api_key=jsearch_key, query="java developer Jacksonville FL"),
                 JSearchFetcher(api_key=jsearch_key, query="java developer remote"),
