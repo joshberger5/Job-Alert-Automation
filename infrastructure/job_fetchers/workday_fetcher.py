@@ -1,14 +1,15 @@
 import re
 import html as html_module
 import json as _json
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import Future, ThreadPoolExecutor, wait
 from typing import Any
 
 import requests
 from domain.job import Job
 from infrastructure.job_fetchers._utils import infer_remote
 
-_DETAIL_TIMEOUT: int = 8
+_DETAIL_TIMEOUT: int = 12
+_DETAIL_BATCH_TIMEOUT: int = 120
 _DETAIL_WORKERS: int = 10
 
 
@@ -83,13 +84,18 @@ class WorkdayFetcher:
         if self.fetch_descriptions:
             urls_to_fetch: list[str] = [url for _, url in raw_postings if url]
             with ThreadPoolExecutor(max_workers=_DETAIL_WORKERS) as pool:
-                future_to_url = {pool.submit(self._fetch_description, url): url for url in urls_to_fetch}
-                for future in as_completed(future_to_url):
-                    url = future_to_url[future]
+                future_to_url: dict[Future[str], str] = {
+                    pool.submit(self._fetch_description, url): url for url in urls_to_fetch
+                }
+                done, not_done = wait(future_to_url, timeout=_DETAIL_BATCH_TIMEOUT)
+                for f in not_done:
+                    f.cancel()
+                for f in done:
+                    url_key: str = future_to_url[f]
                     try:
-                        descriptions[url] = future.result()
+                        descriptions[url_key] = f.result()
                     except Exception:
-                        descriptions[url] = ""
+                        descriptions[url_key] = ""
 
         jobs: list[Job] = []
         for item, url in raw_postings:
