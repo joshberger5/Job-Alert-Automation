@@ -13,8 +13,9 @@ from infrastructure.job_fetchers.remoteok_fetcher import RemoteOKFetcher
 from infrastructure.job_fetchers.weworkremotely_fetcher import WeWorkRemotelyFetcher
 
 
-def build_fetchers() -> list[JobFetcher]:
-    return [
+def build_fetchers() -> tuple[list[JobFetcher], list[str]]:
+    warnings: list[str] = []
+    fetchers_list: list[JobFetcher] = [
         # ── Adzuna ────────────────────────────────────────────────────────────
         AdzunaFetcher(
             app_id=os.environ["ADZUNA_APP_ID"],
@@ -101,3 +102,18 @@ def build_fetchers() -> list[JobFetcher]:
             location_filter=None,
         ),
     ]
+
+    jsearch_key: str | None = os.environ.get("JSEARCH_API_KEY")
+    if jsearch_key:
+        try:
+            from infrastructure.job_fetchers.jsearch_fetcher import JSearchFetcher  # type: ignore[import-not-found]
+            fetchers_list.extend([
+                JSearchFetcher(api_key=jsearch_key, query="java developer Jacksonville FL"),
+                JSearchFetcher(api_key=jsearch_key, query="java developer remote"),
+            ])
+        except ImportError:
+            warnings.append("JSearchFetcher not yet implemented")
+    else:
+        warnings.append("JSEARCH_API_KEY not set — JSearch fetcher skipped")
+
+    return fetchers_list, warnings
