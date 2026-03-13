@@ -1,0 +1,19 @@
+{
+  "count": 1,
+  "hasMore": false,
+  "offset": 0,
+  "limit": 25,
+  "items": [
+    {
+      "requisitionList": [
+        {
+          "Id": "210672475",
+          "Title": "Software Engineer III",
+          "PrimaryLocation": "Jersey City, NJ, United States",
+          "PostedDate": "2026-02-01",
+          "PostingEndDate": "2026-04-01"
+        }
+      ]
+    }
+  ]
+}
