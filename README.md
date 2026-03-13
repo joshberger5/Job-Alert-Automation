@@ -91,6 +91,7 @@ All fetchers implement the `JobFetcher` protocol (`fetch() -> list[Job]`) and ru
 | FIS Global | `WorkdayFetcher` | POST `/wday/cxs/fis/SearchJobs/jobs` — paginated JSON |
 | SSC Technologies | `WorkdayFetcher` | POST `/wday/cxs/ssctech/SSCTechnologies/jobs` — descriptions fetched from job pages via ld+json, **parallelized** |
 | VyStar Credit Union | `WorkdayFetcher` | Same as above |
+| Availity | `WorkdayFetcher` | POST `availity.wd1.myworkdayjobs.com/…/jobs` — descriptions fetched via ld+json, **parallelized** |
 | Landstar System | `LandstarFetcher` | POST `jobs.dayforcehcm.com/api/geo/landstar/jobposting/search` (Ceridian Dayforce) — paginated JSON; salary extracted from description text |
 | Bank of America (×2) | `BankOfAmericaFetcher` | `/services/jobssearchservlet` — one instance location-only, one with `keywords=Java`; deduplication handles overlap |
 | Paysafe | `IcimsFetcher` | HTML scrape of `/tile-search-results/` (paginated, capped at 300 jobs); detail page per job, **parallelized** |
