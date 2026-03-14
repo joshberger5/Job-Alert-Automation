@@ -15608,5 +15608,30 @@
     "first_seen": "2026-03-14T11:20:41",
     "score": 0,
     "qualified": false
+  },
+  "ahu-technologies-business-analyst-chicago-il": {
+    "first_seen": "2026-03-14T16:42:36",
+    "score": 0,
+    "qualified": false
+  },
+  "stellar-ai-senior-software-engineer": {
+    "first_seen": "2026-03-14T16:42:36",
+    "score": 4,
+    "qualified": false
+  },
+  "bhft-market-data-engineering-manager": {
+    "first_seen": "2026-03-14T16:42:36",
+    "score": 7,
+    "qualified": true
+  },
+  "close-senior-software-engineer-backend-python-usa-only-100-remote-1": {
+    "first_seen": "2026-03-14T16:42:36",
+    "score": 0,
+    "qualified": false
+  },
+  "1130760": {
+    "first_seen": "2026-03-14T16:42:36",
+    "score": -1,
+    "qualified": false
   }
 }
