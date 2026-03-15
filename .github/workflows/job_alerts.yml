@@ -31,7 +31,15 @@ jobs:
         run: mypy domain/ application/ infrastructure/ main.py
 
       - name: Run tests
-        run: pytest tests/ -v
+        run: pytest tests/ -v --ignore=tests/e2e/
+
+      - name: E2E fetcher health check
+        continue-on-error: true
+        env:
+          ADZUNA_APP_ID:  ${{ secrets.ADZUNA_APP_ID }}
+          ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
+          JSEARCH_API_KEY: ${{ secrets.JSEARCH_API_KEY }}
+        run: pytest tests/e2e/ -v
 
       - name: Run job alerts
         env:
