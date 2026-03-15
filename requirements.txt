@@ -7,3 +7,4 @@ mypy
 types-requests
 types-PyYAML
 types-beautifulsoup4
+mutmut

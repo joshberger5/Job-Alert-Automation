@@ -222,6 +222,35 @@ Fixtures (JSON, HTML, RSS) live in `tests/fixtures/` — either trimmed real API
 
 ---
 
+## Mutation Testing
+
+[mutmut](https://mutmut.readthedocs.io/) is the Python equivalent of pitest — it introduces small code mutations (flipping `+` to `-`, changing `True` to `False`, etc.) one at a time and runs the test suite against each. A mutation that isn't caught by any test is a **survived mutant**, which reveals a gap in test coverage. Results are browsable as an HTML report.
+
+Mutation testing targets `domain/` and `application/` only (configured in `setup.cfg`). `infrastructure/` is excluded because fetcher I/O is heavily mocked and produces little signal.
+
+```bash
+# Install (included in requirements.txt)
+pip install -r requirements.txt
+
+# Run all mutations (takes several minutes — run locally, not in CI)
+py -m mutmut run
+
+# Print a terminal summary
+py -m mutmut results
+
+# Generate an HTML report (analogous to pitest's HTML output)
+py -m mutmut html
+# → opens html/index.html in a browser
+```
+
+The HTML report shows each source file with surviving and killed mutants highlighted inline — green for killed (test caught it), red for survived (gap found).
+
+**Artifacts** (both gitignored, local-only):
+- `.mutmut-cache` — mutmut's SQLite run database; incremental re-runs skip already-tested mutations
+- `html/` — generated HTML report
+
+---
+
 ## Deployment
 
 GitHub Actions workflow (`.github/workflows/job_alerts.yml`) runs at **6 AM, 12 PM, and 5 PM ET** daily, plus on-demand via `workflow_dispatch`. Only one cron entry is active at a time — currently EDT (`0 10,16,21 * * *`). Next DST adjustment: Nov 1, 2026 (switch to `0 11,17,22 * * *` for EST).

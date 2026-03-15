@@ -29,3 +29,7 @@ infrastructure/tertiary_cache.json
 
 # GSD planning docs (local-only)
 .planning/
+
+# Mutation testing artifacts (local-only)
+.mutmut-cache
+html/
