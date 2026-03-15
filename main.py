@@ -4,11 +4,13 @@ import json
 import os
 import sys
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import IO
 
 from dotenv import load_dotenv
+
+from application.fetcher_result import FetcherFailure
 
 from domain.candidate_profile import CandidateProfile
 from domain.filtering_policy import FilteringPolicy
@@ -76,13 +78,21 @@ def _fetcher_label(fetcher: JobFetcher) -> str:
     return fetcher.company_name
 
 
-def _run_fetcher(fetcher: JobFetcher) -> tuple[str, list[Job], Exception | None]:
+def _run_fetcher(fetcher: JobFetcher) -> tuple[str, list[Job], FetcherFailure | None]:
     label: str = _fetcher_label(fetcher)
-    try:
-        jobs: list[Job] = fetcher.fetch()
-        return label, jobs, None
-    except Exception as e:
-        return label, [], e
+    last_error: Exception | None = None
+    for _attempt in range(1, 3):  # attempts 1 and 2
+        try:
+            jobs: list[Job] = fetcher.fetch()
+            return label, jobs, None
+        except Exception as e:
+            last_error = e
+    failure: FetcherFailure = {
+        "company": label,
+        "error": str(last_error),
+        "attempts": 2,
+    }
+    return label, [], failure
 
 
 def _build_profile() -> CandidateProfile:
@@ -111,23 +121,33 @@ def _build_services(
     return service, repository
 
 
-def _fetch_jobs(fetchers: list[JobFetcher], timeout: int) -> list[Job]:
+def _fetch_jobs(
+    fetchers: list[JobFetcher], timeout: int
+) -> tuple[list[Job], list[FetcherFailure], list[str]]:
     all_jobs: list[Job] = []
-    with ThreadPoolExecutor(max_workers=len(fetchers)) as pool:
-        futures = {pool.submit(_run_fetcher, f): f for f in fetchers}
+    failures: list[FetcherFailure] = []
+    warnings: list[str] = []
+    _FetcherResult = tuple[str, list[Job], FetcherFailure | None]
+    with ThreadPoolExecutor(max_workers=max(len(fetchers), 1)) as pool:
+        futures: dict[Future[_FetcherResult], JobFetcher] = {
+            pool.submit(_run_fetcher, f): f for f in fetchers
+        }
         for future in as_completed(futures):
             try:
-                label, jobs, error = future.result(timeout=timeout)
+                label: str
+                jobs: list[Job]
+                failure: FetcherFailure | None
+                label, jobs, failure = future.result(timeout=timeout)
             except TimeoutError:
                 label = _fetcher_label(futures[future])
-                print(f"  [{label}] TIMEOUT (>{timeout}s) — skipped")
+                failures.append({"company": label, "error": "TIMEOUT", "attempts": 1})
                 continue
-            if error:
-                print(f"  [{label}] ERROR: {error}")
+            if failure is not None:
+                failures.append(failure)
             else:
                 print(f"  [{label}] {len(jobs)} jobs")
-            all_jobs.extend(jobs)
-    return all_jobs
+                all_jobs.extend(jobs)
+    return all_jobs, failures, warnings
 
 
 def _apply_filters(
@@ -199,9 +219,19 @@ def main() -> None:
         _print_profile(profile)
 
         service, repository = _build_services(profile)
-        fetchers: list[JobFetcher] = build_fetchers()
+        fetchers: list[JobFetcher]
+        pre_warnings: list[str]
+        fetchers, pre_warnings = build_fetchers()
         print(f"  Fetching from {len(fetchers)} sources in parallel...")
-        all_jobs: list[Job] = _fetch_jobs(fetchers, timeout=_FETCHER_TIMEOUT)
+        all_jobs: list[Job]
+        fetch_failures: list[FetcherFailure]
+        fetch_warnings: list[str]
+        all_jobs, fetch_failures, fetch_warnings = _fetch_jobs(fetchers, timeout=_FETCHER_TIMEOUT)
+        warnings: list[str] = pre_warnings + fetch_warnings
+        for fail in fetch_failures:
+            print(f"  [{fail['company']}] FAILED: {fail.get('error', 'unknown')} (attempts: {fail.get('attempts', '?')})")
+        for warning in warnings:
+            print(f"  [WARNING] {warning}")
 
         print()
         records: list[JobRecord] = service.process(all_jobs)
