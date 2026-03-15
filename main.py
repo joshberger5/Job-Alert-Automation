@@ -6,6 +6,8 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
+from typing import IO
+
 from dotenv import load_dotenv
 
 from domain.candidate_profile import CandidateProfile
@@ -37,7 +39,7 @@ _FETCHER_TIMEOUT: int = 120  # seconds per fetcher before giving up
 class _Tee:
     """Writes to both the real stdout and a StringIO buffer simultaneously."""
 
-    def __init__(self, primary: io.TextIOWrapper, secondary: io.StringIO) -> None:
+    def __init__(self, primary: IO[str], secondary: io.StringIO) -> None:
         self._primary = primary
         self._secondary = secondary
 
@@ -189,7 +191,7 @@ def _send_email_notification(
 
 def main() -> None:
     buf: io.StringIO = io.StringIO()
-    with contextlib.redirect_stdout(_Tee(sys.stdout, buf)):  # type: ignore[arg-type]
+    with contextlib.redirect_stdout(_Tee(sys.stdout, buf)):
         start: float = time.monotonic()
         run_at: datetime = datetime.now()
 
