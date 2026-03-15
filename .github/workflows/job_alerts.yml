@@ -2,9 +2,9 @@ name: Job Alerts
 
 on:
   schedule:
-    - cron: '0 11 * * *'   # 6 AM ET (EST, UTC-5)  → change to '0 10 * * *' after DST (Mar 8)
-    - cron: '0 17 * * *'   # 12 PM ET (EST, UTC-5) → change to '0 16 * * *' after DST (Mar 8)
-    - cron: '0 22 * * *'   # 5 PM ET (EST, UTC-5)  → change to '0 21 * * *' after DST (Mar 8)
+    # EDT (UTC-4, active Mar–Nov): 6 AM, 12 PM, 5 PM ET
+    # Next DST adjustment: Nov 1, 2026 — change to '0 11,17,22 * * *' for EST
+    - cron: '0 10,16,21 * * *'
   workflow_dispatch:        # allow manual runs from GitHub UI
 
 jobs:
