@@ -1,8 +1,13 @@
+import contextlib
+import io
 import json
 import os
+import sys
 import time
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from datetime import datetime
+from typing import IO
+
 from dotenv import load_dotenv
 
 from application.fetcher_result import FetcherFailure
@@ -31,6 +36,22 @@ from infrastructure.llm_title_filter import GeminiTitleFilter
 load_dotenv()
 
 _FETCHER_TIMEOUT: int = 120  # seconds per fetcher before giving up
+
+
+class _Tee:
+    """Writes to both the real stdout and a StringIO buffer simultaneously."""
+
+    def __init__(self, primary: IO[str], secondary: io.StringIO) -> None:
+        self._primary = primary
+        self._secondary = secondary
+
+    def write(self, data: str) -> int:
+        self._primary.write(data)
+        return self._secondary.write(data)
+
+    def flush(self) -> None:
+        self._primary.flush()
+        self._secondary.flush()
 
 
 def _print_profile(profile: CandidateProfile) -> None:
@@ -172,6 +193,7 @@ def _send_email_notification(
     total_fetched: int,
     llm_relevant: list[JobRecord],
     llm_filtered: list[JobRecord],
+    run_log: str,
 ) -> None:
     if not os.environ.get("SMTP_HOST"):
         return
@@ -180,6 +202,7 @@ def _send_email_notification(
             qualified, run_at, duration_s, total_fetched,
             llm_relevant_jobs=llm_relevant or None,
             llm_filtered_jobs=llm_filtered or None,
+            run_log=run_log,
         )
         print("  [Email] Sent")
     except Exception as e:
@@ -187,46 +210,50 @@ def _send_email_notification(
 
 
 def main() -> None:
-    start: float = time.monotonic()
-    run_at: datetime = datetime.now()
+    buf: io.StringIO = io.StringIO()
+    with contextlib.redirect_stdout(_Tee(sys.stdout, buf)):
+        start: float = time.monotonic()
+        run_at: datetime = datetime.now()
 
-    profile: CandidateProfile = _build_profile()
-    _print_profile(profile)
+        profile: CandidateProfile = _build_profile()
+        _print_profile(profile)
 
-    service, repository = _build_services(profile)
-    fetchers: list[JobFetcher]
-    pre_warnings: list[str]
-    fetchers, pre_warnings = build_fetchers()
-    print(f"  Fetching from {len(fetchers)} sources in parallel...")
-    all_jobs: list[Job]
-    fetch_failures: list[FetcherFailure]
-    fetch_warnings: list[str]
-    all_jobs, fetch_failures, fetch_warnings = _fetch_jobs(fetchers, timeout=_FETCHER_TIMEOUT)
-    warnings: list[str] = pre_warnings + fetch_warnings
-    for fail in fetch_failures:
-        print(f"  [{fail['company']}] FAILED: {fail.get('error', 'unknown')} (attempts: {fail.get('attempts', '?')})")
-    for warning in warnings:
-        print(f"  [WARNING] {warning}")
+        service, repository = _build_services(profile)
+        fetchers: list[JobFetcher]
+        pre_warnings: list[str]
+        fetchers, pre_warnings = build_fetchers()
+        print(f"  Fetching from {len(fetchers)} sources in parallel...")
+        all_jobs: list[Job]
+        fetch_failures: list[FetcherFailure]
+        fetch_warnings: list[str]
+        all_jobs, fetch_failures, fetch_warnings = _fetch_jobs(fetchers, timeout=_FETCHER_TIMEOUT)
+        warnings: list[str] = pre_warnings + fetch_warnings
+        for fail in fetch_failures:
+            print(f"  [{fail['company']}] FAILED: {fail.get('error', 'unknown')} (attempts: {fail.get('attempts', '?')})")
+        for warning in warnings:
+            print(f"  [WARNING] {warning}")
 
-    print()
-    records: list[JobRecord] = service.process(all_jobs)
-    qualified, llm_filtered, llm_relevant, counts = _apply_filters(records, profile)
-
-    print(f"  Results: {counts}")
-    if llm_relevant:
-        print(f"  LLM-relevant (scored_out): {len(llm_relevant)}")
-
-    if qualified:
         print()
-        for r in qualified:
-            print(f"  *** {r['title']} @ {r['company']} | Score {r['score']} | {r['url']}")
+        records: list[JobRecord] = service.process(all_jobs)
+        qualified, llm_filtered, llm_relevant, counts = _apply_filters(records, profile)
 
-    repository.flush()
-    _write_debug_json(records, run_at, len(all_jobs), counts)
+        print(f"  Results: {counts}")
+        if llm_relevant:
+            print(f"  LLM-relevant (scored_out): {len(llm_relevant)}")
 
-    duration_s: float = time.monotonic() - start
-    _send_email_notification(qualified, run_at, duration_s, len(all_jobs), llm_relevant, llm_filtered)
-    print(f"\n  Done in {duration_s:.1f}s")
+        if qualified:
+            print()
+            for r in qualified:
+                print(f"  *** {r['title']} @ {r['company']} | Score {r['score']} | {r['url']}")
+
+        repository.flush()
+        _write_debug_json(records, run_at, len(all_jobs), counts)
+
+        duration_s: float = time.monotonic() - start
+        print(f"\n  Done in {duration_s:.1f}s")
+
+    run_log: str = buf.getvalue()
+    _send_email_notification(qualified, run_at, duration_s, len(all_jobs), llm_relevant, llm_filtered, run_log)
 
 
 if __name__ == "__main__":

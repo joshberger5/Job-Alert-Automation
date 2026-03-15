@@ -210,7 +210,7 @@ Fixtures (JSON, HTML, RSS) live in `tests/fixtures/` — either trimmed real API
 
 ## Deployment
 
-GitHub Actions workflow (`.github/workflows/job_alerts.yml`) runs at **6 AM, 12 PM, and 5 PM ET** daily, plus on-demand via `workflow_dispatch`. (Cron times are UTC and require manual adjustment for DST — see comments in the workflow file.)
+GitHub Actions workflow (`.github/workflows/job_alerts.yml`) runs at **6 AM, 12 PM, and 5 PM ET** daily, plus on-demand via `workflow_dispatch`. Only one cron entry is active at a time — currently EDT (`0 10,16,21 * * *`). Next DST adjustment: Nov 1, 2026 (switch to `0 11,17,22 * * *` for EST).
 
 After each run, `seen_jobs.json` is force-committed back to the repo (`git add -f`, bypassing `.gitignore`) so job history persists across runs.
 

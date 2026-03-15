@@ -1,3 +1,4 @@
+import html as _html
 import os
 import smtplib
 from datetime import datetime
@@ -133,6 +134,7 @@ def _build_html(
     total_fetched: int,
     llm_relevant_jobs: list[JobRecord] | None = None,
     llm_filtered_jobs: list[JobRecord] | None = None,
+    run_log: str = "",
 ) -> str:
     n: int = len(jobs)
     s: str = "s" if n != 1 else ""
@@ -238,6 +240,18 @@ def _build_html(
 
         {llm_relevant_html}
 
+        <!-- RUN LOG SECTION -->
+        <tr>
+          <td style="padding:20px 24px 4px;border-top:2px solid #e2e8f0;">
+            <p style="margin:0 0 8px;font-size:11px;font-weight:700;color:#475569;
+                      letter-spacing:0.8px;text-transform:uppercase;">Run Log</p>
+            <pre style="margin:0;background:#0f172a;color:#94a3b8;font-size:11px;
+                        font-family:'Courier New',Courier,monospace;padding:16px;
+                        border-radius:6px;overflow-x:auto;white-space:pre-wrap;
+                        word-break:break-word;">{_html.escape(run_log)}</pre>
+          </td>
+        </tr>
+
         <!-- FOOTER -->
         <tr>
           <td style="padding:8px 0 28px;text-align:center;">
@@ -272,6 +286,7 @@ class EmailNotifier:
         total_fetched: int,
         llm_relevant_jobs: list[JobRecord] | None = None,
         llm_filtered_jobs: list[JobRecord] | None = None,
+        run_log: str = "",
     ) -> None:
         n: int = len(qualified_jobs)
         s: str = "s" if n != 1 else ""
@@ -280,7 +295,7 @@ class EmailNotifier:
 
         html: str = _build_html(
             qualified_jobs, run_at, duration_s, total_fetched,
-            llm_relevant_jobs, llm_filtered_jobs,
+            llm_relevant_jobs, llm_filtered_jobs, run_log,
         )
 
         msg = MIMEMultipart("alternative")
