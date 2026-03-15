@@ -174,10 +174,24 @@ Sent via SMTP STARTTLS. Skipped entirely if `SMTP_HOST` is not set.
 ## Tests
 
 ```bash
-py -m pytest tests/ -v
+# Unit tests (no network calls)
+py -m pytest tests/ -v --ignore=tests/e2e/
+
+# E2E fetcher health checks (real HTTP — requires .env with Adzuna keys)
+py -m pytest tests/e2e/ -v
 ```
 
-148 tests across 22 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
+161 unit tests across 22 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
+
+### E2E fetcher health checks
+
+`tests/e2e/test_fetcher_health.py` runs one parametrized test per fetcher against live endpoints. A `FAILED` result means the fetcher raised an exception (SSL error, 401, timeout, etc.). Zero jobs returned is a valid pass — it just means no open roles matched today.
+
+- **Locally without `.env`**: 0 tests collected (skipped gracefully)
+- **Locally with `.env`**: all fetchers exercised; known broken ones (BofA ×2, JPMorgan Chase, CSX, Florida Blue) will show `FAILED`
+- **GitHub Actions**: runs as a separate `E2E fetcher health check` step with `continue-on-error: true` — failures are visible in the step log but never block the workflow
+
+The `e2e` pytest marker is registered in `pytest.ini`.
 
 | File | Tests | What it covers |
 |---|---|---|
@@ -244,8 +258,12 @@ application/     JobProcessingService (orchestration), ResumeProfileBuilder,
 infrastructure/  All I/O: job fetchers, LatexResumeParser, JsonJobRepository,
                  EmailNotifier, GeminiTitleFilter, in-memory event publisher.
 
-tests/           pytest suite — one file per fetcher + job processing service.
+tests/           pytest unit suite — one file per fetcher + job processing service.
                  All HTTP mocked; fixtures in tests/fixtures/.
+tests/e2e/       E2E fetcher health checks — real HTTP calls, one test per fetcher.
+                 Requires .env with Adzuna keys; skipped gracefully when absent.
+
+pytest.ini       Registers the `e2e` pytest marker.
 
 main.py          Wiring only — constructs all objects, runs fetcher pool,
                  writes jobs_debug.json, triggers email.
