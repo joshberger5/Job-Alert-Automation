@@ -163,9 +163,9 @@ Duplicate detection happens before filtering and scoring, so already-seen jobs c
 
 `EmailNotifier.send()` builds an HTML email (table-based, inline styles for client compatibility) with up to three sections:
 
-- **Qualified jobs** — always present when any exist. One card per job: company, title, location, employment type, salary (if known), score badge (green ≥ 14, blue ≥ 10, amber ≥ 7), "View Job →" link. Each section is collapsible.
-- **LLM Rejected** — jobs that scored high enough but were flagged by the LLM title filter. Shown only when `GEMINI_API_KEY` is set and at least one job was re-classified.
-- **Possibly Relevant** — scored-out jobs that the LLM considers worth a look. Shown only when `GEMINI_API_KEY` is set and any such jobs exist.
+- **Qualified jobs** — always present when any exist. One card per job: company, title, location, employment type, salary (if known), score badge (green ≥ 14, blue ≥ 10, amber ≥ 7), "View Job →" link. Cards are ordered by score descending within each section.
+- **LLM Rejected** — jobs that scored high enough but were flagged by the LLM title filter. Shown only when `GEMINI_API_KEY` is set and at least one job was re-classified. Ordered by score descending.
+- **Possibly Relevant** — scored-out jobs that the LLM considers worth a look. Shown only when `GEMINI_API_KEY` is set and any such jobs exist. Ordered by score descending.
 
 Sent via SMTP STARTTLS. Skipped entirely if `SMTP_HOST` is not set.
 
@@ -181,7 +181,7 @@ py -m pytest tests/ -v --ignore=tests/e2e/
 py -m pytest tests/e2e/ -v
 ```
 
-161 unit tests across 22 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
+164 unit tests across 22 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
 
 ### E2E fetcher health checks
 
@@ -216,6 +216,7 @@ The `e2e` pytest marker is registered in `pytest.ini`.
 | `test_fetcher_result.py` | 2 | `FetcherFailure` TypedDict field presence and types |
 | `test_main_retry.py` | 4 | `_run_fetcher` succeeds on first attempt, retries once on failure, records failure after 2 attempts |
 | `test_detail_timeout.py` | 3 | `_DETAIL_TIMEOUT == 12` in `WorkdayFetcher`, `IcimsFetcher`, `AdzunaSimilarFetcher` |
+| `test_email_notifier.py` | 10 | Run Log rendering, HTML escaping, score-descending ordering in all three email sections, input list not mutated |
 | `test_main_timeout.py` | 2 | `_fetch_jobs` returns 3-tuple; timed-out fetcher recorded as failure |
 
 Fixtures (JSON, HTML, RSS) live in `tests/fixtures/` — either trimmed real API responses or synthetic data matching the exact schema each fetcher expects.

@@ -100,8 +100,9 @@ def _section(
 ) -> str:
     n: int = len(jobs)
     s: str = "s" if n != 1 else ""
-    if jobs:
-        body: str = "\n".join(_job_card(j) for j in jobs)
+    sorted_jobs: list[JobRecord] = sorted(jobs, key=lambda j: j.get("score", 0), reverse=True)
+    if sorted_jobs:
+        body: str = "\n".join(_job_card(j) for j in sorted_jobs)
     else:
         body = """<table width="100%" cellpadding="0" cellspacing="0"
        style="background:white;border-radius:8px;border:1px solid #e2e8f0;">
@@ -141,6 +142,8 @@ def _build_html(
     date_str: str = run_at.strftime("%b %d, %Y at %H:%M")
     duration_str: str = _fmt_duration(duration_s)
 
+    sorted_jobs: list[JobRecord] = sorted(jobs, key=lambda j: j.get("score", 0), reverse=True)
+
     if n == 0:
         cards_html: str = """
 <table width="100%" cellpadding="0" cellspacing="0"
@@ -152,7 +155,7 @@ def _build_html(
   </tr>
 </table>"""
     else:
-        inner: str = "\n".join(_job_card(j) for j in jobs)
+        inner: str = "\n".join(_job_card(j) for j in sorted_jobs)
         cards_html = f"""<p style="margin:0 0 14px;font-size:11px;font-weight:700;color:#475569;
           letter-spacing:0.8px;text-transform:uppercase;">
   Qualified Jobs
