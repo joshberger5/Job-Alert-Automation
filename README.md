@@ -2,6 +2,8 @@
 
 Scrapes job postings from 27 sources (up to 29 with optional JSearch) 3× daily, scores them against a candidate profile parsed from a LaTeX resume, optionally filters titles with a Gemini LLM pass, and emails a formatted digest of qualified matches.
 
+![Email preview](docs/email_preview.png)
+
 ---
 
 ## Setup
