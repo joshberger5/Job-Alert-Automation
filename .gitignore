@@ -33,3 +33,6 @@ infrastructure/tertiary_cache.json
 # Mutation testing artifacts (local-only)
 .mutmut-cache
 html/
+
+# Windows/bash crash dumps
+bash.exe.stackdump
