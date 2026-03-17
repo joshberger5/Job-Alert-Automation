@@ -89,23 +89,16 @@ def _job_card(job: JobRecord) -> str:
             _FEEDBACK_BASE_URL, job_id, title, company, pat
         )
         _thumb_up: str = (
-            '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"'
-            ' fill="#3b82f6" style="vertical-align:middle;margin-right:3px;">'
-            '<path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32'
-            'c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10'
-            'c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05'
-            'c.09-.23.14-.47.14-.73v-2z"/></svg>'
+            '<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjM2I4MmY2IiBkPSJNMSAyMWg0VjlIMXYxMnptMjItMTFjMC0xLjEtLjktMi0yLTJoLTYuMzFsLjk1LTQuNTcuMDMtLjMyYzAtLjQxLS4xNy0uNzktLjQ0LTEuMDZMMTQuMTcgMSA3LjU5IDcuNTlDNy4yMiA3Ljk1IDcgOC40NSA3IDl2MTBjMCAxLjEuOSAyIDIgMmg5Yy44MyAwIDEuNTQtLjUgMS44NC0xLjIybDMuMDItNy4wNWMuMDktLjIzLjE0LS40Ny4xNC0uNzN2LTJ6Ii8+PC9zdmc+"'
+            ' width="14" height="14" style="vertical-align:middle;margin-right:3px;" alt="">'
         )
         _thumb_down: str = (
-            '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"'
-            ' fill="#3b82f6" style="vertical-align:middle;margin-right:3px;">'
-            '<path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2'
-            'c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L10.83 23'
-            'l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>'
+            '<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjM2I4MmY2IiBkPSJNMTUgM0g2Yy0uODMgMC0xLjU0LjUtMS44NCAxLjIybC0zLjAyIDcuMDVjLS4wOS4yMy0uMTQuNDctLjE0LjczdjJjMCAxLjEuOSAyIDIgMmg2LjMxbC0uOTUgNC41Ny0uMDMuMzJjMCAuNDEuMTcuNzkuNDQgMS4wNkwxMC44MyAyM2w2LjU5LTYuNTljLjM2LS4zNi41OC0uODYuNTgtMS40MVY1YzAtMS4xLS45LTItMi0yem00IDB2MTJoNFYzaC00eiIvPjwvc3ZnPg=="'
+            ' width="14" height="14" style="vertical-align:middle;margin-right:3px;" alt="">'
         )
         vote_row = (
             f'<p style="margin:8px 0 0;font-size:13px;">'
-            f'<a href="{up_url}" style="text-decoration:none;margin-right:12px;">{_thumb_up} Relevant</a>'
+            f'<a href="{up_url}" style="text-decoration:none;color:#3b82f6;margin-right:12px;">{_thumb_up} Relevant</a>'
             f'<a href="{down_url}" style="text-decoration:none;color:#64748b;">{_thumb_down} Not relevant</a>'
             f'</p>'
         )
