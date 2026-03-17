@@ -1,6 +1,7 @@
 import json
 import re
 from pathlib import Path
+from typing import cast
 
 FEEDBACK_WEIGHT: float = 0.5
 _FEEDBACK_PATH: Path = Path("feedback.json")  # relative to CWD (project root)
@@ -20,7 +21,6 @@ class FeedbackBiasService:
                 votes: list[dict[str, object]] = json.load(f)
             bias: dict[str, int] = {}
             for entry in votes:
-                reason: str = str(entry.get("reason", "")).strip().lower()
                 vote_raw: object = entry.get("vote", 0)
                 vote: int
                 if str(vote_raw) in ("+1", "1"):
@@ -34,8 +34,11 @@ class FeedbackBiasService:
                         vote = 1 if int_val > 0 else -1
                     except (ValueError, TypeError):
                         continue
-                if reason:
-                    bias[reason] = bias.get(reason, 0) + vote
+                reasons_raw: list[object] = cast(list[object], entry.get("reasons", []))
+                for raw_reason in reasons_raw:
+                    token: str = str(raw_reason).strip().lower()
+                    if token:
+                        bias[token] = bias.get(token, 0) + vote
             return bias
         except Exception:
             return {}
