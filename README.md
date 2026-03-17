@@ -1,6 +1,6 @@
 # Job Alert Automation
 
-Scrapes job postings from 27 sources (up to 29 with optional JSearch) 3× daily, scores them against a candidate profile parsed from a LaTeX resume, optionally filters titles with a Gemini LLM pass, and emails a formatted digest of qualified matches.
+Scrapes job postings from 27 sources (up to 29 with optional JSearch) 3× daily, scores them against a candidate profile parsed from a LaTeX resume, optionally filters titles with a Gemini LLM pass, and emails a formatted digest of qualified matches. Each email card contains thumbs-up/thumbs-down vote links; votes accumulate in a 50-record ring buffer and bias future scoring via `FeedbackBiasService`.
 
 ![Email preview](docs/email_preview.png)
 
@@ -29,6 +29,9 @@ GEMINI_API_KEY=...
 
 # Optional — enables JSearch/RapidAPI fetcher (2 additional sources)
 JSEARCH_API_KEY=...
+
+# Optional — enables thumbs-up/thumbs-down vote links in email cards
+FEEDBACK_PAT=...
 ```
 
 Place `resume.tex` in the project root. Edit `candidate_profile.yaml` to set your preferences:
@@ -127,7 +130,7 @@ Detail-page fetches inside `WorkdayFetcher`, `IcimsFetcher`, `IcimsSitemapFetche
 - **−2** for each skill in `job.required_skills` not present in the candidate's combined skill set (only applies when the fetcher populates `required_skills`; most don't — `RemoteOKFetcher` does via job tags).
 - **Qualifies** if `score ≥ 7` (`ScoringPolicy.MINIMUM_SCORE`).
 
-After scoring, `FeedbackBiasService` applies a personal multiplier derived from feedback vote history (`feedback.json`). Reason tokens with ≥ 3 net votes contribute `net_votes × 0.5` to the multiplier, clamped to `[0.5, 2.0]`. The adjusted score determines `"qualified"` or `"scored_out"`, and `feedback_multiplier` is written to `jobs_debug.json`.
+After scoring, `FeedbackBiasService` applies a personal multiplier derived from feedback vote history (`feedback.json`). Each vote record stores a `reasons[]` array; every token in the array independently accumulates net votes. Reason tokens with ≥ 3 net votes contribute `net_votes × 0.5` to the multiplier, clamped to `[0.5, 2.0]`. The adjusted score determines `"qualified"` or `"scored_out"`, and `feedback_multiplier` is written to `jobs_debug.json`.
 
 ### 5 — LLM Title Filtering (optional)
 
@@ -165,11 +168,30 @@ Duplicate detection happens before filtering and scoring, so already-seen jobs c
 
 `EmailNotifier.send()` builds an HTML email (table-based, inline styles for client compatibility) with up to three sections:
 
-- **Qualified jobs** — always present when any exist. One card per job: company, title, location, employment type, salary (if known), score badge (green ≥ 14, blue ≥ 10, amber ≥ 7), "View Job →" link. Cards are ordered by score descending within each section.
+- **Qualified jobs** — always present when any exist. One card per job: company, title, location, employment type, salary (if known), score badge (green ≥ 14, blue ≥ 10, amber ≥ 7), "View Job →" link, and thumbs-up/thumbs-down vote links (shown only when `FEEDBACK_PAT` is set). Cards are ordered by score descending within each section.
 - **LLM Rejected** — jobs that scored high enough but were flagged by the LLM title filter. Shown only when `GEMINI_API_KEY` is set and at least one job was re-classified. Ordered by score descending.
 - **Possibly Relevant** — scored-out jobs that the LLM considers worth a look. Shown only when `GEMINI_API_KEY` is set and any such jobs exist. Ordered by score descending.
 
 Sent via SMTP STARTTLS. Skipped entirely if `SMTP_HOST` is not set.
+
+### 9 — Feedback Loop
+
+When `FEEDBACK_PAT` is set, each qualified job card in the email contains 👍 and 👎 vote links. Clicking one opens `docs/feedback.html` (GitHub Pages), where the user selects a reason tag and submits. The page fires a `repository_dispatch` event to GitHub, which triggers `feedback.yml`.
+
+**`feedback.yml` workflow** (`.github/workflows/feedback.yml`):
+1. Reads the vote payload from `github.event.client_payload`
+2. Appends a record to `feedback.json`, sorts by `voted_at`, and trims to the **50 most recent** records (`_trim_votes()` in `infrastructure/feedback_trimmer.py` mirrors this logic for unit tests)
+3. Reads `candidate_profile.yaml` and injects the reason arrays into `docs/feedback.html` (replacing `__THUMBS_UP_REASONS__` and `__THUMBS_DOWN_REASONS__` placeholders)
+4. Commits both files with `[skip ci]` to avoid triggering `job_alerts.yml`
+
+**`feedback.json` schema** (each record):
+```json
+{ "job_id": "...", "vote": 1, "title": "...", "company": "...", "reasons": ["Great tech stack"], "voted_at": "2026-03-16T12:00:00" }
+```
+
+`vote` is `1` (thumbs-up) or `-1` (thumbs-down). `reasons` is a non-empty array. The file holds at most 50 records; resetting history requires deleting it.
+
+The PAT is passed in the URL **fragment** (`#token`), not the query string, to keep it out of server logs. It requires `Contents: read/write` permission on the repo (fine-grained token) to commit `feedback.json`.
 
 ---
 
@@ -183,7 +205,7 @@ py -m pytest tests/ -v --ignore=tests/e2e/
 py -m pytest tests/e2e/ -v
 ```
 
-164 unit tests across 22 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
+171 unit tests across 24 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
 
 ### E2E fetcher health checks
 
@@ -212,13 +234,15 @@ The `e2e` pytest marker is registered in `pytest.ini`.
 | `test_landstar_fetcher.py` | 19 | Field mapping, salary (annual + hourly→annual conversion, absent), remote detection (`hasVirtualLocation`, title, description), multi-location formatting, pagination, error handling |
 | `test_adzuna_similar_fetcher.py` | 10 | Job extraction from "Similar jobs" section, ID/salary/URL parsing, cross-seed deduplication, graceful degradation on HTTP errors and missing section |
 | `test_resume_profile_builder.py` | 6 | `minimum_salary` and reason tags loaded from YAML; taxonomy-gated tertiary extraction (single-occurrence excluded, taxonomy hit included, fail-open when no Gemini key) |
-| `test_feedback_bias_service.py` | 9 | No-file → multiplier 1.0; below-threshold token skipped; at-threshold token applied; min/max clamp (0.5/2.0); score delta in breakdown |
+| `test_feedback_bias_service.py` | 10 | No-file → multiplier 1.0; below-threshold token skipped; at-threshold token applied; min/max clamp (0.5/2.0); score delta in breakdown; multi-reason independent accumulation |
 | `test_oracle_fetcher.py` | 3 | Field mapping from ICE REST response, detail-page description extraction, pagination |
 | `test_jsearch_fetcher.py` | 3 | Field mapping, `job_is_remote` handling, salary formatting |
 | `test_fetcher_result.py` | 2 | `FetcherFailure` TypedDict field presence and types |
 | `test_main_retry.py` | 4 | `_run_fetcher` succeeds on first attempt, retries once on failure, records failure after 2 attempts |
 | `test_detail_timeout.py` | 3 | `_DETAIL_TIMEOUT == 12` in `WorkdayFetcher`, `IcimsFetcher`, `AdzunaSimilarFetcher` |
-| `test_email_notifier.py` | 10 | Run Log rendering, HTML escaping, score-descending ordering in all three email sections, input list not mutated |
+| `test_email_notifier.py` | 13 | Run Log rendering, HTML escaping, score-descending ordering in all three email sections, input list not mutated; vote links present/absent/URL-structured |
+| `test_feedback_json_trim.py` | 3 | `_trim_votes()` keeps last 50, no-op under 50, sorts by `voted_at` before trimming |
+| `test_tee.py` | 6 | `Tee` write/flush forwarding to primary and secondary streams |
 | `test_main_timeout.py` | 2 | `_fetch_jobs` returns 3-tuple; timed-out fetcher recorded as failure |
 
 Fixtures (JSON, HTML, RSS) live in `tests/fixtures/` — either trimmed real API responses or synthetic data matching the exact schema each fetcher expects.
@@ -274,6 +298,7 @@ After each run, `seen_jobs.json` is force-committed back to the repo (`git add -
 |---|---|
 | `GEMINI_API_KEY` | Enables LLM title filtering via Gemini 2.0 Flash Lite (free tier) |
 | `JSEARCH_API_KEY` | Enables JSearch/RapidAPI fetcher (2 additional sources) |
+| `FEEDBACK_PAT` | Enables vote links in email cards; fine-grained PAT with `Contents: read/write` on this repo |
 
 ---
 
