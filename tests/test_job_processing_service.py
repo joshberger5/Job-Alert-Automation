@@ -290,6 +290,7 @@ def test_mixed_batch_returns_record_per_job() -> None:
 
     filtering: MagicMock = MagicMock()
     filtering.allows.side_effect = lambda job, profile: job.id != "filtered"
+    filtering.is_unverified_remote.return_value = False
 
     scoring: MagicMock = MagicMock()
     scoring.evaluate.side_effect = lambda job, profile: (

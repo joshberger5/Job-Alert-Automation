@@ -191,6 +191,7 @@ def build_email_html(
     total_fetched: int,
     llm_relevant_jobs: list[JobRecord] | None = None,
     llm_filtered_jobs: list[JobRecord] | None = None,
+    unverified_remote_jobs: list[JobRecord] | None = None,
     run_log: str = "",
 ) -> str:
     n: int = len(jobs)
@@ -237,6 +238,16 @@ def build_email_html(
             "but didn&rsquo;t reach the scoring minimum."
         ),
         jobs=llm_relevant_jobs or [],
+    )
+    unverified_remote_html: str = _section(
+        comment="UNVERIFIED REMOTE SECTION",
+        heading="Unverified Remote &mdash; location unconfirmed",
+        subtext=(
+            "These mention remote work in their description but the location "
+            "field doesn&rsquo;t confirm it. The role may be office-based with "
+            "remote work listed as a perk."
+        ),
+        jobs=unverified_remote_jobs or [],
     )
 
     return f"""<!DOCTYPE html>
@@ -298,6 +309,8 @@ def build_email_html(
         {llm_rejected_html}
 
         {llm_relevant_html}
+
+        {unverified_remote_html}
 
         <!-- RUN LOG SECTION -->
         <tr>
@@ -361,6 +374,7 @@ class EmailNotifier:
         total_fetched: int,
         llm_relevant_jobs: list[JobRecord] | None = None,
         llm_filtered_jobs: list[JobRecord] | None = None,
+        unverified_remote_jobs: list[JobRecord] | None = None,
         run_log: str = "",
     ) -> None:
         n: int = len(qualified_jobs)
@@ -370,7 +384,7 @@ class EmailNotifier:
 
         html: str = build_email_html(
             qualified_jobs, run_at, duration_s, total_fetched,
-            llm_relevant_jobs, llm_filtered_jobs, run_log,
+            llm_relevant_jobs, llm_filtered_jobs, unverified_remote_jobs, run_log,
         )
 
         msg = MIMEMultipart("alternative")

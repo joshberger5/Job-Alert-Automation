@@ -77,9 +77,25 @@ class JobProcessingService:
                 continue
 
             if not self.filtering_policy.allows(job, self.profile):
-                record["result"] = "filtered_out"
-                record["filter_reason"] = _filter_reason(job, self.profile)
-                self.repository.save(job, 0, False)
+                if self.filtering_policy.is_unverified_remote(job, self.profile):
+                    uv_score: int
+                    uv_breakdown: dict[str, int]
+                    uv_multiplier: float
+                    uv_raw: int
+                    uv_raw_breakdown: dict[str, int]
+                    uv_raw, uv_raw_breakdown = self.scoring_policy.evaluate(job, self.profile)
+                    uv_score, uv_breakdown, uv_multiplier = self._feedback_bias.apply(
+                        uv_raw, job.description + " " + job.title, uv_raw_breakdown
+                    )
+                    self.repository.save(job, uv_score, False)
+                    record["result"] = "unverified_remote"
+                    record["score"] = uv_score
+                    record["score_breakdown"] = uv_breakdown
+                    record["feedback_multiplier"] = uv_multiplier
+                else:
+                    record["result"] = "filtered_out"
+                    record["filter_reason"] = _filter_reason(job, self.profile)
+                    self.repository.save(job, 0, False)
                 debug_records.append(record)
                 continue
 
