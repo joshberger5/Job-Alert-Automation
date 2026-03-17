@@ -26,7 +26,7 @@ from application.title_filter_service import TitleFilterService
 
 from infrastructure.json_job_repository import JsonJobRepository
 from infrastructure.in_memory_event_publisher import InMemoryEventPublisher
-from infrastructure.email_notifier import EmailNotifier
+from infrastructure.email_notifier import EmailNotifier, archive_email, build_email_html
 from infrastructure.resume.latex_resume_parser import LatexResumeParser
 from infrastructure.job_fetchers import JobFetcher
 from infrastructure.fetcher_registry import build_fetchers
@@ -195,6 +195,13 @@ def _send_email_notification(
     llm_filtered: list[JobRecord],
     run_log: str,
 ) -> None:
+    html: str = build_email_html(
+        qualified, run_at, duration_s, total_fetched,
+        llm_relevant_jobs=llm_relevant or None,
+        llm_filtered_jobs=llm_filtered or None,
+        run_log=run_log,
+    )
+    archive_email(html, run_at)
     if not os.environ.get("SMTP_HOST"):
         return
     try:

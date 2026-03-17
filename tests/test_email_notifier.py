@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from application.job_record import JobRecord
-from infrastructure.email_notifier import _build_html, _section
+from infrastructure.email_notifier import build_email_html as _build_html, _section
 
 
 def _html(run_log: str = "") -> str:
