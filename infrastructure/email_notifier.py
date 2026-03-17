@@ -1,11 +1,16 @@
 import html as _html
 import os
 import smtplib
+import urllib.parse
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from application.job_record import JobRecord
+
+_FEEDBACK_BASE_URL: str = (
+    "https://joshberger5.github.io/Job-Alert-Automation/feedback.html"
+)
 
 
 def _score_color(score: int) -> str:
@@ -22,6 +27,25 @@ def _fmt_duration(seconds: float) -> str:
     if seconds < 60:
         return f"{seconds:.0f}s"
     return f"{seconds / 60:.1f}m"
+
+
+def _vote_links(
+    base_url: str,
+    job_id: str,
+    title: str,
+    company: str,
+    pat: str,
+) -> tuple[str, str]:
+    """Return (thumbs_up_url, thumbs_down_url) for the feedback page."""
+    def _build(vote: str) -> str:
+        qs: str = urllib.parse.urlencode({
+            "job_id": job_id,
+            "vote": vote,
+            "title": title,
+            "company": company,
+        })
+        return f"{base_url}?{qs}#{pat}"
+    return _build("+1"), _build("-1")
 
 
 def _job_card(job: JobRecord) -> str:
@@ -54,6 +78,22 @@ def _job_card(job: JobRecord) -> str:
         if url else ""
     )
 
+    pat: str = os.environ.get("FEEDBACK_PAT", "")
+    job_id: str = job.get("id", "")
+    vote_row: str = ""
+    if pat and job_id:
+        up_url: str
+        down_url: str
+        up_url, down_url = _vote_links(
+            _FEEDBACK_BASE_URL, job_id, title, company, pat
+        )
+        vote_row = (
+            f'<p style="margin:8px 0 0;font-size:13px;">'
+            f'<a href="{up_url}" style="text-decoration:none;margin-right:12px;">&#128077; Relevant</a>'
+            f'<a href="{down_url}" style="text-decoration:none;color:#64748b;">&#128078; Not relevant</a>'
+            f'</p>'
+        )
+
     color: str = _score_color(score)
 
     return f"""
@@ -84,7 +124,7 @@ def _job_card(job: JobRecord) -> str:
           </td>
         </tr>
         <tr>
-          <td colspan="2" style="padding-top:14px;">{btn}</td>
+          <td colspan="2" style="padding-top:14px;">{btn}{vote_row}</td>
         </tr>
       </table>
     </td>
