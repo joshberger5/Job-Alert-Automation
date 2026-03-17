@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Job Feedback</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f1f5f9;
+      min-height: 100vh;
+    }
+    #header-section {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 24px 20px;
+    }
+    #header-section h1 {
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
+    #header-section h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    #vote-label {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .vote-up { background: #166534; color: #bbf7d0; }
+    .vote-down { background: #7f1d1d; color: #fecaca; }
+    #app {
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    #reason-section {
+      background: #fff;
+      padding: 24px 20px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    #reason-section h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 16px;
+    }
+    #reason-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .reason-btn {
+      padding: 8px 16px;
+      border: 2px solid #cbd5e1;
+      border-radius: 6px;
+      background: #f8fafc;
+      color: #374151;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .reason-btn:hover {
+      border-color: #3b82f6;
+      background: #eff6ff;
+    }
+    .reason-btn.selected {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: #fff;
+    }
+    #submit-section {
+      background: #fff;
+      padding: 20px;
+    }
+    #submit-btn {
+      width: 100%;
+      padding: 12px;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    #submit-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    #submit-btn:not(:disabled):hover {
+      background: #2563eb;
+    }
+    #result-section {
+      padding: 40px 20px;
+      text-align: center;
+    }
+    #result-message {
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+    .result-success { color: #166534; }
+    .result-error { color: #991b1b; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="header-section">
+      <h1>Voting on:</h1>
+      <h2 id="job-title-company">Loading...</h2>
+      <span id="vote-label"></span>
+    </div>
+    <div id="reason-section">
+      <h3>Why? (select all that apply)</h3>
+      <div id="reason-buttons"></div>
+    </div>
+    <div id="submit-section">
+      <button id="submit-btn" disabled>Submit Vote</button>
+    </div>
+    <div id="result-section" style="display:none">
+      <p id="result-message"></p>
+    </div>
+  </div>
+  <script>
+    // Parse URL params
+    const params = new URLSearchParams(window.location.search);
+    const jobId = params.get("job_id") || "";
+    const vote = params.get("vote") || "";
+    const title = decodeURIComponent(params.get("title") || "");
+    const company = decodeURIComponent(params.get("company") || "");
+    const token = window.location.hash.replace(/^#/, "");
+
+    const OWNER = "joshberger5";
+    const REPO = "Job-Alert-Automation";
+
+    // INJECT_REASONS_PLACEHOLDER
+    const THUMBS_UP_REASONS = __THUMBS_UP_REASONS__;
+    const THUMBS_DOWN_REASONS = __THUMBS_DOWN_REASONS__;
+
+    const selectedReasons = new Set();
+
+    function showSuccess() {
+      document.getElementById("reason-section").style.display = "none";
+      document.getElementById("submit-section").style.display = "none";
+      const resultSection = document.getElementById("result-section");
+      const resultMessage = document.getElementById("result-message");
+      resultMessage.textContent = "Thanks, vote recorded!";
+      resultMessage.className = "result-success";
+      resultSection.style.display = "block";
+    }
+
+    function showError(message) {
+      document.getElementById("reason-section").style.display = "none";
+      document.getElementById("submit-section").style.display = "none";
+      const resultSection = document.getElementById("result-section");
+      const resultMessage = document.getElementById("result-message");
+      resultMessage.textContent = message || "Something went wrong. The vote was not recorded.";
+      resultMessage.className = "result-error";
+      resultSection.style.display = "block";
+    }
+
+    async function submitVote() {
+      const reasons = Array.from(selectedReasons);
+      try {
+        const response = await fetch(
+          `https://api.github.com/repos/${OWNER}/${REPO}/dispatches`,
+          {
+            method: "POST",
+            headers: {
+              "Accept": "application/vnd.github+json",
+              "Authorization": `token ${token}`,
+              "X-GitHub-Api-Version": "2022-11-28",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              event_type: "feedback-vote",
+              client_payload: {
+                job_id: jobId,
+                title: title,
+                company: company,
+                vote: vote,
+                reasons: reasons,
+                voted_at: new Date().toISOString(),
+              },
+            }),
+          }
+        );
+        if (response.ok) {
+          showSuccess();
+        } else {
+          showError();
+        }
+      } catch (e) {
+        showError();
+      }
+    }
+
+    function toggleReason(btn, reason) {
+      if (selectedReasons.has(reason)) {
+        selectedReasons.delete(reason);
+        btn.classList.remove("selected");
+      } else {
+        selectedReasons.add(reason);
+        btn.classList.add("selected");
+      }
+      document.getElementById("submit-btn").disabled = selectedReasons.size === 0;
+    }
+
+    function renderReasons(reasons) {
+      const container = document.getElementById("reason-buttons");
+      reasons.forEach(function(reason) {
+        const btn = document.createElement("button");
+        btn.className = "reason-btn";
+        btn.textContent = reason;
+        btn.addEventListener("click", function() { toggleReason(btn, reason); });
+        container.appendChild(btn);
+      });
+    }
+
+    function init() {
+      // Check for missing token
+      if (!token) {
+        showError("This vote link is missing the required token.");
+        return;
+      }
+
+      // Render header
+      const jobTitleCompany = document.getElementById("job-title-company");
+      jobTitleCompany.textContent = (title || "Unknown job") + " at " + (company || "Unknown company");
+
+      const voteLabel = document.getElementById("vote-label");
+      if (vote === "+1") {
+        voteLabel.textContent = "Relevant";
+        voteLabel.className = "vote-up";
+      } else if (vote === "-1") {
+        voteLabel.textContent = "Not relevant";
+        voteLabel.className = "vote-down";
+      } else {
+        voteLabel.textContent = vote || "Unknown vote";
+      }
+
+      // Render reason buttons based on vote direction
+      const reasons = vote === "+1" ? THUMBS_UP_REASONS : THUMBS_DOWN_REASONS;
+      renderReasons(reasons);
+
+      // Wire submit button
+      document.getElementById("submit-btn").addEventListener("click", submitVote);
+    }
+
+    init();
+  </script>
+</body>
+</html>
