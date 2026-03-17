@@ -1,3 +1,4 @@
+import glob as _glob
 import html as _html
 import os
 import smtplib
@@ -183,7 +184,7 @@ def _section(
         </tr>"""
 
 
-def _build_html(
+def build_email_html(
     jobs: list[JobRecord],
     run_at: datetime,
     duration_s: float,
@@ -327,6 +328,22 @@ def _build_html(
 </html>"""
 
 
+def archive_email(
+    html: str,
+    run_at: datetime,
+    archive_dir: str = "docs/emails",
+    max_files: int = 5,
+) -> None:
+    os.makedirs(archive_dir, exist_ok=True)
+    filename: str = run_at.strftime("email_%Y%m%d_%H%M%S.html")
+    filepath: str = os.path.join(archive_dir, filename)
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(html)
+    existing: list[str] = sorted(_glob.glob(os.path.join(archive_dir, "email_*.html")))
+    while len(existing) > max_files:
+        os.remove(existing.pop(0))
+
+
 class EmailNotifier:
 
     def __init__(self) -> None:
@@ -351,7 +368,7 @@ class EmailNotifier:
         date_str: str = run_at.strftime("%b %d, %Y")
         subject: str = f"Job Alert: {n} qualified job{s} \u2014 {date_str}"
 
-        html: str = _build_html(
+        html: str = build_email_html(
             qualified_jobs, run_at, duration_s, total_fetched,
             llm_relevant_jobs, llm_filtered_jobs, run_log,
         )
