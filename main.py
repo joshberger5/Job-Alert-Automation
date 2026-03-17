@@ -153,7 +153,7 @@ def _fetch_jobs(
 def _apply_filters(
     records: list[JobRecord],
     profile: CandidateProfile,
-) -> tuple[list[JobRecord], list[JobRecord], list[JobRecord], dict[str, int]]:
+) -> tuple[list[JobRecord], list[JobRecord], list[JobRecord], list[JobRecord], dict[str, int]]:
     gemini_key: str | None = os.environ.get("GEMINI_API_KEY")
     llm_filter: GeminiTitleFilter | None = GeminiTitleFilter(api_key=gemini_key) if gemini_key else None
     filter_svc: TitleFilterService = TitleFilterService(KeywordTitleFilter(), llm_filter)
@@ -162,12 +162,13 @@ def _apply_filters(
     qualified: list[JobRecord] = [r for r in filtered if r.get("result") == "qualified"]
     llm_filtered: list[JobRecord] = [r for r in filtered if r.get("result") == "llm_filtered"]
     llm_relevant: list[JobRecord] = [r for r in filtered if r.get("llm_relevant")]
+    unverified_remote: list[JobRecord] = [r for r in records if r.get("result") == "unverified_remote"]
     counts: dict[str, int] = {}
-    for r in filtered:
+    for r in records:
         result_key: str = r["result"]
         counts[result_key] = counts.get(result_key, 0) + 1
 
-    return qualified, llm_filtered, llm_relevant, counts
+    return qualified, llm_filtered, llm_relevant, unverified_remote, counts
 
 
 def _write_debug_json(
@@ -193,12 +194,14 @@ def _send_email_notification(
     total_fetched: int,
     llm_relevant: list[JobRecord],
     llm_filtered: list[JobRecord],
+    unverified_remote: list[JobRecord],
     run_log: str,
 ) -> None:
     html: str = build_email_html(
         qualified, run_at, duration_s, total_fetched,
         llm_relevant_jobs=llm_relevant or None,
         llm_filtered_jobs=llm_filtered or None,
+        unverified_remote_jobs=unverified_remote or None,
         run_log=run_log,
     )
     archive_email(html, run_at)
@@ -209,6 +212,7 @@ def _send_email_notification(
             qualified, run_at, duration_s, total_fetched,
             llm_relevant_jobs=llm_relevant or None,
             llm_filtered_jobs=llm_filtered or None,
+            unverified_remote_jobs=unverified_remote or None,
             run_log=run_log,
         )
         print("  [Email] Sent")
@@ -242,7 +246,7 @@ def main() -> None:
 
         print()
         records: list[JobRecord] = service.process(all_jobs)
-        qualified, llm_filtered, llm_relevant, counts = _apply_filters(records, profile)
+        qualified, llm_filtered, llm_relevant, unverified_remote, counts = _apply_filters(records, profile)
 
         print(f"  Results: {counts}")
         if llm_relevant:
@@ -260,7 +264,7 @@ def main() -> None:
         print(f"\n  Done in {duration_s:.1f}s")
 
     run_log: str = buf.getvalue()
-    _send_email_notification(qualified, run_at, duration_s, len(all_jobs), llm_relevant, llm_filtered, run_log)
+    _send_email_notification(qualified, run_at, duration_s, len(all_jobs), llm_relevant, llm_filtered, unverified_remote, run_log)
 
 
 if __name__ == "__main__":

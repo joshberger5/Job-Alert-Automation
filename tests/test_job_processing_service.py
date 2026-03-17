@@ -58,9 +58,10 @@ def _make_repo(exists: bool = False) -> MagicMock:
     return repo
 
 
-def _make_filtering(allows: bool = True) -> MagicMock:
+def _make_filtering(allows: bool = True, is_unverified_remote: bool = False) -> MagicMock:
     policy: MagicMock = MagicMock()
     policy.allows.return_value = allows
+    policy.is_unverified_remote.return_value = is_unverified_remote
     return policy
 
 
@@ -289,6 +290,7 @@ def test_mixed_batch_returns_record_per_job() -> None:
 
     filtering: MagicMock = MagicMock()
     filtering.allows.side_effect = lambda job, profile: job.id != "filtered"
+    filtering.is_unverified_remote.return_value = False
 
     scoring: MagicMock = MagicMock()
     scoring.evaluate.side_effect = lambda job, profile: (
@@ -318,6 +320,37 @@ def test_mixed_batch_returns_record_per_job() -> None:
     assert results[1] == "filtered_out"
     assert results[2] == "qualified"
     assert results[3] == "scored_out"
+
+
+# ---------------------------------------------------------------------------
+# Unverified remote path
+# ---------------------------------------------------------------------------
+
+
+def test_unverified_remote_result() -> None:
+    f: MagicMock = _make_filtering(allows=False, is_unverified_remote=True)
+    svc, _, _, _, _ = _build_service(filtering=f)
+    records: list[JobRecord] = svc.process([_make_job()])
+
+    assert records[0]["result"] == "unverified_remote"
+
+
+def test_unverified_remote_job_has_score() -> None:
+    f: MagicMock = _make_filtering(allows=False, is_unverified_remote=True)
+    svc, _, _, _, _ = _build_service(filtering=f, scoring=_make_scoring(score=5))
+    records: list[JobRecord] = svc.process([_make_job()])
+
+    assert records[0].get("score") == 5
+
+
+def test_unverified_remote_saves_not_qualified() -> None:
+    repo: MagicMock = _make_repo()
+    f: MagicMock = _make_filtering(allows=False, is_unverified_remote=True)
+    svc, _, _, _, _ = _build_service(repo=repo, filtering=f, scoring=_make_scoring(score=5))
+    job: Job = _make_job()
+    svc.process([job])
+
+    repo.save.assert_called_once_with(job, 5, False)
 
 
 # ---------------------------------------------------------------------------
