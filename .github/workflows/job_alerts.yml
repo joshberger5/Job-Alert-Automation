@@ -55,10 +55,26 @@ jobs:
           FEEDBACK_PAT:   ${{ secrets.FEEDBACK_PAT }}
         run: python main.py
 
+      - name: Inject reasons into feedback.html
+        run: |
+          python - <<'EOF'
+          import json
+          import yaml
+          from pathlib import Path
+
+          profile: dict = yaml.safe_load(Path("candidate_profile.yaml").read_text(encoding="utf-8"))
+          up: str = json.dumps(profile["feedback_thumbs_up_reasons"])
+          down: str = json.dumps(profile["feedback_thumbs_down_reasons"])
+          template: str = Path("docs/feedback.html").read_text(encoding="utf-8")
+          template = template.replace("__THUMBS_UP_REASONS__", up)
+          template = template.replace("__THUMBS_DOWN_REASONS__", down)
+          Path("docs/feedback.html").write_text(template, encoding="utf-8")
+          EOF
+
       - name: Persist seen jobs
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git add -f seen_jobs.json
+          git add -f seen_jobs.json docs/feedback.html
           git diff --staged --quiet || git commit -m "chore: update seen_jobs [skip ci]"
           git push
