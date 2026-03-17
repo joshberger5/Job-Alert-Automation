@@ -1,0 +1,72 @@
+name: Record Feedback Vote
+
+# Triggered by the feedback.html page via GitHub REST API
+# POST /repos/{owner}/{repo}/dispatches with event_type: feedback-vote
+# Required PAT permission: Contents: read/write (fine-grained)
+# Note: GitHub docs may list this under "Contents" not "Actions" — verify at:
+# https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#create-a-repository-dispatch-event
+on:
+  repository_dispatch:
+    types: [feedback-vote]
+
+jobs:
+  record-vote:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Append vote to feedback.json
+        env:
+          VOTE_PAYLOAD: ${{ toJson(github.event.client_payload) }}
+        run: |
+          python - <<'EOF'
+          import json
+          import os
+          from pathlib import Path
+
+          payload: dict = json.loads(os.environ["VOTE_PAYLOAD"])
+          path: Path = Path("feedback.json")
+          votes: list[dict] = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+          votes.append(payload)
+          votes.sort(key=lambda v: str(v.get("voted_at", "")))
+          votes = votes[-50:]
+          path.write_text(json.dumps(votes, indent=2), encoding="utf-8")
+          EOF
+
+      - name: Inject reasons into feedback.html
+        run: |
+          python - <<'EOF'
+          import json
+          import yaml
+          from pathlib import Path
+
+          profile: dict = yaml.safe_load(Path("candidate_profile.yaml").read_text(encoding="utf-8"))
+          up: str = json.dumps(profile["feedback_thumbs_up_reasons"])
+          down: str = json.dumps(profile["feedback_thumbs_down_reasons"])
+          template: str = Path("docs/feedback.html").read_text(encoding="utf-8")
+          template = template.replace("__THUMBS_UP_REASONS__", up)
+          template = template.replace("__THUMBS_DOWN_REASONS__", down)
+          Path("docs/feedback.html").write_text(template, encoding="utf-8")
+          EOF
+
+      - name: Commit changes
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add feedback.json docs/feedback.html
+          git diff --staged --quiet || git commit -m "chore: record feedback vote [skip ci]"
+          git push

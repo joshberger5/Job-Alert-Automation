@@ -142,3 +142,56 @@ def test_score_ordering_does_not_mutate_input_list() -> None:
         total_fetched=10,
     )
     assert [j["title"] for j in jobs] == original_order
+
+
+# ---------------------------------------------------------------------------
+# FEED-01: Vote links in job card
+# ---------------------------------------------------------------------------
+
+
+def test_vote_links_present_in_job_card() -> None:
+    """When FEEDBACK_PAT is set, job card HTML contains vote links with correct params."""
+    import os
+    from unittest.mock import patch as mock_patch
+    from infrastructure.email_notifier import _job_card
+    job: JobRecord = _make_job("Java Developer", 12)
+    job["id"] = "job-abc-123"
+    job["company"] = "ACME Corp"
+    with mock_patch.dict(os.environ, {"FEEDBACK_PAT": "test_pat_xyz"}):
+        card_html: str = _job_card(job)
+    assert "feedback.html" in card_html
+    assert "job-abc-123" in card_html
+    assert "%2B1" in card_html or "+1" in card_html  # URL-encoded or raw +1
+    assert "-1" in card_html
+
+
+def test_vote_links_omitted_when_no_pat() -> None:
+    """When FEEDBACK_PAT is absent, job card HTML does NOT contain vote links."""
+    import os
+    from unittest.mock import patch as mock_patch
+    from infrastructure.email_notifier import _job_card
+    job: JobRecord = _make_job("Java Developer", 12)
+    job["id"] = "job-abc-123"
+    with mock_patch.dict(os.environ, {}, clear=True):
+        # Ensure FEEDBACK_PAT is absent
+        os.environ.pop("FEEDBACK_PAT", None)
+        card_html: str = _job_card(job)
+    assert "feedback.html" not in card_html
+
+
+def test_vote_link_url_structure() -> None:
+    """Vote link contains job_id, vote, title, company as query params; token after #."""
+    import os
+    import urllib.parse
+    from unittest.mock import patch as mock_patch
+    from infrastructure.email_notifier import _job_card
+    job: JobRecord = _make_job("Java Dev", 10)
+    job["id"] = "job-xyz"
+    job["company"] = "Big Corp"
+    with mock_patch.dict(os.environ, {"FEEDBACK_PAT": "mytoken123"}):
+        card_html: str = _job_card(job)
+    # Token must appear after # (in fragment), not as query param
+    assert "#mytoken123" in card_html
+    assert "?mytoken123" not in card_html
+    assert "job_id=" in card_html
+    assert "vote=" in card_html

@@ -36,8 +36,8 @@ def test_token_below_threshold_does_not_apply(tmp_path: Path) -> None:
     """Tokens with |net_votes| < 3 do not affect the multiplier."""
     # 2 upvotes for "java" — net = 2, below threshold of 3
     entries: list[dict[str, object]] = [
-        {"job_id": "a", "reason": "java", "vote": "+1"},
-        {"job_id": "b", "reason": "java", "vote": "+1"},
+        {"job_id": "a", "reasons": ["java"], "vote": "+1"},
+        {"job_id": "b", "reasons": ["java"], "vote": "+1"},
     ]
     feedback_path: Path = _write_feedback(tmp_path, entries)
 
@@ -52,9 +52,9 @@ def test_token_below_threshold_does_not_apply(tmp_path: Path) -> None:
 def test_token_at_threshold_boosts_score(tmp_path: Path) -> None:
     """Token with net_votes == 3 contributes; score for matching job content increases."""
     entries: list[dict[str, object]] = [
-        {"job_id": "a", "reason": "java", "vote": "+1"},
-        {"job_id": "b", "reason": "java", "vote": "+1"},
-        {"job_id": "c", "reason": "java", "vote": "+1"},
+        {"job_id": "a", "reasons": ["java"], "vote": "+1"},
+        {"job_id": "b", "reasons": ["java"], "vote": "+1"},
+        {"job_id": "c", "reasons": ["java"], "vote": "+1"},
     ]
     feedback_path: Path = _write_feedback(tmp_path, entries)
 
@@ -71,7 +71,7 @@ def test_multiplier_clamped_at_minimum(tmp_path: Path) -> None:
     # 10 downvotes each for several tokens found in job content → multiplier goes very negative
     tokens: list[str] = ["java", "python", "sql", "react", "linux"]
     entries: list[dict[str, object]] = [
-        {"job_id": f"job-{t}-{i}", "reason": t, "vote": "-1"}
+        {"job_id": f"job-{t}-{i}", "reasons": [t], "vote": "-1"}
         for t in tokens
         for i in range(10)
     ]
@@ -90,7 +90,7 @@ def test_multiplier_clamped_at_maximum(tmp_path: Path) -> None:
     """Strong positive votes clamp multiplier to 2.0; final_score <= round(base * 2.0)."""
     tokens: list[str] = ["java", "python", "sql", "react", "linux"]
     entries: list[dict[str, object]] = [
-        {"job_id": f"job-{t}-{i}", "reason": t, "vote": "+1"}
+        {"job_id": f"job-{t}-{i}", "reasons": [t], "vote": "+1"}
         for t in tokens
         for i in range(10)
     ]
@@ -108,7 +108,7 @@ def test_multiplier_clamped_at_maximum(tmp_path: Path) -> None:
 def test_feedback_score_delta_in_breakdown(tmp_path: Path) -> None:
     """Returned breakdown includes 'feedback_score_delta' when multiplier is applied."""
     entries: list[dict[str, object]] = [
-        {"job_id": f"job-{i}", "reason": "java", "vote": "+1"}
+        {"job_id": f"job-{i}", "reasons": ["java"], "vote": "+1"}
         for i in range(3)
     ]
     feedback_path: Path = _write_feedback(tmp_path, entries)
@@ -125,7 +125,7 @@ def test_feedback_score_delta_in_breakdown(tmp_path: Path) -> None:
 def test_no_match_in_content_multiplier_stays_one(tmp_path: Path) -> None:
     """Even with threshold-passing tokens, no match in job_content → multiplier stays 1.0."""
     entries: list[dict[str, object]] = [
-        {"job_id": f"job-{i}", "reason": "java", "vote": "+1"}
+        {"job_id": f"job-{i}", "reasons": ["java"], "vote": "+1"}
         for i in range(3)
     ]
     feedback_path: Path = _write_feedback(tmp_path, entries)
@@ -154,9 +154,9 @@ def test_parse_error_in_feedback_json_treated_as_empty(tmp_path: Path) -> None:
 def test_negative_vote_normalization(tmp_path: Path) -> None:
     """Vote values '-1' (string), -1 (int) all normalize correctly."""
     entries: list[dict[str, object]] = [
-        {"job_id": "a", "reason": "java", "vote": "-1"},
-        {"job_id": "b", "reason": "java", "vote": "-1"},
-        {"job_id": "c", "reason": "java", "vote": "-1"},
+        {"job_id": "a", "reasons": ["java"], "vote": "-1"},
+        {"job_id": "b", "reasons": ["java"], "vote": "-1"},
+        {"job_id": "c", "reasons": ["java"], "vote": "-1"},
     ]
     feedback_path: Path = _write_feedback(tmp_path, entries)
 
@@ -167,3 +167,25 @@ def test_negative_vote_normalization(tmp_path: Path) -> None:
     # net = -3, multiplier = 1.0 + (-3 * 0.5) = -0.5, clamped to 0.5
     assert multiplier == 0.5
     assert final_score == round(10 * 0.5)
+
+
+def test_multi_reason_accumulates_independently(tmp_path: Path) -> None:
+    """Multiple reasons in one record each contribute as independent tokens."""
+    entries: list[dict[str, object]] = [
+        {"job_id": f"job-{i}", "reasons": ["java", "spring boot"], "vote": "+1"}
+        for i in range(3)
+    ]
+    feedback_path: Path = _write_feedback(tmp_path, entries)
+
+    with patch("application.feedback_bias_service._FEEDBACK_PATH", feedback_path):
+        svc: FeedbackBiasService = FeedbackBiasService()
+        _, _, multi_multiplier = svc.apply(10, "java spring boot developer", {})
+        _, _, java_only_multiplier = svc.apply(10, "java developer", {})
+        _, _, no_match_multiplier = svc.apply(10, "python developer", {})
+
+    # Both tokens threshold-met and each independently boosts the multiplier.
+    # multi_multiplier >= java_only_multiplier (both clamp to 2.0 in this fixture,
+    # but neither is reduced by the second token being present).
+    assert multi_multiplier >= java_only_multiplier
+    assert java_only_multiplier > 1.0
+    assert no_match_multiplier == 1.0
