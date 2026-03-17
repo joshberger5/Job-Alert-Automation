@@ -146,6 +146,52 @@ def test_no_match_location_not_remote_filtered() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Bug fix: US city + description remote phrase must NOT pass allows()
+# ---------------------------------------------------------------------------
+
+
+def test_us_city_with_description_remote_phrase_not_allowed() -> None:
+    """Bug fix: 'New York, United States' + description 'remote work environment'
+    must NOT pass allows() — location doesn't confirm remote."""
+    job: Job = _make_job(
+        location="New York, New York, United States",
+        description="We offer a remote work environment. Java required.",
+        remote=None,
+    )
+    profile: CandidateProfile = _make_profile(remote_allowed=True, preferred_locations=[])
+    assert _POLICY.allows(job, profile) is False
+
+
+def test_us_city_with_description_remote_phrase_is_unverified_remote() -> None:
+    """Bug fix: same job above IS flagged as unverified remote."""
+    job: Job = _make_job(
+        location="New York, New York, United States",
+        description="We offer a remote work environment. Java required.",
+        remote=None,
+    )
+    profile: CandidateProfile = _make_profile(remote_allowed=True, preferred_locations=[])
+    assert _POLICY.is_unverified_remote(job, profile) is True
+
+
+def test_confirmed_remote_location_is_not_unverified_remote() -> None:
+    """A job with 'Remote' in its location is confirmed — not unverified."""
+    job: Job = _make_job(location="Remote, United States", remote=None)
+    profile: CandidateProfile = _make_profile(remote_allowed=True, preferred_locations=[])
+    assert _POLICY.is_unverified_remote(job, profile) is False
+
+
+def test_remote_none_location_remote_passes_without_description_phrase() -> None:
+    """remote=None + 'Remote' in location → allowed even with no description phrase."""
+    job: Job = _make_job(
+        location="Remote - United States",
+        description="Java developer role.",
+        remote=None,
+    )
+    profile: CandidateProfile = _make_profile(remote_allowed=True, preferred_locations=[])
+    assert _POLICY.allows(job, profile) is True
+
+
+# ---------------------------------------------------------------------------
 # Salary floor filter
 # ---------------------------------------------------------------------------
 
