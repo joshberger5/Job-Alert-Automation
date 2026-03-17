@@ -179,6 +179,33 @@ def test_vote_links_omitted_when_no_pat() -> None:
     assert "feedback.html" not in card_html
 
 
+def test_vote_link_relevant_has_explicit_blue_color() -> None:
+    """'Relevant' link must carry color:#3b82f6 — no explicit color renders purple in email clients."""
+    import os
+    from unittest.mock import patch as mock_patch
+    from infrastructure.email_notifier import _job_card
+    job: JobRecord = _make_job("Java Dev", 10)
+    job["id"] = "job-xyz"
+    job["company"] = "Corp"
+    with mock_patch.dict(os.environ, {"FEEDBACK_PAT": "token"}):
+        card_html: str = _job_card(job)
+    assert "color:#3b82f6" in card_html
+
+
+def test_vote_link_icons_use_img_not_svg() -> None:
+    """Vote icons must use <img> elements not inline <svg> — email clients strip inline SVG."""
+    import os
+    from unittest.mock import patch as mock_patch
+    from infrastructure.email_notifier import _job_card
+    job: JobRecord = _make_job("Java Dev", 10)
+    job["id"] = "job-xyz"
+    job["company"] = "Corp"
+    with mock_patch.dict(os.environ, {"FEEDBACK_PAT": "token"}):
+        card_html: str = _job_card(job)
+    assert "<img" in card_html
+    assert "<svg" not in card_html
+
+
 def test_vote_link_url_structure() -> None:
     """Vote link contains job_id, vote, title, company as query params; token after #."""
     import os
