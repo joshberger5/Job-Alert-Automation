@@ -2,7 +2,7 @@
 
 Scrapes job postings from 27 sources (up to 29 with optional JSearch) 3× daily, scores them against a candidate profile parsed from a LaTeX resume, optionally filters titles with a Gemini LLM pass, and emails a formatted digest of qualified matches. Each email card contains thumbs-up/thumbs-down vote links; votes accumulate in a 50-record ring buffer and bias future scoring via `FeedbackBiasService`.
 
-![Email preview](docs/email_preview.png)
+![Email preview](docs/email_preview_cropped.png)
 
 ---
 
@@ -325,3 +325,9 @@ pytest.ini       Registers the `e2e` pytest marker.
 main.py          Wiring only — constructs all objects, runs fetcher pool,
                  writes jobs_debug.json, triggers email.
 ```
+
+---
+
+## Full Email Preview
+
+![Full email preview](docs/email_preview.png)
