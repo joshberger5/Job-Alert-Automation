@@ -330,4 +330,13 @@ main.py          Wiring only — constructs all objects, runs fetcher pool,
 
 ## Full Email Preview
 
+To regenerate the screenshots after a run:
+
+```bash
+py screenshot_email.py                        # uses latest email in docs/emails/
+py screenshot_email.py docs/emails/foo.html  # specific file
+```
+
+Outputs `docs/email_preview.png` (full page) and `docs/email_preview_cropped.png` (top crop used above).
+
 ![Full email preview](docs/email_preview.png)
