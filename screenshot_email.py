@@ -19,9 +19,10 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import Protocol
 
-import pyautogui
-import pygetwindow as gw
+import pyautogui  # type: ignore[import-untyped]
+import pygetwindow as gw  # type: ignore[import-untyped]
 from PIL import Image
 
 EMAILS_DIR = Path("docs/emails")
@@ -32,15 +33,24 @@ DOWNLOADS = Path.home() / "Downloads"
 EDGE = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 
 
+class _Window(Protocol):
+    _hWnd: int
+    left: int
+    width: int
+    top: int
+    height: int
+    title: str
+
+
 def latest_email() -> Path:
-    files = sorted(EMAILS_DIR.glob("email_*.html"), key=lambda p: p.name)
+    files: list[Path] = sorted(EMAILS_DIR.glob("email_*.html"), key=lambda p: p.name)
     if not files:
         raise FileNotFoundError(f"No email HTML files in {EMAILS_DIR}")
     return files[-1]
 
 
-def focus_and_click(win: object) -> None:
-    hwnd = win._hWnd
+def focus_and_click(win: _Window) -> None:
+    hwnd: int = win._hWnd
     ctypes.windll.user32.ShowWindow(hwnd, 9)  # SW_RESTORE
     ctypes.windll.user32.SetForegroundWindow(hwnd)
     time.sleep(0.4)
@@ -48,13 +58,13 @@ def focus_and_click(win: object) -> None:
     time.sleep(0.3)
 
 
-def wait_for_download(before: set, timeout: int = 20) -> Path:
-    deadline = time.time() + timeout
+def wait_for_download(before: set[Path], timeout: int = 20) -> Path:
+    deadline: float = time.time() + timeout
     while time.time() < deadline:
-        after = set(DOWNLOADS.glob("*.png"))
-        new = after - before
+        after: set[Path] = set(DOWNLOADS.glob("*.png"))
+        new: set[Path] = after - before
         if new:
-            f = max(new, key=lambda p: p.stat().st_mtime)
+            f: Path = max(new, key=lambda p: p.stat().st_mtime)
             time.sleep(0.5)  # let it finish writing
             return f
         time.sleep(0.3)
@@ -66,7 +76,7 @@ def main() -> None:
     print(f"Source: {html.name}")
 
     # Snapshot Downloads before we start
-    before: set = set(DOWNLOADS.glob("*.png"))
+    before: set[Path] = set(DOWNLOADS.glob("*.png"))
 
     # Kill Edge for a clean slate
     subprocess.run(["taskkill", "/f", "/im", "msedge.exe"], capture_output=True)
@@ -77,8 +87,10 @@ def main() -> None:
     time.sleep(4)
 
     # Focus the Edge page window
-    page_wins = [w for w in gw.getAllWindows()
-                 if "Job Alert" in w.title and "DevTools" not in w.title]
+    page_wins: list[_Window] = [
+        w for w in gw.getAllWindows()
+        if "Job Alert" in w.title and "DevTools" not in w.title
+    ]
     if not page_wins:
         raise RuntimeError("Could not find Edge window — did Edge open?")
     focus_and_click(page_wins[0])
@@ -89,7 +101,7 @@ def main() -> None:
     time.sleep(3)
 
     # Find and click inside the DevTools window
-    dt_wins = [w for w in gw.getAllWindows() if "DevTools" in w.title]
+    dt_wins: list[_Window] = [w for w in gw.getAllWindows() if "DevTools" in w.title]
     if not dt_wins:
         raise RuntimeError("DevTools window did not appear")
     focus_and_click(dt_wins[0])
@@ -105,7 +117,7 @@ def main() -> None:
 
     # Wait for the PNG in Downloads
     print("Waiting for download...")
-    downloaded = wait_for_download(before)
+    downloaded: Path = wait_for_download(before)
     print(f"Downloaded: {downloaded.name}")
 
     # Move to docs/
