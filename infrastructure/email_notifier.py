@@ -339,12 +339,17 @@ def archive_email(
     run_at: datetime,
     archive_dir: str = "docs/emails",
     max_files: int = 5,
+    redact_tokens: list[str] | None = None,
 ) -> None:
     os.makedirs(archive_dir, exist_ok=True)
+    safe_html: str = html
+    for token in (redact_tokens or []):
+        if token:
+            safe_html = safe_html.replace(token, "[REDACTED]")
     filename: str = run_at.strftime("email_%Y%m%d_%H%M%S.html")
     filepath: str = os.path.join(archive_dir, filename)
     with open(filepath, "w", encoding="utf-8") as f:
-        f.write(html)
+        f.write(safe_html)
     existing: list[str] = sorted(_glob.glob(os.path.join(archive_dir, "email_*.html")))
     while len(existing) > max_files:
         os.remove(existing.pop(0))

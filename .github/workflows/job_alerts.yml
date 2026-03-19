@@ -78,3 +78,31 @@ jobs:
           git add -f seen_jobs.json docs/feedback.html docs/emails/
           git diff --staged --quiet || git commit -m "chore: update seen_jobs [skip ci]"
           git push
+
+      - name: Notify on failure
+        if: failure()
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          EMAIL_TO:  ${{ secrets.EMAIL_TO }}
+          RUN_URL:   ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python - <<'EOF'
+          import os, smtplib
+          from email.mime.text import MIMEText
+          host: str = os.environ["SMTP_HOST"]
+          port: int = int(os.environ.get("SMTP_PORT", "587"))
+          user: str = os.environ["SMTP_USER"]
+          pw: str   = os.environ["SMTP_PASS"]
+          to: str   = os.environ["EMAIL_TO"]
+          url: str  = os.environ["RUN_URL"]
+          msg = MIMEText(f"The Job Alert workflow failed.\n\nDetails: {url}")
+          msg["Subject"] = "Job Alert Workflow FAILED"
+          msg["From"] = user
+          msg["To"] = to
+          with smtplib.SMTP(host, port) as s:
+              s.ehlo(); s.starttls(); s.login(user, pw)
+              s.sendmail(user, to, msg.as_string())
+          EOF

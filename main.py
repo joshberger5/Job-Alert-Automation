@@ -204,7 +204,8 @@ def _send_email_notification(
         unverified_remote_jobs=unverified_remote or None,
         run_log=run_log,
     )
-    archive_email(html, run_at)
+    pat: str = os.environ.get("FEEDBACK_PAT", "")
+    archive_email(html, run_at, redact_tokens=[pat] if pat else None)
     if not os.environ.get("SMTP_HOST"):
         return
     try:
