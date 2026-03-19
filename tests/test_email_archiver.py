@@ -67,3 +67,25 @@ def test_no_deletion_when_below_max_files(tmp_path: Path) -> None:
     assert len(files) == 3
     for name in existing:
         assert name in files
+
+
+def test_redacts_tokens_in_archived_html(tmp_path: Path) -> None:
+    archive_dir: str = str(tmp_path / "emails")
+    run_at: datetime = datetime(2024, 6, 5, 9, 7, 3)
+    pat: str = "ghp_supersecrettoken12345"
+    html_content: str = f'<a href="https://example.com?job_id=123#{pat}">Vote</a>'
+    archive_email(html_content, run_at, archive_dir=archive_dir, redact_tokens=[pat])
+
+    saved: str = (tmp_path / "emails" / "email_20240605_090703.html").read_text(encoding="utf-8")
+    assert pat not in saved
+    assert "[REDACTED]" in saved
+
+
+def test_redact_empty_token_does_not_corrupt_html(tmp_path: Path) -> None:
+    archive_dir: str = str(tmp_path / "emails")
+    run_at: datetime = datetime(2024, 6, 5, 9, 7, 3)
+    html_content: str = "<html>some content</html>"
+    archive_email(html_content, run_at, archive_dir=archive_dir, redact_tokens=[""])
+
+    saved: str = (tmp_path / "emails" / "email_20240605_090703.html").read_text(encoding="utf-8")
+    assert saved == html_content
