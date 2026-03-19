@@ -159,6 +159,8 @@ blocklist additions.
 - After every run, `archive_email()` writes `docs/emails/email_YYYYMMDD_HHMMSS.html`
 - Maximum 5 archived files; oldest is deleted when the cap is exceeded
 - Archiving runs unconditionally (even when SMTP is not configured)
+- The `FEEDBACK_PAT` is replaced with `[REDACTED]` in archived files — the live
+  email sent via SMTP retains working vote links; the git-committed copy does not
 
 ---
 
