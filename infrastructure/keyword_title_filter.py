@@ -50,6 +50,10 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "manual qa",
     "manual tester",
     "manual test",
+    # ── Non-SWE engineering roles ──────────────────────────────────────────────
+    "site reliability",
+    "solutions engineer",
+    "data analyst",
 ]
 
 
