@@ -77,6 +77,27 @@ def test_software_engineer_approved() -> None:
 # ---------------------------------------------------------------------------
 
 
+def test_data_analyst_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "Risk Strategy Data Analyst")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
+def test_site_reliability_engineer_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "Senior Site Reliability Engineer, Identity Platform")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
+def test_solutions_engineer_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "Senior Technical Solutions Engineer")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
 def test_custom_fragments_override_defaults() -> None:
     kf: KeywordTitleFilter = KeywordTitleFilter(rejected_fragments=["wizard"])
     records: list[JobRecord] = [
