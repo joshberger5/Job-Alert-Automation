@@ -133,6 +133,8 @@ _STOP_WORDS: frozenset[str] = frozenset({
     # Misc
     'present', 'current', 'etc', 'via', 'remote', 'hybrid',
     'florida', 'jacksonville',
+    # Generic tech terms already covered by secondary skills (e.g. 'rest apis')
+    'api', 'rest',
 })
 
 
@@ -323,9 +325,9 @@ class ResumeProfileBuilder:
                 continue
             # Keep tokens that look like tech: special chars, digits, or capitalized
             if (
-                re.search(r'[+#.]', raw)       # e.g. Node.js, C++, C#
-                or re.search(r'\d', raw)        # e.g. ES6, Python3
-                or raw[0].isupper()             # e.g. Docker, PostgreSQL
+                re.search(r'[+#.]', raw)                          # e.g. Node.js, C++, C#
+                or (re.search(r'\d', raw) and re.search(r'[a-zA-Z]', raw))  # e.g. ES6, Python3 (not bare numbers)
+                or raw[0].isupper()                               # e.g. Docker, PostgreSQL
             ):
                 token_counts[lower] += 1
 

@@ -12,9 +12,6 @@ __pycache__/
 CLAUDE.md
 .claude
 
-# Debug output (overwritten each run)
-jobs_debug.json
-
 # Persistent job history (delete to reset)
 seen_jobs.json
 

@@ -77,6 +77,71 @@ def test_software_engineer_approved() -> None:
 # ---------------------------------------------------------------------------
 
 
+def test_data_analyst_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "Risk Strategy Data Analyst")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
+def test_site_reliability_engineer_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "Senior Site Reliability Engineer, Identity Platform")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
+def test_solutions_engineer_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "Senior Technical Solutions Engineer")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
+def test_test_infrastructure_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "Senior Software Engineer - Consumer Engineering Test Infrastructure")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
+def test_staff_software_engineer_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "Staff Software Engineer, Backend - Platform (FinHub - Ledger)")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
+# ---------------------------------------------------------------------------
+# Whitelist (overrides reject list)
+# ---------------------------------------------------------------------------
+
+
+def test_backend_software_engineer_whitelisted() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "Senior Software Engineer, Backend - Platform (FinHub - Ledger)")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" in approved
+
+
+def test_whitelist_overrides_role_type_reject() -> None:
+    """A whitelisted title must be approved even if it also matches a role-type reject fragment."""
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    # Contains "software engineer, backend" (whitelist) AND "test infrastructure" (role-type reject)
+    records: list[JobRecord] = [_make_record("1", "Software Engineer, Backend — Test Infrastructure")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" in approved
+
+
+def test_whitelist_does_not_override_hard_reject() -> None:
+    """A whitelisted title must still be rejected if it matches a hard (seniority) reject fragment."""
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    # Contains "software engineer, backend" (whitelist) AND "staff software" (hard reject)
+    records: list[JobRecord] = [_make_record("1", "Staff Software Engineer, Backend - Platform")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
 def test_custom_fragments_override_defaults() -> None:
     kf: KeywordTitleFilter = KeywordTitleFilter(rejected_fragments=["wizard"])
     records: list[JobRecord] = [
