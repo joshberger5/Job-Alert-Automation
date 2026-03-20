@@ -33,7 +33,7 @@ jobs:
       - name: Run Claude Code to analyze and improve rules
         uses: anthropics/claude-code-action@beta
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           allowed_tools: "Bash,Read,Edit,Write"
