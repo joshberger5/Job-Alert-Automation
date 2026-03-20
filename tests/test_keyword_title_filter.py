@@ -98,6 +98,41 @@ def test_solutions_engineer_rejected() -> None:
     assert "1" not in approved
 
 
+def test_test_infrastructure_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "Senior Software Engineer - Consumer Engineering Test Infrastructure")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
+def test_staff_software_engineer_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "Staff Software Engineer, Backend - Platform (FinHub - Ledger)")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
+# ---------------------------------------------------------------------------
+# Whitelist (overrides reject list)
+# ---------------------------------------------------------------------------
+
+
+def test_backend_software_engineer_whitelisted() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "Senior Software Engineer, Backend - Platform (FinHub - Ledger)")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" in approved
+
+
+def test_whitelist_overrides_reject_fragment() -> None:
+    """A whitelisted title must be approved even if it also matches a reject fragment."""
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    # Contains "software engineer, backend" (whitelist) AND "test infrastructure" (reject)
+    records: list[JobRecord] = [_make_record("1", "Software Engineer, Backend — Test Infrastructure")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" in approved
+
+
 def test_custom_fragments_override_defaults() -> None:
     kf: KeywordTitleFilter = KeywordTitleFilter(rejected_fragments=["wizard"])
     records: list[JobRecord] = [
