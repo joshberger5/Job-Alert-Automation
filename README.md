@@ -1,6 +1,6 @@
 # Job Alert Automation
 
-Scrapes job postings from 27 sources (up to 29 with optional JSearch) 3× daily, scores them against a candidate profile parsed from a LaTeX resume, optionally filters titles with a Gemini LLM pass, and emails a formatted digest of qualified matches. Each email card contains thumbs-up/thumbs-down vote links; votes accumulate in a 50-record ring buffer and bias future scoring via `FeedbackBiasService`.
+Scrapes job postings from 27 sources (up to 29 with optional JSearch) 3× daily, scores them against a candidate profile parsed from a LaTeX resume, filters titles with a fast keyword list and an optional Gemini LLM pass, and emails a formatted digest of qualified matches. Each email card contains thumbs-up/thumbs-down vote links; votes accumulate in a 50-record ring buffer and bias future scoring via `FeedbackBiasService`. After each successful run, `improve_rules.yml` runs Claude Code non-interactively to analyze `jobs_debug.json` and open a PR with targeted filter improvements if any are found.
 
 ![Email preview](docs/email_preview_cropped.png)
 
@@ -74,7 +74,7 @@ py main.py
 `LatexResumeParser` strips LaTeX markup from `resume.tex` to produce plain text. `ResumeProfileBuilder` then constructs a `CandidateProfile` by:
 
 - Locating the **Technical Skills** section and splitting it into categories. The first category (e.g. Languages) becomes `core_skills` with weight **4**; all remaining categories become `secondary_skills` with weight **2**.
-- Scanning the **Experience** and **Projects** sections for capitalized tokens, then applying two filters: (1) **frequency gate** — tokens appearing only once are dropped; (2) **taxonomy gate** — tokens are checked against `infrastructure/tech_taxonomy.yaml` (61 curated tech terms). Taxonomy hits are always included. Unknown tokens are optionally classified by Gemini (when `GEMINI_API_KEY` is set) and cached in `infrastructure/tertiary_cache.json`; without a key, unknown tokens are kept (fail-open). Survivors become `tertiary_skills` with weight **1**.
+- Scanning the **Experience** and **Projects** sections for capitalized tokens, then applying two filters: (1) **frequency gate** — tokens appearing only once are dropped; (2) **taxonomy gate** — tokens are checked against `infrastructure/tech_taxonomy.yaml` (61 curated tech terms). Taxonomy hits are always included. Unknown tokens are optionally classified by Gemini (when `GEMINI_API_KEY` is set) and cached in `infrastructure/tertiary_cache.json`; without a key, unknown tokens are kept (fail-open). Survivors become `tertiary_skills` with weight **1**. Generic terms already covered by higher-tier skills (e.g. `rest`, `api` when `rest apis` is already secondary) are excluded via a stop-word list.
 - Calculating `ideal_max_experience_years` by summing date-range durations found in the **Experience** section (total months ÷ 12, rounded down).
 - Loading all preferences from `candidate_profile.yaml`: `preferred_locations`, `remote_allowed`, `open_to_contract`, `minimum_salary`, `feedback_thumbs_down_reasons`, `feedback_thumbs_up_reasons`.
 
@@ -106,7 +106,15 @@ All fetchers implement the `JobFetcher` protocol (`fetch() -> list[Job]`) and ru
 
 Detail-page fetches inside `WorkdayFetcher`, `IcimsFetcher`, `IcimsSitemapFetcher`, and `OracleFetcher` use `ThreadPoolExecutor(max_workers=10)` with a **12-second** per-request timeout and a **120-second** batch cap.
 
-### 3 — Filtering
+### 3 — Keyword Title Filtering
+
+`KeywordTitleFilter` (`infrastructure/keyword_title_filter.py`) runs before policy filtering so obvious non-fits never reach the more expensive downstream steps. It uses case-insensitive substring matching on the job title with a three-tier priority:
+
+1. **Hard reject** (seniority-based; whitelist cannot override) — fragments like `"staff software"` and `"principal software"` that indicate a level structurally out of range regardless of role type.
+2. **Whitelist** (overrides role-type rejections) — fragments like `"software engineer, backend"` and `"backend software engineer"` that unambiguously identify a target role and protect it from future over-aggressive role-type reject rules.
+3. **Role-type reject** — fragments for clearly wrong role categories: data scientist, product manager, site reliability engineer, solutions engineer, data analyst, test infrastructure, manual QA, recruiter, etc.
+
+### 4 — Policy Filtering
 
 `FilteringPolicy.allows()` evaluates each job in order; first failing check eliminates the job:
 
@@ -122,7 +130,7 @@ Detail-page fetches inside `WorkdayFetcher`, `IcimsFetcher`, `IcimsSitemapFetche
    - `job.remote is None` **and** the description/location contains an explicit remote phrase (`"fully remote"`, `"100% remote"`, `"work from home"`, etc.) **and** the location is US-accessible (prevents foreign on-site jobs from slipping through via description phrasing).
 5. **Location check** — passes if any `preferred_locations` substring appears in `job.location` (case-insensitive).
 
-### 4 — Scoring
+### 5 — Scoring
 
 `ScoringPolicy.evaluate()` operates on `"{title} {description}".lower()`:
 
@@ -132,7 +140,7 @@ Detail-page fetches inside `WorkdayFetcher`, `IcimsFetcher`, `IcimsSitemapFetche
 
 After scoring, `FeedbackBiasService` applies a personal multiplier derived from feedback vote history (`feedback.json`). Each vote record stores a `reasons[]` array; every token in the array independently accumulates net votes. Reason tokens with ≥ 3 net votes contribute `net_votes × 0.5` to the multiplier, clamped to `[0.5, 2.0]`. The adjusted score determines `"qualified"` or `"scored_out"`, and `feedback_multiplier` is written to `jobs_debug.json`.
 
-### 5 — LLM Title Filtering (optional)
+### 6 — LLM Title Filtering (optional)
 
 When `GEMINI_API_KEY` is set, `GeminiTitleFilter` runs a single batch call to `gemini-2.0-flash-lite` (free tier) on all post-filter records (`"qualified"` + `"scored_out"`). The prompt is built from `profile.core_skills` and `profile.ideal_max_experience_years` and asks the model to identify which job titles are genuine software engineering roles for the candidate.
 
@@ -140,7 +148,7 @@ When `GEMINI_API_KEY` is set, `GeminiTitleFilter` runs a single batch call to `g
 - **Scored-out jobs the LLM approves** get `llm_relevant=True` added to their debug record and appear in a third email section.
 - **Fails open** — any API error returns all IDs, so no jobs are silently dropped.
 
-### 6 — Persistence
+### 7 — Persistence
 
 `JsonJobRepository` loads `seen_jobs.json` on startup and writes it after every `save()` call. Records are never expired — delete the file to reset. Schema:
 
@@ -152,9 +160,9 @@ When `GEMINI_API_KEY` is set, `GeminiTitleFilter` runs a single batch call to `g
 
 Duplicate detection happens before filtering and scoring, so already-seen jobs cost only a dict lookup.
 
-### 7 — Events & Debug Output
+### 8 — Events & Debug Output
 
-`JobProcessingService` emits `JobEvaluated` and `JobQualified` domain events via `InMemoryEventPublisher` → `SimpleEventDispatcher`. Each job's result is recorded in `jobs_debug.json` with full score breakdown, filter reason, and metadata. The `result` field is one of:
+`JobProcessingService` emits `JobEvaluated` and `JobQualified` domain events via `InMemoryEventPublisher` → `SimpleEventDispatcher`. Each job's result is recorded in `jobs_debug.json` with full score breakdown, filter reason, and metadata. `jobs_debug.json` and `resume.tex` are committed to the repo after every CI run so they're always available for analysis. The `result` field is one of:
 
 | Value | Meaning |
 |---|---|
@@ -164,7 +172,7 @@ Duplicate detection happens before filtering and scoring, so already-seen jobs c
 | `"qualified"` | Passed filtering and scoring |
 | `"llm_filtered"` | Passed scoring but LLM flagged the title as irrelevant |
 
-### 8 — Email
+### 9 — Email
 
 `EmailNotifier.send()` builds an HTML email (table-based, inline styles for client compatibility) with up to three sections:
 
@@ -174,7 +182,7 @@ Duplicate detection happens before filtering and scoring, so already-seen jobs c
 
 Sent via SMTP STARTTLS. Skipped entirely if `SMTP_HOST` is not set.
 
-### 9 — Feedback Loop
+### 10 — Feedback Loop
 
 When `FEEDBACK_PAT` is set, each qualified job card in the email contains 👍 and 👎 vote links. Clicking one opens `docs/feedback.html` (GitHub Pages), where the user selects a reason tag and submits. The page fires a `repository_dispatch` event to GitHub, which triggers `feedback.yml`.
 
@@ -205,7 +213,7 @@ py -m pytest tests/ -v --ignore=tests/e2e/
 py -m pytest tests/e2e/ -v
 ```
 
-171 unit tests across 24 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
+198 unit tests across 26 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
 
 ### E2E fetcher health checks
 
@@ -229,11 +237,11 @@ The `e2e` pytest marker is registered in `pytest.ini`.
 | `test_job_processing_service.py` | 17 | All four result paths (duplicate, filtered_out, scored_out, qualified); correct `repo.save` args per path; `JobEvaluated` + `JobQualified` events on qualified; `feedback_multiplier` on scored records; mixed-batch ordering |
 | `test_scoring_policy.py` | 9 | Word-boundary skill matching (Java ≠ JavaScript, C ≠ account), missing-skill penalties, `qualifies()` at/above/below threshold |
 | `test_experience_requirement.py` | 12 | Year-phrase parsing (trailing punctuation, `+` suffix, range), `UNKNOWN` when absent, gap classification (`WITHIN_IDEAL_RANGE`, `MODERATE_GAP`, `LARGE_GAP`), boundary cases at `ideal_max+4` and `ideal_max+5` |
-| `test_keyword_title_filter.py` | 6 | Rejection fragments (`data scientist`, `product manager`), case-insensitivity, approved engineering titles, custom fragment override |
+| `test_keyword_title_filter.py` | 14 | Role-type rejection fragments (data scientist, product manager, solutions engineer, test infrastructure, etc.), seniority hard-reject (staff software), whitelist overrides role-type reject, whitelist does not override hard reject, case-insensitivity, custom fragment injection |
 | `test_filtering_policy.py` | 15 | Contract filter, salary floor (below/above/missing/disabled), experience gap filter, remote=True/None/Europe logic, preferred-location substring match |
 | `test_landstar_fetcher.py` | 19 | Field mapping, salary (annual + hourly→annual conversion, absent), remote detection (`hasVirtualLocation`, title, description), multi-location formatting, pagination, error handling |
 | `test_adzuna_similar_fetcher.py` | 10 | Job extraction from "Similar jobs" section, ID/salary/URL parsing, cross-seed deduplication, graceful degradation on HTTP errors and missing section |
-| `test_resume_profile_builder.py` | 6 | `minimum_salary` and reason tags loaded from YAML; taxonomy-gated tertiary extraction (single-occurrence excluded, taxonomy hit included, fail-open when no Gemini key) |
+| `test_resume_profile_builder.py` | 10 | `minimum_salary` and reason tags loaded from YAML; taxonomy-gated tertiary extraction (single-occurrence excluded, taxonomy hit included, fail-open when no Gemini key); bare numbers excluded; `api`/`rest` excluded as stop words |
 | `test_feedback_bias_service.py` | 10 | No-file → multiplier 1.0; below-threshold token skipped; at-threshold token applied; min/max clamp (0.5/2.0); score delta in breakdown; multi-reason independent accumulation |
 | `test_oracle_fetcher.py` | 3 | Field mapping from ICE REST response, detail-page description extraction, pagination |
 | `test_jsearch_fetcher.py` | 3 | Field mapping, `job_is_remote` handling, salary formatting |
@@ -241,6 +249,7 @@ The `e2e` pytest marker is registered in `pytest.ini`.
 | `test_main_retry.py` | 4 | `_run_fetcher` succeeds on first attempt, retries once on failure, records failure after 2 attempts |
 | `test_detail_timeout.py` | 3 | `_DETAIL_TIMEOUT == 12` in `WorkdayFetcher`, `IcimsFetcher`, `AdzunaSimilarFetcher` |
 | `test_email_notifier.py` | 13 | Run Log rendering, HTML escaping, score-descending ordering in all three email sections, input list not mutated; vote links present/absent/URL-structured |
+| `test_email_archiver.py` | 6 | Directory creation, correct filename and content, oldest-file trimming when over max, PAT redaction in archived HTML |
 | `test_feedback_json_trim.py` | 3 | `_trim_votes()` keeps last 50, no-op under 50, sorts by `voted_at` before trimming |
 | `test_tee.py` | 6 | `Tee` write/flush forwarding to primary and secondary streams |
 | `test_main_timeout.py` | 2 | `_fetch_jobs` returns 3-tuple; timed-out fetcher recorded as failure |
@@ -282,7 +291,14 @@ The HTML report shows each source file with surviving and killed mutants highlig
 
 GitHub Actions workflow (`.github/workflows/job_alerts.yml`) runs at **6 AM, 12 PM, and 5 PM ET** daily, plus on-demand via `workflow_dispatch`. Only one cron entry is active at a time — currently EDT (`0 10,16,21 * * *`). Next DST adjustment: Nov 1, 2026 (switch to `0 11,17,22 * * *` for EST).
 
-After each run, `seen_jobs.json` is force-committed back to the repo (`git add -f`, bypassing `.gitignore`) so job history persists across runs.
+After each run, `seen_jobs.json` is force-committed back to the repo (`git add -f`, bypassing `.gitignore`) so job history persists across runs. `jobs_debug.json` and `resume.tex` are also committed after each run so they're available for the automated rule-improvement workflow.
+
+**`improve_rules.yml`** triggers after each successful `job_alerts.yml` run (and via `workflow_dispatch` for manual testing). It runs Claude Code non-interactively to:
+1. Read `jobs_debug.json`, `resume.tex`, `candidate_profile.yaml`, and the filtering/scoring source files
+2. Scan every non-duplicate job across all result categories (qualified, filtered, scored_out) for false positives, false negatives, and scoring noise
+3. Make surgical changes to `keyword_title_filter.py`, `candidate_profile.yaml`, or `resume_profile_builder.py` if evidence clearly justifies them
+4. Run the full test suite and mypy; revert and exit if either fails
+5. Open a PR with concrete evidence from `jobs_debug.json` cited in the body
 
 **Required repository secrets:**
 
@@ -299,6 +315,7 @@ After each run, `seen_jobs.json` is force-committed back to the repo (`git add -
 | `GEMINI_API_KEY` | Enables LLM title filtering via Gemini 2.0 Flash Lite (free tier) |
 | `JSEARCH_API_KEY` | Enables JSearch/RapidAPI fetcher (2 additional sources) |
 | `FEEDBACK_PAT` | Enables vote links in email cards; fine-grained PAT with `Contents: read/write` on this repo |
+| `CLAUDE_CODE_OAUTH_TOKEN` | Required by `improve_rules.yml`; Claude Max subscription OAuth token — run `claude setup-token` locally to generate |
 
 ---
 
@@ -313,7 +330,8 @@ application/     JobProcessingService (orchestration), ResumeProfileBuilder,
                  JobRepository protocol, EventPublisher ABC.
 
 infrastructure/  All I/O: job fetchers, LatexResumeParser, JsonJobRepository,
-                 EmailNotifier, GeminiTitleFilter, in-memory event publisher.
+                 EmailNotifier, GeminiTitleFilter, KeywordTitleFilter,
+                 in-memory event publisher.
 
 tests/           pytest unit suite — one file per fetcher + job processing service.
                  All HTTP mocked; fixtures in tests/fixtures/.
