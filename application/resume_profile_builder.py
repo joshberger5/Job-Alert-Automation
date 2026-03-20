@@ -133,6 +133,8 @@ _STOP_WORDS: frozenset[str] = frozenset({
     # Misc
     'present', 'current', 'etc', 'via', 'remote', 'hybrid',
     'florida', 'jacksonville',
+    # Generic tech terms already covered by secondary skills (e.g. 'rest apis')
+    'api', 'rest',
 })
 
 

@@ -5,7 +5,7 @@ from application.job_record import JobRecord
 
 # Lowercase substrings matched against job titles (case-insensitive).
 # A title containing ANY of these fragments is rejected.
-# Edit this list to add / remove role categories you know you're not a fit for.
+# The whitelist below can override these — use for role-type rejections.
 _REJECTED_TITLE_FRAGMENTS: list[str] = [
     # ── Data / ML / Research ──────────────────────────────────────────────────
     "data scientist",
@@ -50,31 +50,62 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "manual qa",
     "manual tester",
     "manual test",
-    # ── Non-SWE engineering roles ──────────────────────────────────────────────
+    # ── Non-SWE engineering roles ─────────────────────────────────────────────
     "site reliability",
     "solutions engineer",
     "data analyst",
+    "test infrastructure",
+]
+
+# Seniority-based rejections — whitelist cannot override these.
+# Use for levels that are structurally out of range regardless of role type.
+_HARD_REJECTED_TITLE_FRAGMENTS: list[str] = [
+    "staff software",     # typically 6-8+ yrs; candidate has ~2
+    "principal software", # above staff
+]
+
+# Lowercase substrings matched against job titles (case-insensitive).
+# A title matching ANY of these fragments is approved immediately,
+# overriding role-type rejections (but NOT hard/seniority rejections).
+_WHITELISTED_TITLE_FRAGMENTS: list[str] = [
+    "software engineer, backend",
+    "backend software engineer",
 ]
 
 
 class KeywordTitleFilter:
     """Fast local title filter — no API calls required.
 
-    Rejects job records whose title contains any fragment from
-    *rejected_fragments* (case-insensitive substring match).  Runs before
-    the Gemini LLM filter so obvious non-fits never consume API quota.
+    Evaluation order per title:
+      1. Hard reject (seniority) → always reject; whitelist cannot override.
+      2. Whitelist → approve immediately; overrides role-type rejections.
+      3. Role-type reject → reject.
+      4. Default → approve.
 
     Mirrors the ``filter_by_title`` interface of ``GeminiTitleFilter`` so
     both can be used interchangeably in ``main.py``.
     """
 
     def __init__(
-        self, rejected_fragments: list[str] | None = None
+        self,
+        rejected_fragments: list[str] | None = None,
+        hard_rejected_fragments: list[str] | None = None,
+        whitelisted_fragments: list[str] | None = None,
     ) -> None:
         self._fragments: list[str] = (
             rejected_fragments
             if rejected_fragments is not None
             else _REJECTED_TITLE_FRAGMENTS
+        )
+        self._hard_rejected: list[str] = (
+            hard_rejected_fragments
+            if hard_rejected_fragments is not None
+            else _HARD_REJECTED_TITLE_FRAGMENTS
+        )
+        self._whitelisted: list[str] = (
+            whitelisted_fragments
+            if whitelisted_fragments is not None
+            else _WHITELISTED_TITLE_FRAGMENTS
         )
 
     def filter_by_title(
@@ -86,7 +117,11 @@ class KeywordTitleFilter:
 
         for record in records:
             title_lower: str = record["title"].lower()
-            if any(frag in title_lower for frag in self._fragments):
+            if any(frag in title_lower for frag in self._hard_rejected):
+                rejected_count += 1
+            elif any(frag in title_lower for frag in self._whitelisted):
+                approved_ids.add(record["id"])
+            elif any(frag in title_lower for frag in self._fragments):
                 rejected_count += 1
             else:
                 approved_ids.add(record["id"])
