@@ -58,15 +58,26 @@ jobs:
             - CLAUDE.md               (project conventions you must follow)
 
             ## Step 2: Identify specific issues
-            Look for:
-            1. Jobs that qualified (result=qualified) but are clearly wrong role type for a backend SWE
-               (wrong title category, wrong tech stack, irrelevant domain)
-            2. Jobs with result=scored_out and llm_relevant=true — these are borderline misses;
-               consider whether scoring should catch them
-            3. Tertiary skill noise — tokens adding 1 point that are substrings of other skills,
-               overly generic, or not actually on the resume (e.g. 'api', 'rest' when 'rest apis'
+            Scan EVERY job in jobs_debug.json except those with result=duplicate.
+            For each result category, look for the issues listed below.
+
+            result=qualified — false positives:
+            - Wrong role type for a backend SWE (non-SWE title category, wrong tech stack,
+              irrelevant domain). These should have been filtered.
+
+            result=filtered — false negatives or correct filters:
+            - Jobs that look like genuine backend SWE roles that were incorrectly filtered.
+              If a filter rule is too broad, narrow it.
+
+            result=scored_out — borderline misses:
+            - Jobs with llm_relevant=true that are genuinely good fits. Consider whether a
+              scoring fix would surface them.
+
+            Across all categories:
+            - Tertiary skill noise — tokens adding 1 point that are substrings of other skills,
+              overly generic, or not actually on the resume (e.g. 'api', 'rest' when 'rest apis'
                is already secondary)
-            4. Missing keyword filters for non-SWE role types that slipped through
+            - Missing keyword filters for non-SWE role types that slipped through to qualified
 
             ## Step 3: Make surgical changes
             Only change what the evidence in jobs_debug.json clearly justifies.
