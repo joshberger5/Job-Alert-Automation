@@ -4,11 +4,12 @@ on:
   workflow_run:
     workflows: ["Job Alerts"]
     types: [completed]
+  workflow_dispatch:
 
 jobs:
   improve:
-    # Only run after a successful job_alerts run
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # Run after a successful job_alerts run, or when manually dispatched
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -55,7 +56,6 @@ jobs:
             - infrastructure/keyword_title_filter.py  (title reject list)
             - application/resume_profile_builder.py   (how skills become score weights)
             - BUSINESS_RULES.md       (rules you must not violate)
-            - CLAUDE.md               (project conventions you must follow)
 
             ## Step 2: Identify specific issues
             Scan EVERY job in jobs_debug.json except those with result=duplicate.
@@ -111,10 +111,7 @@ jobs:
               git add -A
               git commit -m "auto: improve job rules based on latest run"
               git push -u origin "$BRANCH"
-              gh pr create \
-                --title "auto: Improve Job Rules — $(date +%Y-%m-%d)" \
-                --body "$(cat <<'PRBODY'
-            # auto: Improve Job Rules
+              PR_BODY="# auto: Improve Job Rules
 
             ## Summary
             [Describe what changed and why, citing specific jobs from jobs_debug.json as evidence]
@@ -123,9 +120,10 @@ jobs:
             [List each file changed and what was modified]
 
             ## Validation
-            All unit tests passing, mypy clean.
-            PRBODY
-            )"
+            All unit tests passing, mypy clean."
+              gh pr create \
+                --title "auto: Improve Job Rules — $(date +%Y-%m-%d)" \
+                --body "$PR_BODY"
 
             Important: Write the actual PR body with real evidence, not the template above.
             Replace the bracketed placeholders with concrete observations from jobs_debug.json.
