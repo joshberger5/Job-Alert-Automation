@@ -182,7 +182,19 @@ Duplicate detection happens before filtering and scoring, so already-seen jobs c
 
 Sent via SMTP STARTTLS. Skipped entirely if `SMTP_HOST` is not set.
 
-### 10 — Feedback Loop
+### 10 — Automated Rule Improvement
+
+After each successful run, GitHub Actions triggers `improve_rules.yml`, which runs Claude Code non-interactively to:
+
+1. Read `jobs_debug.json`, `resume.tex`, `candidate_profile.yaml`, and the filtering/scoring source files
+2. Scan every non-duplicate job across all result categories for false positives, false negatives, and scoring noise
+3. Make surgical changes to `keyword_title_filter.py`, `candidate_profile.yaml`, or `resume_profile_builder.py` if the evidence clearly justifies them
+4. Run the full test suite and mypy; revert and exit if either fails
+5. Open a PR with concrete evidence from `jobs_debug.json` cited in the body
+
+The system effectively tunes its own filters between runs without any manual intervention — each email digest informs the next.
+
+### 11 — Feedback Loop
 
 When `FEEDBACK_PAT` is set, each qualified job card in the email contains 👍 and 👎 vote links. Clicking one opens `docs/feedback.html` (GitHub Pages), where the user selects a reason tag and submits. The page fires a `repository_dispatch` event to GitHub, which triggers `feedback.yml`.
 
