@@ -182,7 +182,19 @@ Duplicate detection happens before filtering and scoring, so already-seen jobs c
 
 Sent via SMTP STARTTLS. Skipped entirely if `SMTP_HOST` is not set.
 
-### 10 — Feedback Loop
+### 10 — Automated Rule Improvement
+
+After each successful run, GitHub Actions triggers `improve_rules.yml`, which runs Claude Code non-interactively to:
+
+1. Read `jobs_debug.json`, `resume.tex`, `candidate_profile.yaml`, and the filtering/scoring source files
+2. Scan every non-duplicate job across all result categories for false positives, false negatives, and scoring noise
+3. Make surgical changes to `keyword_title_filter.py`, `candidate_profile.yaml`, or `resume_profile_builder.py` if the evidence clearly justifies them
+4. Run the full test suite and mypy; revert and exit if either fails
+5. Open a PR with concrete evidence from `jobs_debug.json` cited in the body
+
+The system effectively tunes its own filters between runs without any manual intervention — each email digest informs the next.
+
+### 11 — Feedback Loop
 
 When `FEEDBACK_PAT` is set, each qualified job card in the email contains 👍 and 👎 vote links. Clicking one opens `docs/feedback.html` (GitHub Pages), where the user selects a reason tag and submits. The page fires a `repository_dispatch` event to GitHub, which triggers `feedback.yml`.
 
@@ -213,7 +225,7 @@ py -m pytest tests/ -v --ignore=tests/e2e/
 py -m pytest tests/e2e/ -v
 ```
 
-198 unit tests across 26 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
+200 unit tests across 26 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
 
 ### E2E fetcher health checks
 
@@ -227,9 +239,9 @@ The `e2e` pytest marker is registered in `pytest.ini`.
 
 | File | Tests | What it covers |
 |---|---|---|
-| `test_adzuna_fetcher.py` | 7 | Field mapping, salary variants (min-only, max-only, absent), remote detection, pagination, single-page stop |
+| `test_adzuna_fetcher.py` | 8 | Field mapping, salary variants (min-only, max-only, equal min/max, absent), remote detection, pagination, single-page stop |
 | `test_greenhouse_fetcher.py` | 3 | HTML stripping from `content`, remote detection, missing/null location |
-| `test_lever_fetcher.py` | 4 | Salary formatting, `location` passed as query param, employment type variants (`contract`, `part-time`, `internship`) |
+| `test_lever_fetcher.py` | 5 | Salary formatting (range, single value, equal min/max), `location` passed as query param, employment type variants (`contract`, `part-time`, `internship`) |
 | `test_workday_fetcher.py` | 4 | Field mapping with `fetch_descriptions=False`, pagination, remote detection, ld+json extraction with `fetch_descriptions=True` |
 | `test_boa_fetcher.py` | 3 | Field mapping (`family \| lob` description, URL construction), pagination, missing `jcrURL` → `url=None` |
 | `test_remoteok_fetcher.py` | 3 | Metadata element skipped, `location: null` → `"Worldwide"`, `tags: null` → `required_skills=[]` |
