@@ -55,7 +55,6 @@ Two sources are combined at startup:
 ```yaml
 preferred_locations:
   - Jacksonville
-  - Jacksonville Beach
   - Orange Park
   - St. Augustine
   - Saint Augustine
@@ -310,7 +309,7 @@ any(preferred_location.lower() in job.location.lower()
 ```
 
 Substring match only. `preferred_locations` is defined in `candidate_profile.yaml` and
-currently includes: Jacksonville, Jacksonville Beach, Orange Park, St. Augustine, Saint Augustine,
+currently includes: Jacksonville, Orange Park, St. Augustine, Saint Augustine,
 St. Johns, Saint Johns, Fleming Island, Ponte Vedra, Fernandina Beach.
 
 If neither the remote check nor the location check passes → `result = "filtered_out"`.
