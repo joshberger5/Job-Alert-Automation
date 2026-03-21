@@ -55,6 +55,8 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "solutions engineer",
     "data analyst",
     "test infrastructure",
+    "civil engineering",
+    "business development",
 ]
 
 # Seniority-based rejections — whitelist cannot override these.
