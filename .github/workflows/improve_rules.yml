@@ -102,16 +102,17 @@ jobs:
               python -m mypy domain/ application/ infrastructure/ main.py
             If either fails, revert your changes and exit without creating a PR.
 
-            ## Step 5: Create the PR
+            ## Step 5: Create or update the PR
             If you made changes and tests pass:
               git config user.email "github-actions[bot]@users.noreply.github.com"
               git config user.name "github-actions[bot]"
-              BRANCH="auto/improve-rules-$(date +%Y%m%d-%H%M)"
-              git checkout -b "$BRANCH"
-              git add -A
-              git commit -m "auto: improve job rules based on latest run"
-              git push -u origin "$BRANCH"
-              PR_BODY="# auto: Improve Job Rules
+
+              # Check for an existing open auto-improve PR
+              EXISTING_PR=$(gh pr list --state open --json number,headRefName \
+                --jq '.[] | select(.headRefName | startswith("auto/improve-rules-")) | .number' \
+                | head -1)
+
+              PR_BODY="# Auto: Improve Job Rules
 
             ## Summary
             [Describe what changed and why, citing specific jobs from jobs_debug.json as evidence]
@@ -121,9 +122,28 @@ jobs:
 
             ## Validation
             All unit tests passing, mypy clean."
-              gh pr create \
-                --title "auto: Improve Job Rules — $(date +%Y-%m-%d)" \
-                --body "$PR_BODY"
+
+              if [ -n "$EXISTING_PR" ]; then
+                # Add to the existing branch
+                BRANCH=$(gh pr view "$EXISTING_PR" --json headRefName --jq '.headRefName')
+                git fetch origin "$BRANCH"
+                git checkout "$BRANCH"
+                git add -A
+                git commit -m "auto: improve job rules based on latest run"
+                git push origin "$BRANCH"
+                # Update the PR body with the latest evidence
+                gh pr edit "$EXISTING_PR" --body "$PR_BODY"
+              else
+                # No open PR — create a new branch and PR
+                BRANCH="auto/improve-rules-$(date +%Y%m%d-%H%M)"
+                git checkout -b "$BRANCH"
+                git add -A
+                git commit -m "auto: improve job rules based on latest run"
+                git push -u origin "$BRANCH"
+                gh pr create \
+                  --title "Auto: Improve Job Rules" \
+                  --body "$PR_BODY"
+              fi
 
             Important: Write the actual PR body with real evidence, not the template above.
             Replace the bracketed placeholders with concrete observations from jobs_debug.json.
