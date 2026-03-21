@@ -30,6 +30,7 @@ from infrastructure.email_notifier import EmailNotifier, archive_email, build_em
 from infrastructure.resume.latex_resume_parser import LatexResumeParser
 from infrastructure.job_fetchers import JobFetcher
 from infrastructure.fetcher_registry import build_fetchers
+from infrastructure.fetcher_health import FetcherHealth, read_health, update_health, write_health
 from infrastructure.keyword_title_filter import KeywordTitleFilter
 from infrastructure.llm_title_filter import GeminiTitleFilter
 
@@ -171,6 +172,13 @@ def _apply_filters(
     return qualified, llm_filtered, llm_relevant, unverified_remote, counts
 
 
+def _update_fetcher_health(fetchers: list[JobFetcher], failures: list[FetcherFailure]) -> None:
+    labels: list[str] = [f.company_name for f in fetchers]
+    current: FetcherHealth = read_health()
+    updated: FetcherHealth = update_health(current, failures, labels)
+    write_health(updated)
+
+
 def _write_debug_json(
     records: list[JobRecord],
     run_at: datetime,
@@ -239,6 +247,7 @@ def main() -> None:
         fetch_failures: list[FetcherFailure]
         fetch_warnings: list[str]
         all_jobs, fetch_failures, fetch_warnings = _fetch_jobs(fetchers, timeout=_FETCHER_TIMEOUT)
+        _update_fetcher_health(fetchers, fetch_failures)
         warnings: list[str] = pre_warnings + fetch_warnings
         for fail in fetch_failures:
             print(f"  [{fail['company']}] FAILED: {fail.get('error', 'unknown')} (attempts: {fail.get('attempts', '?')})")

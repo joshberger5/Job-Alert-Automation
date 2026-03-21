@@ -1,6 +1,6 @@
 # Job Alert Automation
 
-Scrapes job postings from 27 sources (up to 29 with optional JSearch) 3× daily, scores them against a candidate profile parsed from a LaTeX resume, filters titles with a fast keyword list and an optional Gemini LLM pass, and emails a formatted digest of qualified matches. Each email card contains thumbs-up/thumbs-down vote links; votes accumulate in a 50-record ring buffer and bias future scoring via `FeedbackBiasService`. After each successful run, `improve_rules.yml` runs Claude Code non-interactively to analyze `jobs_debug.json` and open a PR with targeted filter improvements if any are found.
+Scrapes job postings from 27 sources (up to 29 with optional JSearch) 3× daily, scores them against a candidate profile parsed from a LaTeX resume, filters titles with a fast keyword list and an optional Gemini LLM pass, and emails a formatted digest of qualified matches. Each email card contains thumbs-up/thumbs-down vote links; votes accumulate in a 50-record ring buffer and bias future scoring via `FeedbackBiasService`. After each successful run, `improve_rules.yml` runs Claude Code non-interactively to analyze `jobs_debug.json` and open a PR with targeted filter improvements if any are found. A second workflow, `fix_fetchers.yml`, tracks consecutive fetcher failures in `fetcher_health.json` and automatically diagnoses and patches any fetcher that fails 3 times in a row.
 
 ![Email preview](docs/email_preview_cropped.png)
 
@@ -202,7 +202,31 @@ After each successful run, GitHub Actions triggers `improve_rules.yml`, which ru
 
 The system effectively tunes its own filters between runs without any manual intervention — each email digest informs the next.
 
-### 11 — Feedback Loop
+### 11 — Automated Fetcher Repair
+
+After each successful run, GitHub Actions also triggers `fix_fetchers.yml`. Each run updates `fetcher_health.json` with per-fetcher consecutive failure counts. When a fetcher reaches 3 consecutive failures, the workflow runs Claude Code non-interactively to:
+
+1. Read `fetcher_health.json` and identify fetchers with `consecutive_failures >= 3`
+2. Read the failing fetcher's source and use `curl` to inspect the live endpoint
+3. Diagnose the root cause (SSL error, 401, URL change, parse failure, timeout)
+4. Make a surgical fix to the fetcher in `infrastructure/job_fetchers/`
+5. Run the full test suite and mypy; revert and exit without a PR if either fails
+6. Open a PR (or push to an existing open `auto/fix-fetchers-*` branch) with the fix
+
+If the root cause cannot be determined safely, the agent exits with a diagnostic message rather than making a speculative change. A successful run resets the fetcher's count to 0.
+
+`fetcher_health.json` schema:
+```json
+{
+  "Company Name": {
+    "consecutive_failures": 3,
+    "last_error": "SSL: CERTIFICATE_VERIFY_FAILED",
+    "last_failed_at": "2026-03-21T10:37:41"
+  }
+}
+```
+
+### 12 — Feedback Loop
 
 When `FEEDBACK_PAT` is set, each qualified job card in the email contains 👍 and 👎 vote links. Clicking one opens `docs/feedback.html` (GitHub Pages), where the user selects a reason tag and submits. The page fires a `repository_dispatch` event to GitHub, which triggers `feedback.yml`.
 
@@ -233,7 +257,7 @@ py -m pytest tests/ -v --ignore=tests/e2e/
 py -m pytest tests/e2e/ -v
 ```
 
-200 unit tests across 26 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
+210 unit tests across 27 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
 
 ### E2E fetcher health checks
 
@@ -266,6 +290,7 @@ The `e2e` pytest marker is registered in `pytest.ini`.
 | `test_oracle_fetcher.py` | 3 | Field mapping from ICE REST response, detail-page description extraction, pagination |
 | `test_jsearch_fetcher.py` | 3 | Field mapping, `job_is_remote` handling, salary formatting |
 | `test_fetcher_result.py` | 2 | `FetcherFailure` TypedDict field presence and types |
+| `test_fetcher_health.py` | 10 | Consecutive failure increment, reset on success, new vs existing fetchers, timeout as failure, multi-fetcher isolation, timestamp recording |
 | `test_main_retry.py` | 4 | `_run_fetcher` succeeds on first attempt, retries once on failure, records failure after 2 attempts |
 | `test_detail_timeout.py` | 3 | `_DETAIL_TIMEOUT == 12` in `WorkdayFetcher`, `IcimsFetcher`, `AdzunaSimilarFetcher` |
 | `test_email_notifier.py` | 13 | Run Log rendering, HTML escaping, score-descending ordering in all three email sections, input list not mutated; vote links present/absent/URL-structured |
