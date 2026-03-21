@@ -1,6 +1,12 @@
 preferred_locations:
   - Jacksonville
   - Jacksonville Beach
+  - Orange Park
+  - St. Augustine
+  - Fleming Island
+  - Ponte Vedra
+  - Fernandina Beach
+  - Yulee
 remote_allowed: true
 open_to_contract: false
 minimum_salary: 85000
