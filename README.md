@@ -213,7 +213,7 @@ py -m pytest tests/ -v --ignore=tests/e2e/
 py -m pytest tests/e2e/ -v
 ```
 
-198 unit tests across 26 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
+200 unit tests across 26 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
 
 ### E2E fetcher health checks
 
@@ -227,9 +227,9 @@ The `e2e` pytest marker is registered in `pytest.ini`.
 
 | File | Tests | What it covers |
 |---|---|---|
-| `test_adzuna_fetcher.py` | 7 | Field mapping, salary variants (min-only, max-only, absent), remote detection, pagination, single-page stop |
+| `test_adzuna_fetcher.py` | 8 | Field mapping, salary variants (min-only, max-only, equal min/max, absent), remote detection, pagination, single-page stop |
 | `test_greenhouse_fetcher.py` | 3 | HTML stripping from `content`, remote detection, missing/null location |
-| `test_lever_fetcher.py` | 4 | Salary formatting, `location` passed as query param, employment type variants (`contract`, `part-time`, `internship`) |
+| `test_lever_fetcher.py` | 5 | Salary formatting (range, single value, equal min/max), `location` passed as query param, employment type variants (`contract`, `part-time`, `internship`) |
 | `test_workday_fetcher.py` | 4 | Field mapping with `fetch_descriptions=False`, pagination, remote detection, ld+json extraction with `fetch_descriptions=True` |
 | `test_boa_fetcher.py` | 3 | Field mapping (`family \| lob` description, URL construction), pagination, missing `jcrURL` → `url=None` |
 | `test_remoteok_fetcher.py` | 3 | Metadata element skipped, `location: null` → `"Worldwide"`, `tags: null` → `required_skills=[]` |
