@@ -49,7 +49,10 @@ class AdzunaFetcher:
                 salary_min = item.get("salary_min")
                 salary_max = item.get("salary_max")
                 if salary_min is not None and salary_max is not None:
-                    salary = f"${int(salary_min):,} - ${int(salary_max):,}"
+                    if salary_min == salary_max:
+                        salary = f"${int(salary_min):,}"
+                    else:
+                        salary = f"${int(salary_min):,} - ${int(salary_max):,}"
                 elif salary_min is not None:
                     salary = f"${int(salary_min):,}"
                 elif salary_max is not None:
