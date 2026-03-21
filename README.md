@@ -39,7 +39,15 @@ Place `resume.tex` in the project root. Edit `candidate_profile.yaml` to set you
 ```yaml
 preferred_locations:
   - Jacksonville
-  - Jacksonville Beach
+  - Orange Park
+  - St. Augustine
+  - Saint Augustine
+  - St. Johns
+  - Saint Johns
+  - Fleming Island
+  - Nocatee
+  - Ponte Vedra
+  - Fernandina Beach
 remote_allowed: true
 open_to_contract: false
 minimum_salary: 85000          # 0 = no salary filter
