@@ -77,6 +77,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git add -f seen_jobs.json docs/feedback.html docs/emails/ jobs_debug.json resume.tex
           git diff --staged --quiet || git commit -m "chore: update seen_jobs [skip ci]"
+          git pull --rebase origin main
           git push
 
       - name: Notify on failure
