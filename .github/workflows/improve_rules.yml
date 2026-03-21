@@ -21,7 +21,6 @@ jobs:
         with:
           ref: main
           token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -37,7 +36,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           mode: agent
-          allowed_tools: "Bash,Read,Edit,Write"
+          allowed_tools: "Bash,Read,Edit,Write,Glob,Grep"
           timeout_minutes: "15"
           direct_prompt: |
             You are an automated job-alert tuning agent for this repository.
@@ -56,6 +55,7 @@ jobs:
             - infrastructure/keyword_title_filter.py  (title reject list)
             - application/resume_profile_builder.py   (how skills become score weights)
             - BUSINESS_RULES.md       (rules you must not violate)
+            - feedback.json           (vote history — tokens with |net_vote_score| >= 3 shift final scores; explains why some jobs score higher or lower than their breakdown suggests)
 
             ## Step 2: Identify specific issues
             Scan EVERY job in jobs_debug.json except those with result=duplicate.
@@ -112,38 +112,51 @@ jobs:
                 --jq '.[] | select(.headRefName | startswith("auto/improve-rules-")) | .number' \
                 | head -1)
 
-              PR_BODY="# Auto: Improve Job Rules
+              Stage only the files you changed (subset of):
+                git add infrastructure/keyword_title_filter.py candidate_profile.yaml application/resume_profile_builder.py
 
-            ## Summary
-            [Describe what changed and why, citing specific jobs from jobs_debug.json as evidence]
+              Write the PR body with actual evidence from jobs_debug.json — no
+              bracketed placeholders. Use this exact format:
 
-            ## Changes
-            [List each file changed and what was modified]
+                # Auto: Improve Job Rules
 
-            ## Validation
-            All unit tests passing, mypy clean."
+                ## Summary
+                - {What changed and why, citing specific job titles or IDs}
+                - {Key reasoning behind each change}
+
+                ## Changes
+                | File | Change |
+                |---|---|
+                | `{path}` | {one-line description} |
+
+                ## Validation
+                All unit tests passing, mypy clean.
+
+              Rules for the PR body:
+              - Plain, technical tone — no marketing language
+              - No "🤖 Generated with Claude Code" footer
+              - Summary bullets explain *why*, not just *what*
+              - Pass the body via a heredoc to avoid quoting issues
 
               if [ -n "$EXISTING_PR" ]; then
-                # Add to the existing branch
                 BRANCH=$(gh pr view "$EXISTING_PR" --json headRefName --jq '.headRefName')
                 git fetch origin "$BRANCH"
                 git checkout "$BRANCH"
-                git add -A
                 git commit -m "auto: improve job rules based on latest run"
                 git push origin "$BRANCH"
-                # Update the PR body with the latest evidence
-                gh pr edit "$EXISTING_PR" --body "$PR_BODY"
+                gh pr edit "$EXISTING_PR" --body "$(cat <<'EOF'
+            {actual body}
+            EOF
+            )"
               else
-                # No open PR — create a new branch and PR
                 BRANCH="auto/improve-rules-$(date +%Y%m%d-%H%M)"
                 git checkout -b "$BRANCH"
-                git add -A
                 git commit -m "auto: improve job rules based on latest run"
                 git push -u origin "$BRANCH"
                 gh pr create \
                   --title "Auto: Improve Job Rules" \
-                  --body "$PR_BODY"
+                  --body "$(cat <<'EOF'
+            {actual body}
+            EOF
+            )"
               fi
-
-            Important: Write the actual PR body with real evidence, not the template above.
-            Replace the bracketed placeholders with concrete observations from jobs_debug.json.
