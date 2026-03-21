@@ -70,6 +70,14 @@ def test_no_salary() -> None:
     assert jobs[0].salary is None
 
 
+def test_salary_equal_min_max_shows_single_value() -> None:
+    data: list[dict[str, object]] = [_make_item(salary_range={"min": 90000, "max": 90000})]
+    with patch("requests.get", return_value=_mock_response(data)):
+        jobs = LeverFetcher(company="test", company_name="Test").fetch()
+
+    assert jobs[0].salary == "$90,000"
+
+
 def test_employment_type_variants() -> None:
     cases: list[tuple[str, str]] = [
         ("Contract", "contract"),

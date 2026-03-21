@@ -130,6 +130,18 @@ def test_pagination() -> None:
     assert len(jobs) == 52
 
 
+def test_salary_equal_min_max_shows_single_value() -> None:
+    item: dict[str, object] = _make_job_item("1")
+    item["salary_min"] = 90000
+    item["salary_max"] = 90000
+    data: dict[str, object] = {"results": [item]}
+
+    with patch("requests.get", return_value=_mock_response(data)):
+        jobs = _make_fetcher().fetch()
+
+    assert jobs[0].salary == "$90,000"
+
+
 def test_single_page_stop() -> None:
     data: dict[str, object] = _load_fixture()  # 2 results < 50
 
