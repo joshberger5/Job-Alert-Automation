@@ -244,6 +244,55 @@ Sample Project
     assert "rest" not in profile.tertiary_skills
 
 
+def test_html_not_in_tertiary_skills() -> None:
+    """'html' must not become a tertiary token — it is a stop word (frontend noise for backend roles)."""
+    resume: str = """
+Technical Skills
+Languages: Java, Python
+
+Experience
+January 2022 – Present
+Software Engineer at Acme Corp
+Generated HTML templates and HTML email components for the notification service.
+
+Projects
+Sample Project
+"""
+    config: dict[str, Any] = _make_config()
+    builder: ResumeProfileBuilder = ResumeProfileBuilder()
+    taxonomy: frozenset[str] = frozenset()
+    env_without_gemini: dict[str, str] = {k: v for k, v in os.environ.items() if k != "GEMINI_API_KEY"}
+    with patch("application.resume_profile_builder.ResumeProfileBuilder._load_config", return_value=config), \
+         patch("application.resume_profile_builder._load_taxonomy", return_value=taxonomy), \
+         patch.dict(os.environ, env_without_gemini, clear=True):
+        profile = builder.build(resume)
+    assert "html" not in profile.tertiary_skills
+
+
+def test_github_not_in_tertiary_skills() -> None:
+    """'github' must not become a tertiary token — it is a stop word (tooling, not a backend skill)."""
+    resume: str = """
+Technical Skills
+Languages: Java, Python
+
+Experience
+January 2022 – Present
+Software Engineer at Acme Corp
+Managed GitHub repositories and GitHub Actions pipelines for CI/CD.
+
+Projects
+Sample Project
+"""
+    config: dict[str, Any] = _make_config()
+    builder: ResumeProfileBuilder = ResumeProfileBuilder()
+    # github is in the taxonomy but overridden by the stop word — test confirms stop word wins
+    taxonomy: frozenset[str] = frozenset({"github"})
+    with patch("application.resume_profile_builder.ResumeProfileBuilder._load_config", return_value=config), \
+         patch("application.resume_profile_builder._load_taxonomy", return_value=taxonomy):
+        profile = builder.build(resume)
+    assert "github" not in profile.tertiary_skills
+
+
 def test_unknown_token_kept_without_gemini_key() -> None:
     """Unknown token (not in taxonomy) appearing twice is kept when GEMINI_API_KEY is absent."""
     config: dict[str, Any] = _make_config()
