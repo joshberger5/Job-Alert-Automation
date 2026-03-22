@@ -204,9 +204,9 @@ The system effectively tunes its own filters between runs without any manual int
 
 ### 11 — Automated Fetcher Repair
 
-After each successful run, GitHub Actions also triggers `fix_fetchers.yml`. Each run updates `fetcher_health.json` with per-fetcher consecutive failure counts. When a fetcher reaches 3 consecutive failures, the workflow runs Claude Code non-interactively to:
+After each successful run, GitHub Actions also triggers `fix_fetchers.yml`. Each run updates `fetcher_health.json` with per-fetcher consecutive failure counts. When a fetcher fails (both retry attempts exhausted within a single run), the workflow runs Claude Code non-interactively to:
 
-1. Read `fetcher_health.json` and identify fetchers with `consecutive_failures >= 3`
+1. Read `fetcher_health.json` and identify fetchers with `consecutive_failures >= 1`
 2. Read the failing fetcher's source and use `curl` to inspect the live endpoint
 3. Diagnose the root cause (SSL error, 401, URL change, parse failure, timeout)
 4. Make a surgical fix to the fetcher in `infrastructure/job_fetchers/`

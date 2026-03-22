@@ -38,11 +38,11 @@ jobs:
 
             ## Step 1: Check if any fetchers need repair
             Read `fetcher_health.json`. If the file is empty (`{}`) or no fetcher
-            has `consecutive_failures >= 3`, print "No fetchers need repair." and
+            has `consecutive_failures >= 1`, print "No fetchers need repair." and
             exit immediately without creating any branch or PR.
 
             ## Step 2: Identify failing fetchers
-            For each fetcher with `consecutive_failures >= 3`:
+            For each fetcher with `consecutive_failures >= 1`:
             - Note the exact `last_error` string
             - Find the fetcher source file in `infrastructure/job_fetchers/` — look
               for a file whose class name or company_name matches the key in health data
