@@ -1,0 +1,148 @@
+name: Fix Failed Fetchers
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Claude Code to diagnose and fix fetchers
+        uses: anthropics/claude-code-action@beta
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          mode: agent
+          allowed_tools: "Bash,Read,Edit,Write,Glob,Grep"
+          timeout_minutes: "20"
+          direct_prompt: |
+            You are an automated fetcher repair agent for this job alert repository.
+
+            ## Step 1: Check if any fetchers need repair
+            Read `fetcher_health.json`. If the file is empty (`{}`) or no fetcher
+            has `consecutive_failures >= 3`, print "No fetchers need repair." and
+            exit immediately without creating any branch or PR.
+
+            ## Step 2: Identify failing fetchers
+            For each fetcher with `consecutive_failures >= 3`:
+            - Note the exact `last_error` string
+            - Find the fetcher source file in `infrastructure/job_fetchers/` — look
+              for a file whose class name or company_name matches the key in health data
+            - Read that fetcher's full source
+            - Check if an E2E test exists in `tests/e2e/` for that fetcher
+
+            ## Step 3: Diagnose the root cause
+            Read `CLAUDE.md` and `BUSINESS_RULES.md` before making any changes.
+
+            Common failure patterns and how to investigate:
+            - SSL certificate error → try `curl -I <endpoint_url>` to see current cert state
+            - 401 Unauthorized → check if auth headers or token format changed; try the
+              endpoint with curl to see the current response
+            - 404 Not Found → the endpoint URL likely changed; search the company's
+              careers page for the new API endpoint
+            - JSON/HTML parse error → fetch the endpoint with curl and compare the
+              current structure to what the fetcher expects
+            - Timeout → endpoint may have changed; try curl to measure response time
+
+            Use Bash to make curl requests when needed to diagnose the live state.
+
+            ## Step 4: Attempt a fix
+            Make surgical changes only to the failing fetcher(s) in
+            `infrastructure/job_fetchers/`. Allowed changes:
+            - Update endpoint URLs
+            - Fix request headers or authentication
+            - Fix HTML/JSON parsing to match the current page structure
+            - Adjust request parameters
+
+            Do NOT:
+            - Modify `fetcher_health.json` (the main run resets counts automatically)
+            - Change domain logic or non-fetcher files
+            - Modify fetchers that are not in the failing list
+
+            If you cannot determine a safe fix, print a clear explanation of the
+            root cause and exit without creating a PR. A failed diagnosis is more
+            useful than a speculative change.
+
+            ## Step 5: Validate
+            Run:
+              python -m pytest tests/ -v --ignore=tests/e2e/
+              python -m mypy domain/ application/ infrastructure/ main.py
+            If either fails, revert your changes and exit without creating a PR.
+            Print the full test/mypy output so it appears in the Actions log.
+
+            ## Step 6: Create or update the PR
+            If changes pass validation:
+              git config user.email "github-actions[bot]@users.noreply.github.com"
+              git config user.name "github-actions[bot]"
+
+              # Check for an existing open auto-fix PR
+              EXISTING_PR=$(gh pr list --state open --json number,headRefName \
+                --jq '.[] | select(.headRefName | startswith("auto/fix-fetchers-")) | .number' \
+                | head -1)
+
+              Stage only the fetcher files you changed:
+                git add infrastructure/job_fetchers/<changed_file>.py
+
+              Write the PR body with actual evidence — no bracketed placeholders.
+              Use this exact format:
+
+                # Auto: Fix Failed Fetchers
+
+                ## Summary
+                - {Which fetcher(s) failed, what the last_error was, what changed and why}
+                - {Root cause and how the fix addresses it}
+
+                ## Changes
+                | File | Change |
+                |---|---|
+                | `infrastructure/job_fetchers/<file>` | {one-line description} |
+
+                ## Validation
+                All unit tests passing, mypy clean.
+
+              Rules for the PR body:
+              - Plain, technical tone — no marketing language
+              - No "🤖 Generated with Claude Code" footer
+              - Summary bullets explain *why*, not just *what*
+              - Pass the body via a heredoc to avoid quoting issues
+
+              if [ -n "$EXISTING_PR" ]; then
+                BRANCH=$(gh pr view "$EXISTING_PR" --json headRefName --jq '.headRefName')
+                git fetch origin "$BRANCH"
+                git checkout "$BRANCH"
+                git commit -m "auto: fix failed fetcher(s)"
+                git push origin "$BRANCH"
+                gh pr edit "$EXISTING_PR" --body "$(cat <<'EOF'
+            {actual body}
+            EOF
+            )"
+              else
+                BRANCH="auto/fix-fetchers-$(date +%Y%m%d-%H%M)"
+                git checkout -b "$BRANCH"
+                git commit -m "auto: fix failed fetcher(s)"
+                git push -u origin "$BRANCH"
+                gh pr create \
+                  --title "Auto: Fix Failed Fetchers" \
+                  --body "$(cat <<'EOF'
+            {actual body}
+            EOF
+            )"
+              fi
