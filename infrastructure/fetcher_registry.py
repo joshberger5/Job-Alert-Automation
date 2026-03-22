@@ -70,6 +70,7 @@ def build_fetchers() -> tuple[list[JobFetcher], list[str]]:
             company_name="FIS Global",
             recruiting_base="https://fis.wd5.myworkdayjobs.com/SearchJobs",
             search_text="java",
+            fetch_descriptions=True,
         ),
         WorkdayFetcher(
             base_url="https://wd1.myworkdaysite.com",

@@ -101,7 +101,7 @@ All fetchers implement the `JobFetcher` protocol (`fetch() -> list[Job]`) and ru
 | Dun & Bradstreet | `LeverFetcher` | `api.lever.co/v0/postings/{company}?mode=json` |
 | Allstate | `WorkdayFetcher` | POST `allstate.wd5.myworkdayjobs.com/…/jobs` — descriptions fetched via ld+json, **parallelized** |
 | GEICO | `WorkdayFetcher` | POST `geico.wd1.myworkdayjobs.com/…/jobs` — descriptions fetched via ld+json, **parallelized** |
-| FIS Global | `WorkdayFetcher` | POST `/wday/cxs/fis/SearchJobs/jobs` — paginated JSON |
+| FIS Global | `WorkdayFetcher` | POST `/wday/cxs/fis/SearchJobs/jobs` — descriptions fetched via ld+json, **parallelized** |
 | SSC Technologies | `WorkdayFetcher` | POST `/wday/cxs/ssctech/SSCTechnologies/jobs` — descriptions fetched from job pages via ld+json, **parallelized** |
 | VyStar Credit Union | `WorkdayFetcher` | Same as above |
 | Availity | `WorkdayFetcher` | POST `availity.wd1.myworkdayjobs.com/…/jobs` — descriptions fetched via ld+json, **parallelized** |
@@ -257,7 +257,7 @@ py -m pytest tests/ -v --ignore=tests/e2e/
 py -m pytest tests/e2e/ -v
 ```
 
-210 unit tests across 27 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
+213 unit tests across 28 files, all passing with no network calls (all HTTP is mocked via `unittest.mock.patch`).
 
 ### E2E fetcher health checks
 
@@ -298,6 +298,7 @@ The `e2e` pytest marker is registered in `pytest.ini`.
 | `test_feedback_json_trim.py` | 3 | `_trim_votes()` keeps last 50, no-op under 50, sorts by `voted_at` before trimming |
 | `test_tee.py` | 6 | `Tee` write/flush forwarding to primary and secondary streams |
 | `test_main_timeout.py` | 2 | `_fetch_jobs` returns 3-tuple; timed-out fetcher recorded as failure |
+| `test_fetcher_registry.py` | 1 | FIS Global WorkdayFetcher has `fetch_descriptions=True` |
 
 Fixtures (JSON, HTML, RSS) live in `tests/fixtures/` — either trimmed real API responses or synthetic data matching the exact schema each fetcher expects.
 
