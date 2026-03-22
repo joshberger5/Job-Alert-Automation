@@ -147,56 +147,66 @@ jobs:
             )"
               fi
 
-            ## Step 7: Self-review
-            After the PR is created or updated, review your own changes against
-            this checklist. Retrieve the PR number:
+            ## Step 7: Self-review and correction
+            After the PR is created or updated, review your own changes, fix every
+            issue found, and post a summary of what was done.
+
+            Retrieve the PR number and check out the branch:
               PR_NUMBER=$(gh pr list --state open --json number,headRefName \
                 --jq '.[] | select(.headRefName | startswith("auto/fix-fetchers-")) | .number' \
                 | head -1)
+              BRANCH=$(gh pr view "$PR_NUMBER" --json headRefName --jq '.headRefName')
+              git fetch origin "$BRANCH" && git checkout "$BRANCH"
 
-            Re-read every file you changed, then check each item:
+            Re-read every file you changed, then work through each check. For each
+            issue found, fix it immediately — do not just note it.
 
-            1. Tests — does a unit test or E2E test exercise the code path you
-               changed? Check tests/ for any existing test covering the fetcher,
-               and whether your fix changes behavior that an existing test would
-               catch. Flag if the fix introduces a new code path with no test
-               coverage.
+            1. Tests — does a unit test exercise the code path you changed? If the
+               fix introduces a new code path with no coverage, write a test now.
 
-            2. Type annotations — scan every new or modified function for
-               parameters, return types, and local variables missing explicit
-               type annotations. Flag any violations (no implicit Any, no bare
-               dict/list without type args).
+            2. Type annotations — scan new or modified functions for missing explicit
+               type annotations (no implicit Any, no bare dict/list). Add any that
+               are missing now.
 
-            3. Business rules — read BUSINESS_RULES.md. Does the fix touch any
-               rule (e.g. salary parsing, remote detection, dedup)? If so,
-               confirm the rule still holds.
+            3. Business rules — read BUSINESS_RULES.md. If any change violates a
+               rule (e.g. salary parsing, remote detection, dedup), revert that
+               change now.
 
-            4. Architecture — did the fix introduce any I/O (HTTP, file reads)
-               into domain/ or application/? All I/O must stay in infrastructure/.
-               Flag any violations.
+            4. Architecture — if the fix introduced any I/O (HTTP, file reads) into
+               domain/ or application/, move it to infrastructure/ now.
 
-            5. Fix quality — verify the fix actually addresses the root cause:
-               a. Root cause match: re-read the `last_error` from fetcher_health.json.
-                  Does the fix directly address that error type? (e.g., if last_error
-                  was an SSL error but the fix only changes URL parsing, that is a
-                  mismatch — flag it.)
-               b. Live evidence: was curl or an equivalent HTTP probe used to inspect
-                  the live endpoint before making the fix? If the fix was made without
-                  checking the live endpoint, flag it as unverified.
-               c. Behavior preservation: does the fix change anything beyond the
-                  broken code path? Check whether pagination, field mapping, or
-                  description fetching logic was altered. Flag any unintended changes
-                  to working behavior.
+            5. Fix quality — verify the fix is sound:
+               a. Root cause match: re-read last_error from fetcher_health.json. If
+                  the fix does not directly address that error type, revert it now.
+                  A mismatched fix masks the real problem.
+               b. Live evidence: if curl was not used to inspect the live endpoint
+                  before making the fix, run it now. If the evidence contradicts the
+                  fix, revert it now.
+               c. Behavior preservation: if the fix altered pagination, field mapping,
+                  or description fetching beyond the broken code path, revert the
+                  unintended changes now.
 
-            Post the review as a PR comment (use actual findings, not placeholders):
+            After all corrections, if any files were changed:
+              python -m pytest tests/ -v --ignore=tests/e2e/
+              python -m mypy domain/ application/ infrastructure/ main.py
+            If either fails, revert the correction and note the failure in the comment.
+            If both pass:
+              git add <files changed during self-review>
+              git commit -m "auto: self-review corrections"
+              git push origin "$BRANCH"
+
+            Post a PR comment summarizing what was found and what action was taken.
+            Use actual specifics — no placeholders:
               gh pr comment "$PR_NUMBER" --body "$(cat <<'EOF'
             ## Automated Self-Review
 
-            {For each checklist item: PASS or FAIL with a one-line explanation.}
-            {If FAIL: include a concrete suggested fix.}
-            {Example passing item: "1. Tests — PASS: test_csx_fetcher.py covers the URL change path."}
-            {Example failing item: "2. Type annotations — FAIL: _parse_salary() is missing a return type annotation."}
-            {Example passing item: "5. Fix quality — PASS: last_error was 'SSL: CERTIFICATE_VERIFY_FAILED'; curl confirmed the cert expired; fix adds verify=False with a comment. No other fetcher logic changed."}
-            {Example failing item: "5b. Fix quality — FAIL: no curl probe was run against the live endpoint; the URL change is speculative based on the error message alone."}
+            {For each check: what was found and what action was taken.
+             Use "Fixed:", "Reverted:", or "No action needed:" for each item.}
+
+            Examples of well-written entries:
+            - "1. Tests — Fixed: added test_geico_description_url to test_workday_fetcher.py covering the updated externalPath construction."
+            - "5a. Fix quality — Reverted: last_error was 'SSL: CERTIFICATE_VERIFY_FAILED' but the fix only changed URL parsing; these are unrelated. Reverted and left a comment explaining the SSL issue needs a different approach."
+            - "5b. Fix quality — No action needed: curl against live endpoint confirmed the response structure matches the updated parser."
+            - "4. Architecture — No action needed: all I/O remains in infrastructure/job_fetchers/."
             EOF
             )"

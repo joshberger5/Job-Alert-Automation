@@ -156,59 +156,74 @@ jobs:
             )"
               fi
 
-            ## Step 6: Self-review
-            After the PR is created or updated, review your own changes against
-            this checklist. Retrieve the PR number:
+            ## Step 6: Self-review and correction
+            After the PR is created or updated, review your own changes, fix every
+            issue found, and post a summary of what was done.
+
+            Retrieve the PR number and check out the branch:
               PR_NUMBER=$(gh pr list --state open --json number,headRefName \
                 --jq '.[] | select(.headRefName | startswith("auto/improve-rules-")) | .number' \
                 | head -1)
+              BRANCH=$(gh pr view "$PR_NUMBER" --json headRefName --jq '.headRefName')
+              git fetch origin "$BRANCH" && git checkout "$BRANCH"
 
-            Re-read every file you changed, then check each item:
+            Re-read every file you changed, then work through each check. For each
+            issue found, fix it immediately — do not just note it.
 
-            1. Tests — for every token added to _STOP_WORDS, is there a unit test
-               in tests/test_resume_profile_builder.py that asserts the token does
-               NOT appear in profile.tertiary_skills? Flag any missing tests.
+            1. Tests — for every token added to _STOP_WORDS, check for a unit test
+               in tests/test_resume_profile_builder.py asserting the token does NOT
+               appear in profile.tertiary_skills. If any are missing, write them now.
 
             2. Comment accuracy — if a new stop word is placed under the comment
                "Generic tech terms already covered by secondary skills", verify it
-               actually IS covered by secondary skills. If not, the comment is
-               wrong and should be corrected.
+               actually IS covered by secondary skills. If not, correct the comment
+               now.
 
-            3. Taxonomy consistency — if a token was added to _STOP_WORDS, grep
-               for it in infrastructure/tech_taxonomy.yaml. If it appears there,
-               flag the conflict (stop word and taxonomy entry contradict each
-               other; the taxonomy entry should be removed).
+            3. Taxonomy consistency — for each token added to _STOP_WORDS, grep for
+               it in infrastructure/tech_taxonomy.yaml. If it appears there, remove
+               it from tech_taxonomy.yaml now (having it in both contradicts itself).
 
-            4. Type annotations — scan any new or modified function for parameters,
-               return types, or local variables missing explicit type annotations.
-               Flag any violations.
+            4. Type annotations — scan new or modified functions for missing explicit
+               type annotations (no implicit Any, no bare dict/list). Add any that
+               are missing now.
 
-            5. Business rules — read BUSINESS_RULES.md. Does any change touch a
-               rule? If so, confirm the rule still holds.
+            5. Business rules — read BUSINESS_RULES.md. If any change violates a
+               rule, revert that specific change now.
 
-            6. Change quality — re-read jobs_debug.json and verify:
+            6. Change quality — re-read jobs_debug.json for each change:
                a. Evidence: for each title fragment added to keyword_title_filter.py,
                   find the specific job(s) in jobs_debug.json that motivated it.
-                  If no job in jobs_debug.json has a title matching the new fragment,
-                  the change is speculative — flag it.
-               b. Collateral damage: scan all result=qualified and result=scored_out
-                  entries in jobs_debug.json. Would any of their titles now be caught
-                  by the new fragment? If so, flag the legitimate jobs that would be
-                  incorrectly filtered.
+                  If no job has a matching title, revert that fragment now — it is
+                  speculative.
+               b. Collateral damage: scan result=qualified and result=scored_out
+                  entries. If any legitimate job title would now be caught by a new
+                  fragment, revert that fragment now.
                c. Stop word noise: for each token added to _STOP_WORDS, confirm at
-                  least one job in jobs_debug.json shows that token adding a point
-                  to a job it shouldn't help score. If no such job exists, flag it
-                  as potentially premature.
+                  least one job shows that token adding noise. If none exists, revert
+                  the stop word addition now.
 
-            Post the review as a PR comment (use actual findings, not placeholders):
+            After all corrections, if any files were changed:
+              python -m pytest tests/ -v --ignore=tests/e2e/
+              python -m mypy domain/ application/ infrastructure/ main.py
+            If either fails, revert the correction and note the failure in the comment.
+            If both pass:
+              git add <files changed during self-review>
+              git commit -m "auto: self-review corrections"
+              git push origin "$BRANCH"
+
+            Post a PR comment summarizing what was found and what action was taken.
+            Use actual specifics — no placeholders:
               gh pr comment "$PR_NUMBER" --body "$(cat <<'EOF'
             ## Automated Self-Review
 
-            {For each checklist item: PASS or FAIL with a one-line explanation.}
-            {If FAIL: include a concrete suggested fix.}
-            {Example passing item: "1. Tests — PASS: test_html_not_in_tertiary_skills covers the new stop word."}
-            {Example failing item: "3. Taxonomy consistency — FAIL: 'github' appears in tech_taxonomy.yaml line 26 and should be removed."}
-            {Example passing item: "6. Change quality — PASS: 'cashier' fragment is backed by job ID 12345 (title: 'Front End Cashier', result: qualified). No legitimate SWE titles in jobs_debug.json contain 'cashier'."}
-            {Example failing item: "6b. Change quality — FAIL: new fragment 'analyst' would filter 'Software Engineer / Analyst' (ID 67890, result: qualified, score: 14) — collateral damage on a legitimate role."}
+            {For each check: what was found and what action was taken.
+             Use "Fixed:", "Reverted:", or "No action needed:" for each item.}
+
+            Examples of well-written entries:
+            - "1. Tests — Fixed: added test_cashier_not_in_tertiary_skills to test_resume_profile_builder.py."
+            - "3. Taxonomy — Fixed: removed 'github' from tech_taxonomy.yaml (contradicted _STOP_WORDS entry)."
+            - "6a. Change quality — Reverted 'analyst' fragment: no job in jobs_debug.json has a title containing 'analyst'; addition was speculative."
+            - "6b. Change quality — Reverted 'data' fragment: 'Software Engineer, Data Platform' (ID 12345, qualified, score 11) would have been incorrectly filtered."
+            - "2. Comment accuracy — No action needed: 'html' is covered by secondary_skills (HTML listed in resume tech skills)."
             EOF
             )"
