@@ -146,3 +146,67 @@ jobs:
             EOF
             )"
               fi
+
+            ## Step 7: Self-review and correction
+            After the PR is created or updated, review your own changes, fix every
+            issue found, and post a summary of what was done.
+
+            Retrieve the PR number and check out the branch:
+              PR_NUMBER=$(gh pr list --state open --json number,headRefName \
+                --jq '.[] | select(.headRefName | startswith("auto/fix-fetchers-")) | .number' \
+                | head -1)
+              BRANCH=$(gh pr view "$PR_NUMBER" --json headRefName --jq '.headRefName')
+              git fetch origin "$BRANCH" && git checkout "$BRANCH"
+
+            Re-read every file you changed, then work through each check. For each
+            issue found, fix it immediately — do not just note it.
+
+            1. Tests — does a unit test exercise the code path you changed? If the
+               fix introduces a new code path with no coverage, write a test now.
+
+            2. Type annotations — scan new or modified functions for missing explicit
+               type annotations (no implicit Any, no bare dict/list). Add any that
+               are missing now.
+
+            3. Business rules — read BUSINESS_RULES.md. If any change violates a
+               rule (e.g. salary parsing, remote detection, dedup), revert that
+               change now.
+
+            4. Architecture — if the fix introduced any I/O (HTTP, file reads) into
+               domain/ or application/, move it to infrastructure/ now.
+
+            5. Fix quality — verify the fix is sound:
+               a. Root cause match: re-read last_error from fetcher_health.json. If
+                  the fix does not directly address that error type, revert it now.
+                  A mismatched fix masks the real problem.
+               b. Live evidence: if curl was not used to inspect the live endpoint
+                  before making the fix, run it now. If the evidence contradicts the
+                  fix, revert it now.
+               c. Behavior preservation: if the fix altered pagination, field mapping,
+                  or description fetching beyond the broken code path, revert the
+                  unintended changes now.
+
+            After all corrections, if any files were changed:
+              python -m pytest tests/ -v --ignore=tests/e2e/
+              python -m mypy domain/ application/ infrastructure/ main.py
+            If either fails, revert the correction and note the failure in the comment.
+            If both pass:
+              git add <files changed during self-review>
+              git commit -m "auto: self-review corrections"
+              git push origin "$BRANCH"
+
+            Post a PR comment summarizing what was found and what action was taken.
+            Use actual specifics — no placeholders:
+              gh pr comment "$PR_NUMBER" --body "$(cat <<'EOF'
+            ## Automated Self-Review
+
+            {For each check: what was found and what action was taken.
+             Use "Fixed:", "Reverted:", or "No action needed:" for each item.}
+
+            Examples of well-written entries:
+            - "1. Tests — Fixed: added test_geico_description_url to test_workday_fetcher.py covering the updated externalPath construction."
+            - "5a. Fix quality — Reverted: last_error was 'SSL: CERTIFICATE_VERIFY_FAILED' but the fix only changed URL parsing; these are unrelated. Reverted and left a comment explaining the SSL issue needs a different approach."
+            - "5b. Fix quality — No action needed: curl against live endpoint confirmed the response structure matches the updated parser."
+            - "4. Architecture — No action needed: all I/O remains in infrastructure/job_fetchers/."
+            EOF
+            )"
