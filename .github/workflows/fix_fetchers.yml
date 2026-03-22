@@ -1,15 +1,10 @@
 name: Fix Failed Fetchers
 
 on:
-  workflow_run:
-    workflows: ["Job Alerts"]
-    types: [completed]
   workflow_dispatch:
 
 jobs:
   fix:
-    # Run after a successful job_alerts run, or when manually dispatched
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write

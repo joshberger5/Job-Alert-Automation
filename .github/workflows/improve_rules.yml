@@ -1,15 +1,10 @@
 name: Improve Job Rules
 
 on:
-  workflow_run:
-    workflows: ["Job Alerts"]
-    types: [completed]
   workflow_dispatch:
 
 jobs:
   improve:
-    # Run after a successful job_alerts run, or when manually dispatched
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write

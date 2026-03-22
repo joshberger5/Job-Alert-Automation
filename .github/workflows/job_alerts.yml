@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write       # needed to commit seen_jobs.json back
+      actions: write        # needed to dispatch downstream workflows
 
     steps:
       - name: Checkout
@@ -80,6 +81,14 @@ jobs:
           git diff --staged --quiet || git commit -m "chore: update seen_jobs [skip ci]"
           git pull --rebase origin main
           git push
+
+      - name: Trigger downstream workflows
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run improve_rules.yml
+          gh workflow run fix_fetchers.yml
 
       - name: Notify on failure
         if: failure()
