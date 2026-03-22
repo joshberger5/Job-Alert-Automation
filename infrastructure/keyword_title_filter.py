@@ -57,6 +57,15 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "test infrastructure",
     "civil engineering",
     "business development",
+    # ── Management roles ──────────────────────────────────────────────────────
+    "engineering manager",
+    "technical program management",
+    "program management",
+    "technical product owner",
+    "assistant vice president",
+    "vice president",
+    "security manager",
+    "devops lead",
 ]
 
 # Seniority-based rejections — whitelist cannot override these.
