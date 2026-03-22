@@ -194,8 +194,9 @@ blocklist additions.
 
 ### 9.1 Fetcher Health
 - Consecutive failure counts tracked in `fetcher_health.json`
-- After 3 consecutive failures, a GitHub Actions workflow runs Claude Code
-  non-interactively to diagnose and attempt a fix, then opens a PR for review
+- After 1 consecutive failure (both retry attempts exhausted within a single run),
+  a GitHub Actions workflow runs Claude Code non-interactively to diagnose and
+  attempt a fix, then opens a PR for review
 - On a successful run, the fetcher's consecutive failure count resets to 0
 - If the repair workflow is unavailable, fall back to a loud alert in the email
   with the full traceback
