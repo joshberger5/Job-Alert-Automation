@@ -1,6 +1,6 @@
 # Job Alert Automation
 
-Scrapes job postings from 27 sources (up to 29 with optional JSearch) 3× daily, scores them against a candidate profile parsed from a LaTeX resume, filters titles with a fast keyword list and an optional Gemini LLM pass, and emails a formatted digest of qualified matches. Each email card contains thumbs-up/thumbs-down vote links; votes accumulate in a 50-record ring buffer and bias future scoring via `FeedbackBiasService`. After each successful run, `improve_rules.yml` runs Claude Code non-interactively to analyze `jobs_debug.json` and open a PR with targeted filter improvements if any are found. A second workflow, `fix_fetchers.yml`, tracks consecutive fetcher failures in `fetcher_health.json` and automatically diagnoses and patches any fetcher that fails 3 times in a row.
+Scrapes job postings from 27 sources (up to 29 with optional JSearch) 3× daily, scores them against a candidate profile parsed from a LaTeX resume, filters titles with a fast keyword list and an optional Gemini LLM pass, and emails a formatted digest of qualified matches. Each email card contains thumbs-up/thumbs-down vote links; votes accumulate in a 50-record ring buffer and bias future scoring via `FeedbackBiasService`. After each successful run, `improve_rules.yml` runs Claude Code non-interactively to analyze `jobs_debug.json` and open a PR with targeted filter improvements if any are found. A second workflow, `fix_fetchers.yml`, tracks consecutive fetcher failures in `fetcher_health.json` and automatically diagnoses and patches any fetcher that fails on its first failure.
 
 ![Email preview](docs/email_preview_cropped.png)
 
@@ -135,7 +135,9 @@ Detail-page fetches inside `WorkdayFetcher`, `IcimsFetcher`, `IcimsSitemapFetche
    - Not found → `UNKNOWN` (pass — benefit of the doubt)
 4. **Remote check** — passes if:
    - `job.remote is True` **and** the location is US-accessible (strips "remote", checks remaining words against `{"us", "usa", "united", "states", "america", "worldwide", "global", "anywhere"}`; empty location passes), **or**
-   - `job.remote is None` **and** the description/location contains an explicit remote phrase (`"fully remote"`, `"100% remote"`, `"work from home"`, etc.) **and** the location is US-accessible (prevents foreign on-site jobs from slipping through via description phrasing).
+   - `job.remote is None` **and** the location explicitly signals remote (contains `"remote"` as a word, or `"worldwide"`, `"global"`, `"anywhere"`) **and** the location is US-accessible.
+
+Jobs that fail the remote check but have explicit remote phrases (`"fully remote"`, `"100% remote"`, `"work from home"`, etc.) in their description are not dropped — they are tracked as `"unverified_remote"` (see Section 8).
 5. **Location check** — passes if any `preferred_locations` substring appears in `job.location` (case-insensitive).
 
 ### 5 — Scoring
@@ -176,17 +178,19 @@ Duplicate detection happens before filtering and scoring, so already-seen jobs c
 |---|---|
 | `"duplicate"` | Already seen in a previous run — skipped immediately |
 | `"filtered_out"` | Failed `FilteringPolicy` (contract, experience gap, or location) |
+| `"unverified_remote"` | Failed the remote/location check, but the description mentions remote work phrases — scored and saved but not marked qualified |
 | `"scored_out"` | Passed filtering but `score < MINIMUM_SCORE` |
 | `"qualified"` | Passed filtering and scoring |
 | `"llm_filtered"` | Passed scoring but LLM flagged the title as irrelevant |
 
 ### 9 — Email
 
-`EmailNotifier.send()` builds an HTML email (table-based, inline styles for client compatibility) with up to three sections:
+`EmailNotifier.send()` builds an HTML email (table-based, inline styles for client compatibility) with up to four sections:
 
 - **Qualified jobs** — always present when any exist. One card per job: company, title, location, employment type, salary (if known), score badge (green ≥ 14, blue ≥ 10, amber ≥ 7), "View Job →" link, and thumbs-up/thumbs-down vote links (shown only when `FEEDBACK_PAT` is set). Cards are ordered by score descending within each section.
 - **LLM Rejected** — jobs that scored high enough but were flagged by the LLM title filter. Shown only when `GEMINI_API_KEY` is set and at least one job was re-classified. Ordered by score descending.
 - **Possibly Relevant** — scored-out jobs that the LLM considers worth a look. Shown only when `GEMINI_API_KEY` is set and any such jobs exist. Ordered by score descending.
+- **Unverified Remote** — jobs that failed the remote/location check but mention remote work phrases in their description. Shown when any such jobs exist. Scored like normal jobs but not treated as qualified matches.
 
 Sent via SMTP STARTTLS. Skipped entirely if `SMTP_HOST` is not set.
 
@@ -280,11 +284,11 @@ The `e2e` pytest marker is registered in `pytest.ini`.
 | `test_boa_fetcher.py` | 3 | Field mapping (`family \| lob` description, URL construction), pagination, missing `jcrURL` → `url=None` |
 | `test_remoteok_fetcher.py` | 3 | Metadata element skipped, `location: null` → `"Worldwide"`, `tags: null` → `required_skills=[]` |
 | `test_weworkremotely_fetcher.py` | 4 | Region filtering (`"Europe Only"` skipped), no-colon title fallback, HTML description stripping |
-| `test_job_processing_service.py` | 17 | All four result paths (duplicate, filtered_out, scored_out, qualified); correct `repo.save` args per path; `JobEvaluated` + `JobQualified` events on qualified; `feedback_multiplier` on scored records; mixed-batch ordering |
+| `test_job_processing_service.py` | 20 | All five result paths (duplicate, filtered_out, unverified_remote, scored_out, qualified); correct `repo.save` args per path; `JobEvaluated` + `JobQualified` events on qualified; `feedback_multiplier` on scored records; mixed-batch ordering |
 | `test_scoring_policy.py` | 9 | Word-boundary skill matching (Java ≠ JavaScript, C ≠ account), missing-skill penalties, `qualifies()` at/above/below threshold |
 | `test_experience_requirement.py` | 12 | Year-phrase parsing (trailing punctuation, `+` suffix, range), `UNKNOWN` when absent, gap classification (`WITHIN_IDEAL_RANGE`, `MODERATE_GAP`, `LARGE_GAP`), boundary cases at `ideal_max+4` and `ideal_max+5` |
 | `test_keyword_title_filter.py` | 14 | Role-type rejection fragments (data scientist, product manager, solutions engineer, test infrastructure, etc.), seniority hard-reject (staff software), whitelist overrides role-type reject, whitelist does not override hard reject, case-insensitivity, custom fragment injection |
-| `test_filtering_policy.py` | 15 | Contract filter, salary floor (below/above/missing/disabled), experience gap filter, remote=True/None/Europe logic, preferred-location substring match |
+| `test_filtering_policy.py` | 19 | Contract filter, salary floor (below/above/missing/disabled), experience gap filter, remote=True/None/Europe logic, preferred-location substring match, `is_unverified_remote` classification |
 | `test_landstar_fetcher.py` | 19 | Field mapping, salary (annual + hourly→annual conversion, absent), remote detection (`hasVirtualLocation`, title, description), multi-location formatting, pagination, error handling |
 | `test_adzuna_similar_fetcher.py` | 10 | Job extraction from "Similar jobs" section, ID/salary/URL parsing, cross-seed deduplication, graceful degradation on HTTP errors and missing section |
 | `test_resume_profile_builder.py` | 12 | `minimum_salary` and reason tags loaded from YAML; taxonomy-gated tertiary extraction (single-occurrence excluded, taxonomy hit included, fail-open when no Gemini key); bare numbers excluded; `api`/`rest`/`html`/`github` excluded as stop words |
@@ -295,7 +299,7 @@ The `e2e` pytest marker is registered in `pytest.ini`.
 | `test_fetcher_health.py` | 10 | Consecutive failure increment, reset on success, new vs existing fetchers, timeout as failure, multi-fetcher isolation, timestamp recording |
 | `test_main_retry.py` | 4 | `_run_fetcher` succeeds on first attempt, retries once on failure, records failure after 2 attempts |
 | `test_detail_timeout.py` | 3 | `_DETAIL_TIMEOUT == 12` in `WorkdayFetcher`, `IcimsFetcher`, `AdzunaSimilarFetcher` |
-| `test_email_notifier.py` | 13 | Run Log rendering, HTML escaping, score-descending ordering in all three email sections, input list not mutated; vote links present/absent/URL-structured |
+| `test_email_notifier.py` | 15 | Run Log rendering, HTML escaping, score-descending ordering in all four email sections, input list not mutated; vote links present/absent/URL-structured, vote link color and icon implementation |
 | `test_email_archiver.py` | 6 | Directory creation, correct filename and content, oldest-file trimming when over max, PAT redaction in archived HTML |
 | `test_feedback_json_trim.py` | 3 | `_trim_votes()` keeps last 50, no-op under 50, sorts by `voted_at` before trimming |
 | `test_tee.py` | 6 | `Tee` write/flush forwarding to primary and secondary streams |
