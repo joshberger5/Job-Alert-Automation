@@ -155,3 +155,44 @@ jobs:
             EOF
             )"
               fi
+
+            ## Step 6: Self-review
+            After the PR is created or updated, review your own changes against
+            this checklist. Retrieve the PR number:
+              PR_NUMBER=$(gh pr list --state open --json number,headRefName \
+                --jq '.[] | select(.headRefName | startswith("auto/improve-rules-")) | .number' \
+                | head -1)
+
+            Re-read every file you changed, then check each item:
+
+            1. Tests — for every token added to _STOP_WORDS, is there a unit test
+               in tests/test_resume_profile_builder.py that asserts the token does
+               NOT appear in profile.tertiary_skills? Flag any missing tests.
+
+            2. Comment accuracy — if a new stop word is placed under the comment
+               "Generic tech terms already covered by secondary skills", verify it
+               actually IS covered by secondary skills. If not, the comment is
+               wrong and should be corrected.
+
+            3. Taxonomy consistency — if a token was added to _STOP_WORDS, grep
+               for it in infrastructure/tech_taxonomy.yaml. If it appears there,
+               flag the conflict (stop word and taxonomy entry contradict each
+               other; the taxonomy entry should be removed).
+
+            4. Type annotations — scan any new or modified function for parameters,
+               return types, or local variables missing explicit type annotations.
+               Flag any violations.
+
+            5. Business rules — read BUSINESS_RULES.md. Does any change touch a
+               rule? If so, confirm the rule still holds.
+
+            Post the review as a PR comment (use actual findings, not placeholders):
+              gh pr comment "$PR_NUMBER" --body "$(cat <<'EOF'
+            ## Automated Self-Review
+
+            {For each checklist item: PASS or FAIL with a one-line explanation.}
+            {If FAIL: include a concrete suggested fix.}
+            {Example passing item: "1. Tests — PASS: test_html_not_in_tertiary_skills covers the new stop word."}
+            {Example failing item: "3. Taxonomy consistency — FAIL: 'github' appears in tech_taxonomy.yaml line 26 and should be removed."}
+            EOF
+            )"

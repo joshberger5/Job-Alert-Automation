@@ -199,6 +199,7 @@ After each successful run, GitHub Actions triggers `improve_rules.yml`, which ru
 3. Make surgical changes to `keyword_title_filter.py`, `candidate_profile.yaml`, or `resume_profile_builder.py` if the evidence clearly justifies them
 4. Run the full test suite and mypy; revert and exit if either fails
 5. Open a PR with concrete evidence from `jobs_debug.json` cited in the body
+6. Self-review: re-read its own changes and post a PR comment checking for missing tests, inaccurate comments, taxonomy/stop-word conflicts, missing type annotations, and business rule compliance
 
 The system effectively tunes its own filters between runs without any manual intervention — each email digest informs the next.
 
@@ -212,6 +213,7 @@ After each successful run, GitHub Actions also triggers `fix_fetchers.yml`. Each
 4. Make a surgical fix to the fetcher in `infrastructure/job_fetchers/`
 5. Run the full test suite and mypy; revert and exit without a PR if either fails
 6. Open a PR (or push to an existing open `auto/fix-fetchers-*` branch) with the fix
+7. Self-review: re-read its own changes and post a PR comment checking for missing test coverage, missing type annotations, architecture violations (I/O in domain/application), and business rule compliance
 
 If the root cause cannot be determined safely, the agent exits with a diagnostic message rather than making a speculative change. A successful run resets the fetcher's count to 0.
 
