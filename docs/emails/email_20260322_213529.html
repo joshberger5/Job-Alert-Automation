@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Job Alert</title>
+</head>
+<body style="margin:0;padding:0;background:#f1f5f9;
+             font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:24px 0;">
+  <tr>
+    <td align="center">
+      <table width="600" cellpadding="0" cellspacing="0"
+             style="max-width:600px;width:100%;">
+
+        <!-- HEADER -->
+        <tr>
+          <td style="background:#0f172a;border-radius:12px 12px 0 0;padding:28px 32px 22px;">
+            <p style="margin:0;color:#475569;font-size:11px;letter-spacing:1px;
+                      text-transform:uppercase;font-weight:600;">Job Alert</p>
+            <h1 style="margin:6px 0 0;color:white;font-size:26px;font-weight:700;line-height:1.2;">
+              0 Qualified Jobs
+            </h1>
+            <p style="margin:8px 0 0;color:#475569;font-size:13px;">Mar 22, 2026 at 21:35</p>
+          </td>
+        </tr>
+
+        <!-- STATS BAR -->
+        <tr>
+          <td style="background:#1e293b;padding:14px 32px;border-radius:0;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="color:#94a3b8;font-size:12px;">
+                  <span style="color:white;font-weight:700;font-size:18px;">2201</span>
+                  &nbsp;scanned
+                </td>
+                <td style="color:#94a3b8;font-size:12px;text-align:center;">
+                  <span style="color:#3b82f6;font-weight:700;font-size:18px;">0</span>
+                  &nbsp;qualified
+                </td>
+                <td style="color:#94a3b8;font-size:12px;text-align:right;">
+                  <span style="color:white;font-weight:700;font-size:18px;">14s</span>
+                  &nbsp;runtime
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- JOB CARDS -->
+        <tr>
+          <td style="padding:20px 24px 8px;">
+            
+<table width="100%" cellpadding="0" cellspacing="0"
+       style="background:white;border-radius:8px;border:1px solid #e2e8f0;">
+  <tr>
+    <td style="padding:36px;text-align:center;">
+      <p style="margin:0;color:#64748b;font-size:15px;">No qualified jobs this run.</p>
+    </td>
+  </tr>
+</table>
+          </td>
+        </tr>
+
+        
+        <!-- LLM-FILTERED SECTION -->
+        <tr>
+          <td style="padding:20px 24px 4px;border-top:2px solid #e2e8f0;">
+            <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#475569;
+                      letter-spacing:0.8px;text-transform:uppercase;">
+              LLM Rejected &mdash; scored but flagged as irrelevant
+              &nbsp;<span style="color:#94a3b8;font-weight:400;text-transform:none;
+                                 letter-spacing:0;">(0 jobs)</span>
+            </p>
+            <p style="margin:0 0 12px;color:#94a3b8;font-size:11px;">These reached the scoring minimum but the LLM considered the title outside your field. Review to catch false rejections.</p>
+            <table width="100%" cellpadding="0" cellspacing="0"
+       style="background:white;border-radius:8px;border:1px solid #e2e8f0;">
+  <tr>
+    <td style="padding:24px;text-align:center;">
+      <p style="margin:0;color:#64748b;font-size:14px;">No jobs in this section.</p>
+    </td>
+  </tr>
+</table>
+          </td>
+        </tr>
+
+        
+        <!-- LLM-RELEVANT SECTION -->
+        <tr>
+          <td style="padding:20px 24px 4px;border-top:2px solid #e2e8f0;">
+            <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#475569;
+                      letter-spacing:0.8px;text-transform:uppercase;">
+              Possibly Relevant &mdash; scored below threshold
+              &nbsp;<span style="color:#94a3b8;font-weight:400;text-transform:none;
+                                 letter-spacing:0;">(0 jobs)</span>
+            </p>
+            <p style="margin:0 0 12px;color:#94a3b8;font-size:11px;">These passed location/remote filtering and the LLM title check, but didn&rsquo;t reach the scoring minimum.</p>
+            <table width="100%" cellpadding="0" cellspacing="0"
+       style="background:white;border-radius:8px;border:1px solid #e2e8f0;">
+  <tr>
+    <td style="padding:24px;text-align:center;">
+      <p style="margin:0;color:#64748b;font-size:14px;">No jobs in this section.</p>
+    </td>
+  </tr>
+</table>
+          </td>
+        </tr>
+
+        
+        <!-- UNVERIFIED REMOTE SECTION -->
+        <tr>
+          <td style="padding:20px 24px 4px;border-top:2px solid #e2e8f0;">
+            <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#475569;
+                      letter-spacing:0.8px;text-transform:uppercase;">
+              Unverified Remote &mdash; location unconfirmed
+              &nbsp;<span style="color:#94a3b8;font-weight:400;text-transform:none;
+                                 letter-spacing:0;">(0 jobs)</span>
+            </p>
+            <p style="margin:0 0 12px;color:#94a3b8;font-size:11px;">These mention remote work in their description but the location field doesn&rsquo;t confirm it. The role may be office-based with remote work listed as a perk.</p>
+            <table width="100%" cellpadding="0" cellspacing="0"
+       style="background:white;border-radius:8px;border:1px solid #e2e8f0;">
+  <tr>
+    <td style="padding:24px;text-align:center;">
+      <p style="margin:0;color:#64748b;font-size:14px;">No jobs in this section.</p>
+    </td>
+  </tr>
+</table>
+          </td>
+        </tr>
+
+        <!-- RUN LOG SECTION -->
+        <tr>
+          <td style="padding:20px 24px 4px;border-top:2px solid #e2e8f0;">
+            <p style="margin:0 0 8px;font-size:11px;font-weight:700;color:#475569;
+                      letter-spacing:0.8px;text-transform:uppercase;">Run Log</p>
+            <pre style="margin:0;background:#0f172a;color:#94a3b8;font-size:11px;
+                        font-family:'Courier New',Courier,monospace;padding:16px;
+                        border-radius:6px;overflow-x:auto;white-space:pre-wrap;
+                        word-break:break-word;">
+  Candidate Profile
+  ────────────────────────────────────────────────────────────────
+  Locations      Jacksonville, Orange Park, St. Augustine, Saint Augustine, St. Johns, Saint Johns, Fleming Island, Nocatee, Ponte Vedra, Fernandina Beach
+  Remote         Yes
+  Max Exp        2 years
+  Contract       No
+  Core Skills    java (4), python (4), sql (4), c# (4)
+  Secondary      spring boot (2), kafka (2), rest apis (2), openapi (2), postgresql (2), liquibase (2), jwt-based auth (2), junit (2), pit mutation testing (2), git (2)
+  ────────────────────────────────────────────────────────────────
+
+  Fetching from 29 sources in parallel...
+  [Landstar System] 0 jobs
+  [Bank of America] 22 jobs
+  [Adzuna] 7 jobs
+  [Bank of America] 22 jobs
+  [Brex] 250 jobs
+  [Adzuna] 11 jobs
+  [We Work Remotely] 25 jobs
+  [Checkr] 56 jobs
+  [RemoteOK] 57 jobs
+  [Dun &amp; Bradstreet] 41 jobs
+  [Gusto] 80 jobs
+  [Adzuna (Similar)] 50 jobs
+  [Robinhood] 155 jobs
+  [Allstate] 18 jobs
+  [Availity] 6 jobs
+  [FNF] 58 jobs
+  [JSearch] 7 jobs
+  [JSearch] 10 jobs
+  [SoFi] 200 jobs
+  [Coinbase] 227 jobs
+  [FIS Global] 59 jobs
+  [SSC Technologies] 49 jobs
+  [DoorDash] 491 jobs
+  [VyStar Credit Union] 64 jobs
+  [GEICO] 103 jobs
+  [Paysafe] 133 jobs
+  [CSX] FAILED: 401 Client Error: Unauthorized for url: https://fa-eowa-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/11.13.18.05/recruitingICEJobRequisitions?finder=findReqs%3Bkeyword%3Djava%3Blimit%3D25%3Boffset%3D0&amp;expand=requisitionList&amp;onlyData=true (attempts: 2)
+  [JPMorgan Chase] FAILED: 401 Client Error: Unauthorized for url: https://jpmc.fa.oraclecloud.com/hcmRestApi/resources/11.13.18.05/recruitingICEJobRequisitions?finder=findReqs%3Bkeyword%3Djava%3Blimit%3D25%3Boffset%3D0&amp;expand=requisitionList&amp;onlyData=true (attempts: 2)
+  [Florida Blue] FAILED: 401 Client Error: Unauthorized for url: https://fa-etum-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/11.13.18.05/recruitingICEJobRequisitions?finder=findReqs%3Bkeyword%3Djava%3Blimit%3D25%3Boffset%3D0&amp;expand=requisitionList&amp;onlyData=true (attempts: 2)
+
+  [KeywordFilter] 0 approved, 0 rejected by title keyword
+  Results: {&#x27;duplicate&#x27;: 2200, &#x27;filtered_out&#x27;: 1}
+
+  Done in 14.2s
+</pre>
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="padding:8px 0 28px;text-align:center;">
+            <p style="margin:0;color:#94a3b8;font-size:11px;">
+              Job Alert Automation &nbsp;&middot;&nbsp; Mar 22, 2026 at 21:35
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
