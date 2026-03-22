@@ -175,6 +175,19 @@ jobs:
                into domain/ or application/? All I/O must stay in infrastructure/.
                Flag any violations.
 
+            5. Fix quality — verify the fix actually addresses the root cause:
+               a. Root cause match: re-read the `last_error` from fetcher_health.json.
+                  Does the fix directly address that error type? (e.g., if last_error
+                  was an SSL error but the fix only changes URL parsing, that is a
+                  mismatch — flag it.)
+               b. Live evidence: was curl or an equivalent HTTP probe used to inspect
+                  the live endpoint before making the fix? If the fix was made without
+                  checking the live endpoint, flag it as unverified.
+               c. Behavior preservation: does the fix change anything beyond the
+                  broken code path? Check whether pagination, field mapping, or
+                  description fetching logic was altered. Flag any unintended changes
+                  to working behavior.
+
             Post the review as a PR comment (use actual findings, not placeholders):
               gh pr comment "$PR_NUMBER" --body "$(cat <<'EOF'
             ## Automated Self-Review
@@ -183,5 +196,7 @@ jobs:
             {If FAIL: include a concrete suggested fix.}
             {Example passing item: "1. Tests — PASS: test_csx_fetcher.py covers the URL change path."}
             {Example failing item: "2. Type annotations — FAIL: _parse_salary() is missing a return type annotation."}
+            {Example passing item: "5. Fix quality — PASS: last_error was 'SSL: CERTIFICATE_VERIFY_FAILED'; curl confirmed the cert expired; fix adds verify=False with a comment. No other fetcher logic changed."}
+            {Example failing item: "5b. Fix quality — FAIL: no curl probe was run against the live endpoint; the URL change is speculative based on the error message alone."}
             EOF
             )"

@@ -186,6 +186,20 @@ jobs:
             5. Business rules — read BUSINESS_RULES.md. Does any change touch a
                rule? If so, confirm the rule still holds.
 
+            6. Change quality — re-read jobs_debug.json and verify:
+               a. Evidence: for each title fragment added to keyword_title_filter.py,
+                  find the specific job(s) in jobs_debug.json that motivated it.
+                  If no job in jobs_debug.json has a title matching the new fragment,
+                  the change is speculative — flag it.
+               b. Collateral damage: scan all result=qualified and result=scored_out
+                  entries in jobs_debug.json. Would any of their titles now be caught
+                  by the new fragment? If so, flag the legitimate jobs that would be
+                  incorrectly filtered.
+               c. Stop word noise: for each token added to _STOP_WORDS, confirm at
+                  least one job in jobs_debug.json shows that token adding a point
+                  to a job it shouldn't help score. If no such job exists, flag it
+                  as potentially premature.
+
             Post the review as a PR comment (use actual findings, not placeholders):
               gh pr comment "$PR_NUMBER" --body "$(cat <<'EOF'
             ## Automated Self-Review
@@ -194,5 +208,7 @@ jobs:
             {If FAIL: include a concrete suggested fix.}
             {Example passing item: "1. Tests — PASS: test_html_not_in_tertiary_skills covers the new stop word."}
             {Example failing item: "3. Taxonomy consistency — FAIL: 'github' appears in tech_taxonomy.yaml line 26 and should be removed."}
+            {Example passing item: "6. Change quality — PASS: 'cashier' fragment is backed by job ID 12345 (title: 'Front End Cashier', result: qualified). No legitimate SWE titles in jobs_debug.json contain 'cashier'."}
+            {Example failing item: "6b. Change quality — FAIL: new fragment 'analyst' would filter 'Software Engineer / Analyst' (ID 67890, result: qualified, score: 14) — collateral damage on a legitimate role."}
             EOF
             )"
