@@ -135,6 +135,8 @@ _STOP_WORDS: frozenset[str] = frozenset({
     'florida', 'jacksonville',
     # Generic tech terms already covered by secondary skills (e.g. 'rest apis')
     'api', 'rest',
+    # Frontend/tooling tokens not relevant to backend scoring
+    'html', 'github',
 })
 
 

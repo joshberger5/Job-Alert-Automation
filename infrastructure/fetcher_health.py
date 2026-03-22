@@ -69,3 +69,4 @@ def update_health(
 def write_health(data: FetcherHealth, path: str = _DEFAULT_PATH) -> None:
     """Write health data to disk as formatted JSON."""
     Path(path).write_text(json.dumps(data, indent=2), encoding="utf-8")
+# test

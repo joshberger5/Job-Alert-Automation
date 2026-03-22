@@ -23,7 +23,6 @@ tokens:
   - ansible
   - jenkins
   - git
-  - github
   - gitlab
   - jira
   - confluence
