@@ -62,6 +62,8 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "technical program management",
     "program management",
     "technical product owner",
+    "technical program manager",
+    "solutions architect, manager",
     "assistant vice president",
     "vice president",
     "security manager",

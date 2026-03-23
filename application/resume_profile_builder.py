@@ -137,6 +137,8 @@ _STOP_WORDS: frozenset[str] = frozenset({
     'api', 'rest',
     # Frontend/tooling tokens not relevant to backend scoring
     'html', 'github',
+    # Generic action words that add noise
+    'actions',
 })
 
 
