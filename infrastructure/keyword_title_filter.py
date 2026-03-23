@@ -33,6 +33,9 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "attorney",
     "paralegal",
     "compliance officer",
+    "account management",
+    "wealth management",
+    "transaction management",
     # ── People / Recruiting ───────────────────────────────────────────────────
     "recruiter",
     "talent acquisition",
