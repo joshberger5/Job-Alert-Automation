@@ -17,6 +17,7 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     # ── Product / Design ──────────────────────────────────────────────────────
     "product manager",
     "product owner",
+    "product development",
     "program manager",
     "ux designer",
     "ui designer",
