@@ -17,6 +17,7 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     # ── Product / Design ──────────────────────────────────────────────────────
     "product manager",
     "product owner",
+    "product development",
     "program manager",
     "ux designer",
     "ui designer",
@@ -40,6 +41,9 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "recruiter",
     "talent acquisition",
     "human resources",
+    # ── Banking / Insurance ────────────────────────────────────────────────────
+    "relationship banker",
+    "insurance agent",
     # ── Sales / Marketing ─────────────────────────────────────────────────────
     "account executive",
     "account manager",
@@ -53,6 +57,7 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "manual qa",
     "manual tester",
     "manual test",
+    "program and operations manager",
     # ── Non-SWE engineering roles ─────────────────────────────────────────────
     "site reliability",
     "solutions engineer",
