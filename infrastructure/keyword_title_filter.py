@@ -43,6 +43,7 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     # ── Sales / Marketing ─────────────────────────────────────────────────────
     "account executive",
     "account manager",
+    "sales executive",
     "sales representative",
     "sales associate",
     "inside sales",
@@ -50,6 +51,7 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "marketing specialist",
     # ── Operations / Other ────────────────────────────────────────────────────
     "operations manager",
+    "ops analyst",
     "manual qa",
     "manual tester",
     "manual test",
