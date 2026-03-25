@@ -318,6 +318,31 @@ Sample Project
     assert "actions" not in profile.tertiary_skills
 
 
+def test_exchange_not_in_tertiary_skills() -> None:
+    """'exchange' must not become a tertiary token — it is a stop word (domain term, not a tech skill)."""
+    resume: str = """
+Technical Skills
+Languages: Java, Python
+
+Experience
+January 2022 – Present
+Software Engineer at Exchange Corp
+Built systems for financial exchange processing and exchange data analytics.
+
+Projects
+Sample Project
+"""
+    config: dict[str, Any] = _make_config()
+    builder: ResumeProfileBuilder = ResumeProfileBuilder()
+    taxonomy: frozenset[str] = frozenset()
+    env_without_gemini: dict[str, str] = {k: v for k, v in os.environ.items() if k != "GEMINI_API_KEY"}
+    with patch("application.resume_profile_builder.ResumeProfileBuilder._load_config", return_value=config), \
+         patch("application.resume_profile_builder._load_taxonomy", return_value=taxonomy), \
+         patch.dict(os.environ, env_without_gemini, clear=True):
+        profile = builder.build(resume)
+    assert "exchange" not in profile.tertiary_skills
+
+
 def test_unknown_token_kept_without_gemini_key() -> None:
     """Unknown token (not in taxonomy) appearing twice is kept when GEMINI_API_KEY is absent."""
     config: dict[str, Any] = _make_config()

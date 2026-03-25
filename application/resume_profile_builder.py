@@ -139,6 +139,8 @@ _STOP_WORDS: frozenset[str] = frozenset({
     'html', 'github',
     # Generic action words that appear frequently but aren't technical skills
     'actions',
+    # Domain-specific terms that aren't technical skills
+    'exchange',
 })
 
 

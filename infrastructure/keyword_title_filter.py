@@ -55,6 +55,9 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "inside sales",
     "marketing manager",
     "marketing specialist",
+    "sales solution",
+    "customer acquisition",
+    "institutional sales",
     # ── Operations / Other ────────────────────────────────────────────────────
     "operations manager",
     "ops analyst",
@@ -70,6 +73,10 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "civil engineering",
     "business development",
     "electrical design",
+    "risk analyst",
+    "support agent",
+    "front-end developer",
+    "frontend developer",
     # ── Legal roles ───────────────────────────────────────────────────────────
     "senior counsel",
     "counsel",
