@@ -69,6 +69,10 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "test infrastructure",
     "civil engineering",
     "business development",
+    "electrical design",
+    # ── Legal roles ───────────────────────────────────────────────────────────
+    "senior counsel",
+    "counsel",
     # ── Management roles ──────────────────────────────────────────────────────
     "engineering manager",
     "technical program management",
