@@ -1,18 +1,18 @@
 {
   "JPMorgan Chase": {
-    "consecutive_failures": 10,
+    "consecutive_failures": 11,
     "last_error": "401 Client Error: Unauthorized for url: https://jpmc.fa.oraclecloud.com/hcmRestApi/resources/11.13.18.05/recruitingICEJobRequisitions?finder=findReqs%3Bkeyword%3Djava%3Blimit%3D25%3Boffset%3D0&expand=requisitionList&onlyData=true",
-    "last_failed_at": "2026-03-25T10:59:14"
+    "last_failed_at": "2026-03-25T17:15:22"
   },
   "CSX": {
-    "consecutive_failures": 10,
+    "consecutive_failures": 11,
     "last_error": "401 Client Error: Unauthorized for url: https://fa-eowa-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/11.13.18.05/recruitingICEJobRequisitions?finder=findReqs%3Bkeyword%3Djava%3Blimit%3D25%3Boffset%3D0&expand=requisitionList&onlyData=true",
-    "last_failed_at": "2026-03-25T10:59:14"
+    "last_failed_at": "2026-03-25T17:15:22"
   },
   "Florida Blue": {
-    "consecutive_failures": 10,
+    "consecutive_failures": 11,
     "last_error": "401 Client Error: Unauthorized for url: https://fa-etum-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/11.13.18.05/recruitingICEJobRequisitions?finder=findReqs%3Bkeyword%3Djava%3Blimit%3D25%3Boffset%3D0&expand=requisitionList&onlyData=true",
-    "last_failed_at": "2026-03-25T10:59:14"
+    "last_failed_at": "2026-03-25T17:15:22"
   },
   "GEICO": {
     "consecutive_failures": 0,
