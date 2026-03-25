@@ -27,6 +27,7 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "interaction designer",
     # ── Finance / Legal / Accounting ──────────────────────────────────────────
     "financial analyst",
+    "financial advisor",
     "quantitative analyst",
     "quant analyst",
     "accountant",
@@ -34,6 +35,7 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "attorney",
     "paralegal",
     "compliance officer",
+    "tax resolution",
     "account management",
     "wealth management",
     "transaction management",
@@ -47,6 +49,7 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     # ── Sales / Marketing ─────────────────────────────────────────────────────
     "account executive",
     "account manager",
+    "sales executive",
     "sales representative",
     "sales associate",
     "inside sales",
@@ -54,6 +57,7 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "marketing specialist",
     # ── Operations / Other ────────────────────────────────────────────────────
     "operations manager",
+    "ops analyst",
     "manual qa",
     "manual tester",
     "manual test",
@@ -81,8 +85,9 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
 # Seniority-based rejections — whitelist cannot override these.
 # Use for levels that are structurally out of range regardless of role type.
 _HARD_REJECTED_TITLE_FRAGMENTS: list[str] = [
-    "staff software",     # typically 6-8+ yrs; candidate has ~2
-    "principal software", # above staff
+    "staff software engineer",  # typically 6-8+ yrs; candidate has ~2
+    "staff engineer",           # covers staff titles more broadly
+    "principal software",       # above staff
 ]
 
 # Lowercase substrings matched against job titles (case-insensitive).
