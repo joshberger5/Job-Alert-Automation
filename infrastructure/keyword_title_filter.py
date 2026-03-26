@@ -12,6 +12,7 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "data engineer",
     "machine learning",
     "ml engineer",
+    "ai/ml",
     "research scientist",
     "research engineer",
     # ── Product / Design ──────────────────────────────────────────────────────
@@ -39,6 +40,7 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "account management",
     "wealth management",
     "transaction management",
+    "mortgage",
     # ── People / Recruiting ───────────────────────────────────────────────────
     "recruiter",
     "talent acquisition",
