@@ -91,6 +91,7 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "vice president",
     "security manager",
     "devops lead",
+    "application development manager",
 ]
 
 # Seniority-based rejections — whitelist cannot override these.
