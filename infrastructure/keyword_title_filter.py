@@ -14,6 +14,7 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "ml engineer",
     "research scientist",
     "research engineer",
+    "product analyst",
     # ── Product / Design ──────────────────────────────────────────────────────
     "product manager",
     "product owner",
