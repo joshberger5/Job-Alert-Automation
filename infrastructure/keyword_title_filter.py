@@ -40,6 +40,9 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "account management",
     "wealth management",
     "transaction management",
+    "treasury fulfillment advisor",
+    "reconciliation specialist",
+    "relationship manager",
     # ── People / Recruiting ───────────────────────────────────────────────────
     "recruiter",
     "talent acquisition",
@@ -93,6 +96,9 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "security manager",
     "devops lead",
     "application development manager",
+    "internal audit it manager",
+    "senior manager",
+    "manager, field strategy",
 ]
 
 # Seniority-based rejections — whitelist cannot override these.
@@ -100,7 +106,9 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
 _HARD_REJECTED_TITLE_FRAGMENTS: list[str] = [
     "staff software engineer",  # typically 6-8+ yrs; candidate has ~2
     "staff engineer",           # covers staff titles more broadly
+    "staff security engineer",  # staff level security role
     "principal software",       # above staff
+    "avp",                      # assistant vice president
 ]
 
 # Lowercase substrings matched against job titles (case-insensitive).
