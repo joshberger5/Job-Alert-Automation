@@ -319,15 +319,15 @@ Sample Project
 
 
 def test_exchange_not_in_tertiary_skills() -> None:
-    """'exchange' must not become a tertiary token — it is a stop word (domain term, not a tech skill)."""
+    """'exchange' must not become a tertiary token — it is a stop word (company name fragment, not a tech skill)."""
     resume: str = """
 Technical Skills
 Languages: Java, Python
 
 Experience
 January 2022 – Present
-Software Engineer at Exchange Corp
-Built systems for financial exchange processing and exchange data analytics.
+Software Engineer at Intercontinental Exchange
+Worked on exchange exchange systems and data exchange exchange protocols.
 
 Projects
 Sample Project
