@@ -69,10 +69,6 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "manual tester",
     "manual test",
     "program and operations manager",
-    # ── QA / Testing roles ────────────────────────────────────────────────────
-    "qa automation",
-    # ── Frontend / UI roles ───────────────────────────────────────────────────
-    "ui developer",
     # ── Non-SWE engineering roles ─────────────────────────────────────────────
     "site reliability",
     "solutions engineer",
@@ -103,7 +99,6 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "internal audit it manager",
     "senior manager",
     "manager, field strategy",
-    "lead engineering",
 ]
 
 # Seniority-based rejections — whitelist cannot override these.
@@ -114,7 +109,6 @@ _HARD_REJECTED_TITLE_FRAGMENTS: list[str] = [
     "staff security engineer",  # staff level security role
     "principal software",       # above staff
     "avp",                      # assistant vice president
-    "principal engineer",       # above staff level
 ]
 
 # Lowercase substrings matched against job titles (case-insensitive).
