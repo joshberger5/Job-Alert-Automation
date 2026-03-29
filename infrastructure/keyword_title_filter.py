@@ -40,6 +40,7 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "account management",
     "wealth management",
     "transaction management",
+    "treasury",
     "treasury fulfillment advisor",
     "reconciliation specialist",
     "relationship manager",
