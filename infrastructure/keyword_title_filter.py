@@ -81,6 +81,9 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "support agent",
     "front-end developer",
     "frontend developer",
+    "application security",
+    "security engineer",
+    "business analyst",
     # ── Legal roles ───────────────────────────────────────────────────────────
     "senior counsel",
     "counsel",
