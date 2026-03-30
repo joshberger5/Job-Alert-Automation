@@ -75,20 +75,9 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "program and operations manager",
     # ── Customer / Business Operations ────────────────────────────────────────
     "customer success manager",
-    "payroll manager", 
-    "premium onboarding partner",
-    # ── Sales / Director roles ────────────────────────────────────────────────
-    "director,",
-    # ── Financial / Analyst roles ──────────────────────────────────────────────
-    "financial crime",
-    "oversight analyst",
-    # ── Real Estate / Escrow roles ─────────────────────────────────────────────
-    "escrow assistant",
-    "escrow officer", 
-    "construction loan",
     # ── Learning & Development ────────────────────────────────────────────────
-    "learning & development",
-    "learning and development",
+    "learning & development specialist",
+    "ai learning & development",
     # ── Non-SWE engineering roles ─────────────────────────────────────────────
     "site reliability",
     "solutions engineer",

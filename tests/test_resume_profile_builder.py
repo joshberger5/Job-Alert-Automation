@@ -401,3 +401,78 @@ Sample Intercontinental project involving work at various companies like Interco
          patch.dict(os.environ, env_without_gemini, clear=True):
         profile = builder.build(resume)
     assert "intercontinental" not in profile.tertiary_skills
+
+
+def test_android_not_in_tertiary_skills() -> None:
+    """'android' must not become a tertiary token — it is a stop word (mobile development, not backend)."""
+    resume: str = """
+Technical Skills
+Languages: Java, Python
+
+Experience
+January 2022 – Present
+Software Engineer at Acme Corp
+Worked on Android applications and Android development tools.
+
+Projects
+Sample Project
+"""
+    config: dict[str, Any] = _make_config()
+    builder: ResumeProfileBuilder = ResumeProfileBuilder()
+    taxonomy: frozenset[str] = frozenset()
+    env_without_gemini: dict[str, str] = {k: v for k, v in os.environ.items() if k != "GEMINI_API_KEY"}
+    with patch("application.resume_profile_builder.ResumeProfileBuilder._load_config", return_value=config), \
+         patch("application.resume_profile_builder._load_taxonomy", return_value=taxonomy), \
+         patch.dict(os.environ, env_without_gemini, clear=True):
+        profile = builder.build(resume)
+    assert "android" not in profile.tertiary_skills
+
+
+def test_ios_not_in_tertiary_skills() -> None:
+    """'ios' must not become a tertiary token — it is a stop word (mobile development, not backend)."""
+    resume: str = """
+Technical Skills
+Languages: Java, Python
+
+Experience
+January 2022 – Present
+Software Engineer at Acme Corp
+Developed iOS applications and iOS SDK integrations.
+
+Projects
+Sample Project
+"""
+    config: dict[str, Any] = _make_config()
+    builder: ResumeProfileBuilder = ResumeProfileBuilder()
+    taxonomy: frozenset[str] = frozenset()
+    env_without_gemini: dict[str, str] = {k: v for k, v in os.environ.items() if k != "GEMINI_API_KEY"}
+    with patch("application.resume_profile_builder.ResumeProfileBuilder._load_config", return_value=config), \
+         patch("application.resume_profile_builder._load_taxonomy", return_value=taxonomy), \
+         patch.dict(os.environ, env_without_gemini, clear=True):
+        profile = builder.build(resume)
+    assert "ios" not in profile.tertiary_skills
+
+
+def test_mobile_not_in_tertiary_skills() -> None:
+    """'mobile' must not become a tertiary token — it is a stop word (mobile development, not backend)."""
+    resume: str = """
+Technical Skills
+Languages: Java, Python
+
+Experience
+January 2022 – Present
+Software Engineer at Acme Corp
+Built mobile applications and mobile backend services.
+
+Projects
+Sample Project
+"""
+    config: dict[str, Any] = _make_config()
+    builder: ResumeProfileBuilder = ResumeProfileBuilder()
+    taxonomy: frozenset[str] = frozenset()
+    env_without_gemini: dict[str, str] = {k: v for k, v in os.environ.items() if k != "GEMINI_API_KEY"}
+    with patch("application.resume_profile_builder.ResumeProfileBuilder._load_config", return_value=config), \
+         patch("application.resume_profile_builder._load_taxonomy", return_value=taxonomy), \
+         patch.dict(os.environ, env_without_gemini, clear=True):
+        profile = builder.build(resume)
+    assert "mobile" not in profile.tertiary_skills
