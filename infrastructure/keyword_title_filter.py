@@ -73,6 +73,22 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "qa specialist",
     "qa automation intern",
     "program and operations manager",
+    # ── Customer / Business Operations ────────────────────────────────────────
+    "customer success manager",
+    "payroll manager", 
+    "premium onboarding partner",
+    # ── Sales / Director roles ────────────────────────────────────────────────
+    "director,",
+    # ── Financial / Analyst roles ──────────────────────────────────────────────
+    "financial crime",
+    "oversight analyst",
+    # ── Real Estate / Escrow roles ─────────────────────────────────────────────
+    "escrow assistant",
+    "escrow officer", 
+    "construction loan",
+    # ── Learning & Development ────────────────────────────────────────────────
+    "learning & development",
+    "learning and development",
     # ── Non-SWE engineering roles ─────────────────────────────────────────────
     "site reliability",
     "solutions engineer",
@@ -88,6 +104,13 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "application security",
     "security engineer",
     "business analyst",
+    # ── Mobile development (non-backend) ──────────────────────────────────────
+    "android engineer",
+    "android developer",
+    "mobile engineer",
+    "mobile developer", 
+    "ios engineer",
+    "ios developer",
     # ── Legal roles ───────────────────────────────────────────────────────────
     "senior counsel",
     "counsel",

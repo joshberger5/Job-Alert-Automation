@@ -141,6 +141,8 @@ _STOP_WORDS: frozenset[str] = frozenset({
     'actions',
     # Company names that shouldn't contribute to technical skill scoring
     'exchange', 'intercontinental',
+    # Mobile-specific terms not relevant for backend roles
+    'android', 'ios', 'mobile',
 })
 
 
