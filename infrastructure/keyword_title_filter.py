@@ -69,6 +69,9 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "manual qa",
     "manual tester",
     "manual test",
+    "qa testing",
+    "qa specialist",
+    "qa automation intern",
     "program and operations manager",
     # ── Non-SWE engineering roles ─────────────────────────────────────────────
     "site reliability",
@@ -112,6 +115,7 @@ _HARD_REJECTED_TITLE_FRAGMENTS: list[str] = [
     "staff engineer",           # covers staff titles more broadly
     "staff security engineer",  # staff level security role
     "principal software",       # above staff
+    "principal engineer",       # covers principal engineer roles more broadly
     "avp",                      # assistant vice president
 ]
 
