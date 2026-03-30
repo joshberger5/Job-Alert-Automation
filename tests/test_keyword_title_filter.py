@@ -133,6 +133,34 @@ def test_staff_software_engineer_rejected() -> None:
     assert "1" not in approved
 
 
+def test_principal_engineer_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "Principal Engineer Software, Infrastructure (Chronosphere)")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
+def test_qa_testing_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "QA Testing")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
+def test_qa_specialist_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "QA Specialist")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
+def test_qa_automation_intern_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "QA Automation Intern")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
 # ---------------------------------------------------------------------------
 # Whitelist (overrides reject list)
 # ---------------------------------------------------------------------------
