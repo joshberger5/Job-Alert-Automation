@@ -379,3 +379,25 @@ Sample Project
          patch.dict(os.environ, env_without_gemini, clear=True):
         profile = builder.build(resume)
     assert "actions" not in profile.tertiary_skills
+
+
+def test_intercontinental_not_in_tertiary_skills() -> None:
+    """'intercontinental' must not become a tertiary token — it is a stop word (company name fragment, not a tech skill)."""
+    resume: str = """
+Technical Skills
+Languages: Java, Python
+
+Experience
+Intercontinental Exchange
+Projects
+Sample Intercontinental project involving work at various companies like Intercontinental organizations.
+"""
+    config: dict[str, Any] = _make_config()
+    builder: ResumeProfileBuilder = ResumeProfileBuilder()
+    taxonomy: frozenset[str] = frozenset()
+    env_without_gemini: dict[str, str] = {k: v for k, v in os.environ.items() if k != "GEMINI_API_KEY"}
+    with patch("application.resume_profile_builder.ResumeProfileBuilder._load_config", return_value=config), \
+         patch("application.resume_profile_builder._load_taxonomy", return_value=taxonomy), \
+         patch.dict(os.environ, env_without_gemini, clear=True):
+        profile = builder.build(resume)
+    assert "intercontinental" not in profile.tertiary_skills
