@@ -27,6 +27,8 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "visual designer",
     "interaction designer",
     # ── Finance / Legal / Accounting ──────────────────────────────────────────
+    "reporting analyst",
+    "information management analyst",
     "financial analyst",
     "financial advisor",
     "quantitative analyst",
