@@ -4,7 +4,7 @@ on:
   schedule:
     # EDT (UTC-4, active Mar–Nov): 6 AM, 12 PM, 5 PM ET
     # Next DST adjustment: Nov 1, 2026 — change to '0 11,17,22 * * *' for EST
-    - cron: '0 10,16,21 * * *'
+    # - cron: '0 10,16,21 * * *'
   workflow_dispatch:        # allow manual runs from GitHub UI
 
 jobs:
