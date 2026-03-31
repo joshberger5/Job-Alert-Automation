@@ -66,6 +66,7 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     # ── Operations / Other ────────────────────────────────────────────────────
     "operations manager",
     "ops analyst",
+    "ops consultant",
     "manual qa",
     "manual tester",
     "manual test",
