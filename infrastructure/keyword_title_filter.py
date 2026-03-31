@@ -119,6 +119,9 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "senior manager",
     "manager, field strategy",
     "development manager",
+    "release and environment manager",
+    # ── Security roles ────────────────────────────────────────────────────────
+    "security engineer",
 ]
 
 # Seniority-based rejections — whitelist cannot override these.
