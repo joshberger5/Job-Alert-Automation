@@ -105,9 +105,65 @@ def test_test_infrastructure_rejected() -> None:
     assert "1" not in approved
 
 
+def test_application_security_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "Senior Engineer, Application Security")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
+def test_security_engineer_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "Security Engineer II Canada")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
+def test_business_analyst_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "Business Analyst - Project Lead")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
 def test_staff_software_engineer_rejected() -> None:
     kf: KeywordTitleFilter = KeywordTitleFilter()
     records: list[JobRecord] = [_make_record("1", "Staff Software Engineer, Backend - Platform (FinHub - Ledger)")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
+def test_principal_engineer_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "Principal Engineer Software, Infrastructure (Chronosphere)")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
+def test_qa_testing_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "QA Testing")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
+def test_qa_specialist_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "QA Specialist")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
+def test_qa_automation_intern_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "QA Automation Intern")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
+def test_release_and_environment_manager_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "Release and Environment Manager")]
     approved: set[str] = kf.filter_by_title(records, _PROFILE)
     assert "1" not in approved
 

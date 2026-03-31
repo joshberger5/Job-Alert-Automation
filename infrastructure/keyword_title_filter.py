@@ -14,6 +14,7 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "ml engineer",
     "research scientist",
     "research engineer",
+    "product analyst",
     # ── Product / Design ──────────────────────────────────────────────────────
     "product manager",
     "product owner",
@@ -26,6 +27,8 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "visual designer",
     "interaction designer",
     # ── Finance / Legal / Accounting ──────────────────────────────────────────
+    "reporting analyst",
+    "information management analyst",
     "financial analyst",
     "financial advisor",
     "quantitative analyst",
@@ -39,6 +42,10 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "account management",
     "wealth management",
     "transaction management",
+    "treasury",
+    "treasury fulfillment advisor",
+    "reconciliation specialist",
+    "relationship manager",
     # ── People / Recruiting ───────────────────────────────────────────────────
     "recruiter",
     "talent acquisition",
@@ -55,13 +62,25 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "inside sales",
     "marketing manager",
     "marketing specialist",
+    "sales solution",
+    "customer acquisition",
+    "institutional sales",
     # ── Operations / Other ────────────────────────────────────────────────────
     "operations manager",
     "ops analyst",
+    "ops consultant",
     "manual qa",
     "manual tester",
     "manual test",
+    "qa testing",
+    "qa specialist",
+    "qa automation intern",
     "program and operations manager",
+    # ── Customer / Business Operations ────────────────────────────────────────
+    "customer success manager",
+    # ── Learning & Development ────────────────────────────────────────────────
+    "learning & development specialist",
+    "ai learning & development",
     # ── Non-SWE engineering roles ─────────────────────────────────────────────
     "site reliability",
     "solutions engineer",
@@ -69,6 +88,24 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "test infrastructure",
     "civil engineering",
     "business development",
+    "electrical design",
+    "risk analyst",
+    "support agent",
+    "front-end developer",
+    "frontend developer",
+    "application security",
+    "security engineer",
+    "business analyst",
+    # ── Mobile development (non-backend) ──────────────────────────────────────
+    "android engineer",
+    "android developer",
+    "mobile engineer",
+    "mobile developer", 
+    "ios engineer",
+    "ios developer",
+    # ── Legal roles ───────────────────────────────────────────────────────────
+    "senior counsel",
+    "counsel",
     # ── Management roles ──────────────────────────────────────────────────────
     "engineering manager",
     "technical program management",
@@ -80,6 +117,14 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
     "vice president",
     "security manager",
     "devops lead",
+    "application development manager",
+    "internal audit it manager",
+    "senior manager",
+    "manager, field strategy",
+    "development manager",
+    "release and environment manager",
+    # ── Security roles ────────────────────────────────────────────────────────
+    "security engineer",
 ]
 
 # Seniority-based rejections — whitelist cannot override these.
@@ -87,7 +132,10 @@ _REJECTED_TITLE_FRAGMENTS: list[str] = [
 _HARD_REJECTED_TITLE_FRAGMENTS: list[str] = [
     "staff software engineer",  # typically 6-8+ yrs; candidate has ~2
     "staff engineer",           # covers staff titles more broadly
+    "staff security engineer",  # staff level security role
     "principal software",       # above staff
+    "principal engineer",       # covers principal engineer roles more broadly
+    "avp",                      # assistant vice president
 ]
 
 # Lowercase substrings matched against job titles (case-insensitive).

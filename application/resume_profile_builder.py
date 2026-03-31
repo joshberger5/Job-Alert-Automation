@@ -139,6 +139,10 @@ _STOP_WORDS: frozenset[str] = frozenset({
     'html', 'github',
     # Generic action words that appear frequently but aren't technical skills
     'actions',
+    # Company names that shouldn't contribute to technical skill scoring
+    'exchange', 'intercontinental',
+    # Mobile-specific terms not relevant for backend roles
+    'android', 'ios', 'mobile',
 })
 
 
