@@ -104,8 +104,24 @@ def build_fetchers() -> tuple[list[JobFetcher], list[str]]:
             location_filter=None,
         ),
         # ── Oracle Cloud ──────────────────────────────────────────────────────
-        # NOTE: Oracle Cloud HCM ICE REST API deprecated - removed 2026-03-27
-        # JPMorgan Chase, CSX, Florida Blue fetchers removed due to API 501 errors
+        OracleFetcher(
+            base_url="https://jpmc.fa.oraclecloud.com",
+            site_id="CX_1001",
+            company_name="JPMorgan Chase",
+            keyword="java",
+        ),
+        OracleFetcher(
+            base_url="https://fa-eowa-saasfaprod1.fa.ocs.oraclecloud.com",
+            site_id="CSXCareers",
+            company_name="CSX",
+            keyword="java",
+        ),
+        OracleFetcher(
+            base_url="https://fa-etum-saasfaprod1.fa.ocs.oraclecloud.com",
+            site_id="floridablue",
+            company_name="Florida Blue",
+            keyword="java",
+        ),
         # ── Availity (Workday) ────────────────────────────────────────────────
         WorkdayFetcher(
             base_url="https://availity.wd1.myworkdayjobs.com",

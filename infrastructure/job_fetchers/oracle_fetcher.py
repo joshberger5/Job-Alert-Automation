@@ -14,11 +14,11 @@ _DETAIL_TIMEOUT: int = 12
 _DETAIL_BATCH_TIMEOUT: int = 120
 _DETAIL_WORKERS: int = 10
 _LIMIT: int = 25
-_ICE_PATH: str = "/hcmRestApi/resources/11.13.18.05/recruitingICEJobRequisitions"
+_CE_PATH: str = "/hcmRestApi/CandidateExperience/v1/jobs"
 
 
 class OracleFetcher:
-    """Fetcher for Oracle Cloud HCM career sites using the ICE REST endpoint."""
+    """Fetcher for Oracle Cloud HCM career sites using the CandidateExperience v1 API."""
 
     def __init__(
         self,
@@ -40,19 +40,33 @@ class OracleFetcher:
             has_more: bool
             items, has_more = self._fetch_listing_page(offset)
             for item in items:
-                reqs: list[dict[str, Any]] = item.get("requisitionList", [])
-                req_dicts.extend(reqs)
+                # Handle both old ICE format (with requisitionList) and new CE format (direct job data)
+                if "requisitionList" in item:
+                    reqs: list[dict[str, Any]] = item.get("requisitionList", [])
+                    req_dicts.extend(reqs)
+                else:
+                    # New format: items are job requisitions directly
+                    req_dicts.append(item)
             if not has_more:
                 break
             offset += _LIMIT
 
-        req_ids: list[str] = [str(r.get("Id", "")) for r in req_dicts if r.get("Id")]
+        # Extract IDs handling both old and new API field names
+        req_ids: list[str] = []
+        for r in req_dicts:
+            job_id = r.get("Id") or r.get("id") or r.get("jobId") or ""
+            if job_id:
+                req_ids.append(str(job_id))
+        
         descriptions: dict[str, str] = self._fetch_all_details(req_ids)
 
         jobs: list[Job] = []
         for req in req_dicts:
-            req_id: str = str(req.get("Id", ""))
-            location: str = str(req.get("PrimaryLocation", ""))
+            # Handle field name variations between ICE and CandidateExperience APIs
+            req_id: str = str(req.get("Id") or req.get("id") or req.get("jobId") or "")
+            location: str = str(req.get("PrimaryLocation") or req.get("location") or req.get("primaryLocation") or "")
+            title: str = str(req.get("Title") or req.get("title") or req.get("jobTitle") or "")
+            
             url: str = (
                 f"{self._base_url}/hcmUI/CandidateExperience/en/sites"
                 f"/{self._site_id}/job/{req_id}"
@@ -61,7 +75,7 @@ class OracleFetcher:
             jobs.append(
                 Job(
                     id=req_id,
-                    title=str(req.get("Title", "")),
+                    title=title,
                     company=self.company_name,
                     location=location,
                     description=description,
@@ -78,19 +92,29 @@ class OracleFetcher:
         self, offset: int
     ) -> tuple[list[dict[str, Any]], bool]:
         params: dict[str, str] = {
-            "finder": f"findReqs;keyword={self._keyword};limit={_LIMIT};offset={offset}",
-            "expand": "requisitionList",
-            "onlyData": "true",
+            "keyword": self._keyword,
+            "limit": str(_LIMIT),
+            "offset": str(offset),
+        }
+        headers: dict[str, str] = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
         }
         resp: requests.Response = requests.get(
-            f"{self._base_url}{_ICE_PATH}",
+            f"{self._base_url}{_CE_PATH}",
             params=params,
+            headers=headers,
             timeout=_LISTING_TIMEOUT,
         )
         resp.raise_for_status()
         data: dict[str, Any] = resp.json()
-        items: list[dict[str, Any]] = data.get("items", [])
-        has_more: bool = bool(data.get("hasMore", False))
+        # The new API might have a different structure, so we handle both formats
+        if "items" in data:
+            items: list[dict[str, Any]] = data.get("items", [])
+        else:
+            # If data is a list directly, use it; otherwise wrap it
+            items = data if isinstance(data, list) else [data] if data else []
+        has_more: bool = bool(data.get("hasMore", False)) if isinstance(data, dict) else len(items) == _LIMIT
         return items, has_more
 
     def _fetch_all_details(self, req_ids: list[str]) -> dict[str, str]:
