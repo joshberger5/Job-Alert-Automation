@@ -161,6 +161,13 @@ def test_qa_automation_intern_rejected() -> None:
     assert "1" not in approved
 
 
+def test_release_and_environment_manager_rejected() -> None:
+    kf: KeywordTitleFilter = KeywordTitleFilter()
+    records: list[JobRecord] = [_make_record("1", "Release and Environment Manager")]
+    approved: set[str] = kf.filter_by_title(records, _PROFILE)
+    assert "1" not in approved
+
+
 # ---------------------------------------------------------------------------
 # Whitelist (overrides reject list)
 # ---------------------------------------------------------------------------
