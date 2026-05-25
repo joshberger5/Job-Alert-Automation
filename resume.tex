@@ -136,7 +136,7 @@
 \section{Summary}
  \begin{itemize}[leftmargin=0.15in, label={}]
     \small{\item{
-     Backend software engineer with experience building scalable enterprise systems using Java, Spring Boot, and Kafka. Delivered production systems involving event-driven processing, multi-tenant architectures, and performance optimization. Known for shipping high-impact automation that reduced developer workload and improved system performance.
+     Backend engineer at ICE building distributed microservices on Java, Spring Boot, PostgreSQL, and Kafka for a mortgage servicing platform that processes a majority of U.S. mortgages. Two years full-time after finishing a CS degree in three. Self-initiated work includes a cross-service N+1 fix, a DDD refactor of a core service, and a Kafka test suite reduction from 1,000 seconds to 2.
     }}
  \end{itemize}
  \vspace{-16pt}
@@ -150,21 +150,23 @@
       {Intercontinental Exchange}{August 2024 -- Present}
       {Software Engineer}{Jacksonville, Florida}
       \resumeItemListStart
-        \resumeItem{Led complete rewrite of a business-critical Spring Boot microservice, migrating persistence from a tightly coupled third-party task engine to an internally developed data service to remove architectural constraints and improve long-term extensibility.}
+        \resumeItem{Rewrote 13,000+ lines of a Spring Boot microservice to replace a deprecated Taskana dependency, eliminating controller-to-persistence coupling and migrating to an internally owned database that restored full customization and performance headroom.}
 
-        \resumeItem{Designed and implemented event-driven bulk processing using Kafka, publishing one event per entity and leveraging asynchronous consumers to enable scalable, non-blocking mass operations.}
+        \resumeItem{Took ownership of an event-driven Kafka integration and extended it to support asynchronous bulk operations across six workflow types, replicating legacy mass action functionality in the new platform.}
 
-        \resumeItem{Implemented audit-tracked persistence models and Specification-based dynamic querying with JWT-enforced organization-scoped multi-tenancy.}
+        \resumeItem{Recognized an anemic domain model where service classes held all business logic, and refactored a core service to relocate state validation into the aggregate root and remove reliance on its OpenAPI-generated model.}
 
-        \resumeItem{Engineered an automated metadata generation system eliminating manual configuration for 30,000+ UI fields across 1,100 legacy application screens.}
+        \resumeItem{Built an automated metadata generation system that eliminated manual configuration for 30,000+ UI fields across 1,100 legacy screens by reverse-engineering undocumented business rules from 2,000 HTML artifacts.}
 
-        \resumeItem{Parsed and analyzed 2,000 legacy HTML artifacts to reverse-engineer undocumented business rules and standardize metadata generation.}
+        \resumeItem{Integrated an internal LLM service into a new API endpoint that generated standardized metadata on-demand, reducing per-screen configuration time by 30–45 minutes and enabling 50 developers to complete all remaining submissions in a single day.}
 
-        \resumeItem{Developed a backend API endpoint that generated standardized metadata on-demand via an internal LLM service, reducing per-screen configuration time by 30–45 minutes and enabling 50 developers to complete all remaining submissions in a single day.}
+        \resumeItem{Reduced API latency by 20+ seconds by resolving an N+1 query, replacing per-entity select loops with batch loading, and cutting total-count queries from paginated endpoints across three services, load-tested against 197,000 records with zero failures.}
 
-        \resumeItem{Reduced API latency by 10+ seconds through query optimization and improved data access patterns.}
+        \resumeItem{Diagnosed two simultaneous production issues, including a misconfigured service base path that caused a 55-second timeout blocking client access to a customer-facing page; both fixes root-caused and merged the same day.}
 
-        \resumeItem{Increased mutation test coverage by 20\% using PIT by refactoring legacy tests and strengthening regression safety for critical workflows.}
+        \resumeItem{Diagnosed the root cause of a 1,000+ second Kafka integration test suite and refactored it to run in under 2 seconds, without patching around the timeout.}
+
+        \resumeItem{Drove mutation test coverage from 80\% to 96\% using PITest.}
 
     \resumeItemListEnd
 
@@ -192,7 +194,7 @@
     \small{\item{
      \textbf{Languages}{: Java, Python, SQL, C\#} \\
      \textbf{Backend \& Architecture}{: Spring Boot, Kafka, REST APIs, OpenAPI, PostgreSQL, Liquibase, JWT-based Auth} \\
-     \textbf{Testing \& Tooling}{: JUnit, PIT Mutation Testing, Git} \\
+     \textbf{Testing \& Tooling}{: JUnit, PITest, Git} \\
     }}
  \end{itemize}
  \vspace{-16pt}
@@ -205,9 +207,9 @@
       \resumeProjectHeading
           {\textbf{Automated Job Discovery \& Notification System} $|$ \emph{Python, GitHub Actions, REST APIs}}{February 2026 -- Present}
           \resumeItemListStart
-            \resumeItem{Architected a layered job aggregation system using Domain-Driven Design, integrating concurrent REST API clients across 10+ job boards (Adzuna, Greenhouse, Lever, Workday) with deduplication and salary normalization.}
+            \resumeItem{Applied Domain-Driven Design to build a layered job aggregation system integrating concurrent REST API clients across 10+ job boards (Adzuna, Greenhouse, Lever, Workday) with deduplication and salary normalization.}
             \resumeItem{Integrated an LLM-based title filtering layer (Gemini) behind a deterministic keyword filter to reduce false-positive alerts while minimizing API cost and latency.}
-            \resumeItem{Deployed as a fully automated GitHub Actions pipeline running 3$\times$ daily with HTML email delivery and persistent state tracking across runs.}
+            \resumeItem{Runs fully automated on GitHub Actions 3$\times$ daily, delivering results via HTML email with persistent state tracking across runs.}
           \resumeItemListEnd
     \resumeSubHeadingListEnd
 \vspace{-15pt}
