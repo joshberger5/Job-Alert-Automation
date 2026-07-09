@@ -131,7 +131,7 @@
 \section{Summary}
  \begin{itemize}[leftmargin=0.15in, label={}]
     \small{\item{
-     Backend engineer at ICE building distributed microservices on Java, Spring Boot, PostgreSQL, and Kafka for a mortgage servicing platform that processes a majority of U.S. mortgages. Two years full-time after finishing a CS degree in three. Self-initiated work includes a cross-service N+1 fix, a DDD refactor of a core service, and a Kafka test suite reduction from 1,000 seconds to 2.
+     Backend engineer at ICE building distributed microservices on Java, Spring Boot, PostgreSQL, and Kafka for a mortgage servicing platform that processes a majority of U.S. mortgages. Finished a CS degree in three years; two years full-time since. Self-initiated work includes a 97\% latency cut on the platform's main create operation (10.5s to 0.4s), a domain-driven refactor of a core service, and a Kafka integration test suite reduced from over 1,000 seconds to under 2.
     }}
  \end{itemize}
  \vspace{-16pt}
@@ -145,23 +145,19 @@
       {Intercontinental Exchange}{August 2024 -- Present}
       {Software Engineer}{Jacksonville, Florida}
       \resumeItemListStart
-        \resumeItem{Rewrote 13,000+ lines of a Spring Boot microservice to replace a deprecated Taskana dependency, eliminating controller-to-persistence coupling and migrating to an internally owned database that restored full customization and performance headroom.}
+        \resumeItem{Cut latency on a core create operation by 97\% (10.5s to 0.4s average, 14.7s to 0.7s at p99) by replacing an application-layer duplicate check with an O(1) database index lookup, clearing the blocker that kept teams from migrating off the deprecated endpoint.}
 
-        \resumeItem{Took ownership of an event-driven Kafka integration and extended it to support asynchronous bulk operations across six workflow types, replicating legacy mass action functionality in the new platform.}
+        \resumeItem{Reduced API latency by 20+ seconds across three services by resolving compounding N+1 queries in JPA that had been hanging the UI, replacing per-entity select loops with batch loading and cutting redundant count queries by switching pagination from JPA Page to Slice; load-tested against 197,000 records with zero failures.}
 
-        \resumeItem{Recognized an anemic domain model where service classes held all business logic, and refactored a core service to relocate state validation into the aggregate root and remove reliance on its OpenAPI-generated model.}
+        \resumeItem{Rewrote a 13,000-line backend service to replace a deprecated third-party workflow library with an in-house data layer, removing a scaling ceiling and unpatched security vulnerabilities while making new features faster to ship.}
 
-        \resumeItem{Built an automated metadata generation system that eliminated manual configuration for 30,000+ UI fields across 1,100 legacy screens by reverse-engineering undocumented business rules from 2,000 HTML artifacts.}
+        \resumeItem{Added asynchronous bulk actions across six operation types to an event-driven Kafka pipeline and delivered a feature a client needed for their production launch, catching a latent infinite-retry bug before it could cause an outage.}
 
-        \resumeItem{Integrated an internal LLM service into a new API endpoint that generated standardized metadata on-demand, reducing per-screen configuration time by 30--45 minutes and enabling 50 developers to complete all remaining submissions in a single day.}
+        \resumeItem{Built a system that auto-generated configuration for 30,000+ UI fields across 1,100 legacy screens, replacing manual setup, by reverse-engineering undocumented rules from 2,000 source files; exposed it through an internal LLM endpoint that let 50 developers finish entering the remaining fields in a single day.}
 
-        \resumeItem{Reduced API latency by 20+ seconds by resolving an N+1 query, replacing per-entity select loops with batch loading, and cutting total-count queries from paginated endpoints across three services, load-tested against 197,000 records with zero failures.}
+        \resumeItem{Pinpointed the failure in a priority-1 outage within 30 seconds of walking into the room, after the team had been stuck for hours; shipped the root-cause fix across two services and later ran a team training on the debugging setup.}
 
-        \resumeItem{Diagnosed two simultaneous production issues, including a misconfigured service base path that caused a 55-second timeout blocking client access to a customer-facing page; both fixes root-caused and merged the same day.}
-
-        \resumeItem{Diagnosed the root cause of a 1,000+ second Kafka integration test suite and refactored it to run in under 2 seconds, without patching around the timeout.}
-
-        \resumeItem{Drove mutation test coverage from 80\% to 96\% using PITest.}
+        \resumeItem{Diagnosed why an integration test suite took over 1,000 seconds and rebuilt it to run in under 2 seconds, instead of patching around the timeout; raised mutation test coverage from 80\% to 96\% with PITest.}
 
     \resumeItemListEnd
 
@@ -180,7 +176,7 @@
 \section{Technical Skills}
  \begin{itemize}[leftmargin=0.15in, label={}]
     \small{\item{
-     \textbf{Languages}{: Java, Python, SQL} \\
+     \textbf{Languages}{: Java, Python} \\
      \textbf{Backend \& Architecture}{: Spring Boot, Kafka, REST APIs, OpenAPI, PostgreSQL, Liquibase, JWT-based Auth, Microservices Architecture} \\
      \textbf{Tooling \& Infrastructure}{: Docker, GitHub Actions, Git, JUnit, PITest} \\
     }}
