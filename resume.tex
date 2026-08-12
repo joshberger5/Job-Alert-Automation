@@ -131,7 +131,7 @@
 \section{Summary}
  \begin{itemize}[leftmargin=0.15in, label={}]
     \small{\item{
-     Over two years as a full-stack software engineer at ICE building distributed microservices using Java, Spring Boot, PostgreSQL, and Kafka for a mortgage servicing platform that processes a majority of U.S. mortgages.
+     Software engineer with 2+ years at ICE building distributed backend microservices (Java, Spring Boot, Kafka, PostgreSQL) and LLM-integrated internal tooling for a mortgage servicing platform that processes a majority of U.S. mortgages.
     }}
  \end{itemize}
  \vspace{-16pt}
@@ -145,6 +145,8 @@
       {Intercontinental Exchange}{August 2024 -- Present}
       {Software Engineer}{Jacksonville, Florida}
       \resumeItemListStart
+        \resumeItem{Built an LLM-integrated tool that auto-generated configuration for 30,000+ UI fields across 1,100 legacy screens by reverse-engineering undocumented rules from 2,000 source files, replacing manual setup and letting 50 developers finish the remaining fields in a single day.}
+
         \resumeItem{Cut latency on a core create operation by 97\% (10.5s to 0.4s average, 14.7s to 0.7s at p99) by replacing an application-layer duplicate check with an O(1) database index lookup, clearing the blocker that kept teams from migrating off the deprecated endpoint.}
 
         \resumeItem{Reduced API latency by 20+ seconds across three services by resolving compounding N+1 queries in JPA that had been hanging the UI, replacing per-entity select loops with batch loading and cutting redundant count queries by switching pagination from JPA Page to Slice; load-tested against 197,000 records with zero failures.}
@@ -152,8 +154,6 @@
         \resumeItem{Rewrote a 13,000-line backend service to replace a deprecated third-party workflow library with an in-house data layer, removing a scaling ceiling and unpatched security vulnerabilities while making new features faster to ship.}
 
         \resumeItem{Added asynchronous bulk actions across six operation types to an event-driven Kafka pipeline and delivered a feature a client needed for their production launch, catching a latent infinite-retry bug before it could cause an outage.}
-
-        \resumeItem{Built an LLM-integrated tool that auto-generated configuration for 30,000+ UI fields across 1,100 legacy screens, replacing manual setup, by reverse-engineering undocumented rules from 2,000 source files; allowed 50 developers finish entering the remaining fields in a single day.}
 
         \resumeItem{Pinpointed the failure in a priority-1 outage within 30 seconds of walking into the room, after the team had been stuck for hours; shipped the root-cause fix across two services and later ran a team training on the debugging setup.}
 
@@ -176,7 +176,7 @@
 \section{Technical Skills}
  \begin{itemize}[leftmargin=0.15in, label={}]
     \small{\item{
-     \textbf{Languages}{: Java, Python} \\
+     \textbf{Languages}{: Java, Python, SQL} \\
      \textbf{Backend \& Architecture}{: Spring Boot, Kafka, REST APIs, OpenAPI, PostgreSQL, Liquibase, JWT-based Auth, Microservices Architecture} \\
      \textbf{Tooling \& Infrastructure}{: Docker, GitHub Actions, Git, JUnit, PITest} \\
     }}
