@@ -147,13 +147,13 @@
       \resumeItemListStart
         \resumeItem{Built an LLM-integrated tool that auto-generated configuration for 34,000+ UI fields across 1,100 legacy screens by reverse-engineering undocumented rules from 3,100+ source files, replacing manual setup and letting 50 developers finish the remaining fields in a single day.}
 
-        \resumeItem{Redesigned duplicate detection on a high-volume endpoint as a hashed, indexed database lookup with an advisory lock for concurrent writes, cutting latency by 97\% (10.5s to 0.4s average, 14,7s to 0.7s at p99) and clearing the blocker that kept teams from migrating off the deprecated endpoint.}
+        \resumeItem{Redesigned duplicate detection on a high-volume endpoint as a hashed, indexed database lookup with an advisory lock for concurrent writes, cutting latency by 97\% (10.5s to 0.4s average, 14.7s to 0.7s at p99) and clearing the blocker that kept teams from migrating off the deprecated endpoint.}
 
         \resumeItem{Eliminated N+1 queries on five endpoints across two services with entity graphs, batch fetching, and bulk user preloading, ending 504 timeouts and cutting one endpoint from 12.3s to 1.4s; added Hibernate-statistics tests that fail if the N+1s return.}
 
         \resumeItem{Rewrote a core backend service off a forked task-management library that was pinned to an end-of-life Spring Boot version, moving it to an in-house data store behind an adapter layer in a 15,000 line change; load testing at 40 concurrent users created 197,000+ records in 30 minutes with zero failed requests and a 258ms median.}
 
-        \resumeItem{Pinpointed the failure within 30 seconds in a priority-1 outage that silently broke cross-system sync for every client, after the tech leads on the team had been stuck for hours; ran the full UI-to-Kafka path locally to rule out application logic and walked five engineers through that setup the next morning, traced the trigger to a shared-library upgrade that broke a case-sensitive message header, and shipped case-insensitive header ahndling across two services so the upgrade could be reapplied.}
+        \resumeItem{Pinpointed the failure within 30 seconds in a priority-1 outage that silently broke cross-system sync for every client, after the tech leads on the team had been stuck for hours; ran the full UI-to-Kafka path locally to rule out application logic and walked five engineers through that setup the next morning, traced the trigger to a shared-library upgrade that broke a case-sensitive message header, and shipped case-insensitive header handling across two services so the upgrade could be reapplied.}
 
         \resumeItem{Replaced a service's 276 tests with 347 ones written from scratch that run 59 seconds faster, raising mutation coverage from 84\% to 95\%; swapped timeout-based Kafka tests that could stall the suite for over 1,100 seconds for configuration tests that run in under 2 seconds, and deleted 100+ unused mock files.}
 
@@ -161,7 +161,7 @@
 
         \resumeItem{Integrated a Temporal workflow engine with a task platform across 7 repositories so mortgage servicers can launch and track automated business processes from their task queue, including human-in-the-loop steps; extended the shared workflow SDK so any team can control how fields render, and the work was featured in a CTO demo.}
 
-        \resumeItem{Integrated loan data views into a React/Typescript microfrontend so each task automatically shows the live loan fields needed to complete it, pulled from several legacy mainframe screens; first moved another team's components and types into the shared UI library so both products import one copy instead of maintaining divering forks, and built the backend-for-frontend endpoints behind it.}
+        \resumeItem{Integrated loan data views into a React/Typescript microfrontend so each task automatically shows the live loan fields needed to complete it, pulled from several legacy mainframe screens; first moved another team's components and types into the shared UI library so both products import one copy instead of maintaining diverging forks, and built the backend-for-frontend endpoints behind it.}
 
     \resumeItemListEnd
 
@@ -184,9 +184,9 @@
 \section{Technical Skills}
  \begin{itemize}[leftmargin=0.15in, label={}]
     \small{\item{
-     \textbf{Languages}{: Java, Typescript, Python, SQL} \\
+     \textbf{Languages}{: Java, TypeScript, Python, SQL} \\
      \textbf{Frameworks \& Data}{: Spring Boot, Spring Data JPA/Hibernate, Kafka, Temporal, React, REST/OpenAPI, PostgreSQL, Liquibase, OAuth2/JWT} \\
-     \textbf{Tooling \& Testing}{: Docker, Kubernetes (EKS), Azure DevOps, GitHub Actions, Splunk, Snyk, JUnit 5, Mockito, Wiremock, PITest, Claude Code, Git} \\
+     \textbf{Tooling \& Testing}{: Docker, Kubernetes (EKS), Azure DevOps, GitHub Actions, Splunk, Snyk, JUnit 5, Mockito, WireMock, PITest, Claude Code, Git} \\
     }}
  \end{itemize}
  \vspace{-16pt}
