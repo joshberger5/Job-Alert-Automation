@@ -66,10 +66,10 @@
 
 %-------------------------
 % Custom commands
-\newcommand{\resumeItem}[1]{
-  \item\small{
-    {#1 \vspace{-2pt}}
-  }
+\newcommand{\resumeItem}[1]{%
+  \item\small{%
+    {#1\vspace{-2pt}}%
+  }%
 }
 
 \newcommand{\classesList}[4]{
@@ -131,7 +131,7 @@
 \section{Summary}
  \begin{itemize}[leftmargin=0.15in, label={}]
     \small{\item{
-     Software engineer with 2+ years at ICE building distributed backend microservices (Java, Spring Boot, Kafka, PostgreSQL) and LLM-integrated internal tooling for a mortgage servicing platform that processes a majority of U.S. mortgages.
+     Software engineer with 2+ years at ICE building distributed backend microservices (Java, Spring Boot, Kafka, PostgreSQL), React microfrontends, and LLM-integrated internal tooling for a mortgage servicing platform that processes a majority of U.S. mortgages.
     }}
  \end{itemize}
  \vspace{-16pt}
@@ -145,19 +145,23 @@
       {Intercontinental Exchange}{August 2024 -- Present}
       {Software Engineer}{Jacksonville, Florida}
       \resumeItemListStart
-        \resumeItem{Built an LLM-integrated tool that auto-generated configuration for 30,000+ UI fields across 1,100 legacy screens by reverse-engineering undocumented rules from 2,000 source files, replacing manual setup and letting 50 developers finish the remaining fields in a single day.}
+        \resumeItem{Built an LLM-integrated tool that auto-generated configuration for 34,000+ UI fields across 1,100 legacy screens by reverse-engineering undocumented rules from 3,100+ source files, replacing manual setup and letting 50 developers finish the remaining fields in a single day.}
 
-        \resumeItem{Cut latency on a core create operation by 97\% (10.5s to 0.4s average, 14.7s to 0.7s at p99) by replacing an application-layer duplicate check with an O(1) database index lookup, clearing the blocker that kept teams from migrating off the deprecated endpoint.}
+        \resumeItem{Redesigned duplicate detection on a high-volume endpoint as a hashed, indexed database lookup with an advisory lock for concurrent writes, cutting latency by 97\% (10.5s to 0.4s average, 14,7s to 0.7s at p99) and clearing the blocker that kept teams from migrating off the deprecated endpoint.}
 
-        \resumeItem{Reduced API latency by 20+ seconds across three services by resolving compounding N+1 queries in JPA that had been hanging the UI, replacing per-entity select loops with batch loading and cutting redundant count queries by switching pagination from JPA Page to Slice; load-tested against 197,000 records with zero failures.}
+        \resumeItem{Eliminated N+1 queries on five endpoints across two services with entity graphs, batch fetching, and bulk user preloading, ending 504 timeouts and cutting one endpoint from 12.3s to 1.4s; added Hibernate-statistics tests that fail if the N+1s return.}
 
-        \resumeItem{Rewrote a 13,000-line backend service to replace a deprecated third-party workflow library with an in-house data layer, removing a scaling ceiling and unpatched security vulnerabilities while making new features faster to ship.}
+        \resumeItem{Rewrote a core backend service off a forked task-management library that was pinned to an end-of-life Spring Boot version, moving it to an in-house data store behind an adapter layer in a 15,000 line change; load testing at 40 concurrent users created 197,000+ records in 30 minutes with zero failed requests and a 258ms median.}
 
-        \resumeItem{Added asynchronous bulk actions across six operation types to an event-driven Kafka pipeline and delivered a feature a client needed for their production launch, catching a latent infinite-retry bug before it could cause an outage.}
+        \resumeItem{Pinpointed the failure within 30 seconds in a priority-1 outage that silently broke cross-system sync for every client, after the tech leads on the team had been stuck for hours; ran the full UI-to-Kafka path locally to rule out application logic and walked five engineers through that setup the next morning, traced the trigger to a shared-library upgrade that broke a case-sensitive message header, and shipped case-insensitive header ahndling across two services so the upgrade could be reapplied.}
 
-        \resumeItem{Pinpointed the failure in a priority-1 outage within 30 seconds of walking into the room, after the team had been stuck for hours; shipped the root-cause fix across two services and later ran a team training on the debugging setup.}
+        \resumeItem{Replaced a service's 276 tests with 347 ones written from scratch that run 59 seconds faster, raising mutation coverage from 84\% to 95\%; swapped timeout-based Kafka tests that could stall the suite for over 1,100 seconds for configuration tests that run in under 2 seconds, and deleted 100+ unused mock files.}
 
-        \resumeItem{Diagnosed why an integration test suite took over 1,000 seconds and rebuilt it to run in under 2 seconds, instead of patching around the timeout; raised mutation test coverage from 80\% to 96\% with PITest.}
+        \resumeItem{Shipped the ability to reopen closed tasks across four services before a beta client's production launch deadline, including syncing with a legacy mainframe task system, and fixed two latent bugs the rollout exposed: a stale API contract that turned any list containing a reopened task into a 500, and an infinite Kafka retry loop triggered by a stale message schema, which I made non-retryable before it reached production.}
+
+        \resumeItem{Integrated a Temporal workflow engine with a task platform across 7 repositories so mortgage servicers can launch and track automated business processes from their task queue, including human-in-the-loop steps; extended the shared workflow SDK so any team can control how fields render, and the work was featured in a CTO demo.}
+
+        \resumeItem{Integrated loan data views into a React/Typescript microfrontend so each task automatically shows the live loan fields needed to complete it, pulled from several legacy mainframe screens; first moved another team's components and types into the shared UI library so both products import one copy instead of maintaining divering forks, and built the backend-for-frontend endpoints behind it.}
 
     \resumeItemListEnd
 
@@ -165,7 +169,11 @@
       {Intercontinental Exchange}{May -- August 2024}
       {Software Engineer Intern}{Jacksonville, Florida}
       \resumeItemListStart
-        \resumeItem{Selected as 1 of 3 interns (out of 50+) to receive a return offer after leading a 6-person intern team to deliver a production-ready backend service integrated with legacy mainframe systems.}
+      
+        \resumeItem{Led a 6-person intern team that delivered a production-ready backend service integrated with legacy mainframe systems.}
+
+        \resumeItem{1 of 3 interns out of 50+ to receive a return offer.}
+        
     \resumeItemListEnd
 
   \resumeSubHeadingListEnd
@@ -176,37 +184,23 @@
 \section{Technical Skills}
  \begin{itemize}[leftmargin=0.15in, label={}]
     \small{\item{
-     \textbf{Languages}{: Java, Python, SQL} \\
-     \textbf{Backend \& Architecture}{: Spring Boot, Kafka, REST APIs, OpenAPI, PostgreSQL, Liquibase, JWT-based Auth, Microservices Architecture} \\
-     \textbf{Tooling \& Infrastructure}{: Docker, GitHub Actions, Git, JUnit, PITest} \\
+     \textbf{Languages}{: Java, Typescript, Python, SQL} \\
+     \textbf{Frameworks \& Data}{: Spring Boot, Spring Data JPA/Hibernate, Kafka, Temporal, React, REST/OpenAPI, PostgreSQL, Liquibase, OAuth2/JWT} \\
+     \textbf{Tooling \& Testing}{: Docker, Kubernetes (EKS), Azure DevOps, GitHub Actions, Splunk, Snyk, JUnit 5, Mockito, Wiremock, PITest, Claude Code, Git} \\
     }}
  \end{itemize}
  \vspace{-16pt}
-
-
-%-----------PROJECTS-----------
-\section{Projects}
-    \vspace{-5pt}
-    \resumeSubHeadingListStart
-      \resumeProjectHeading
-          {\textbf{Automated Job Discovery \& Notification System} $|$ \emph{Python, GitHub Actions, REST APIs}}{February 2026 -- Present}
-          \resumeItemListStart
-            \resumeItem{Applied Domain-Driven Design to build a layered job aggregation system integrating concurrent REST API clients across 10+ job boards (Adzuna, Greenhouse, Lever, Workday) with deduplication and salary normalization.}
-            \resumeItem{Integrated an LLM-based title filtering layer (Gemini) behind a deterministic keyword filter to reduce false-positive alerts while minimizing API cost and latency.}
-            \resumeItem{Runs fully automated on GitHub Actions 3$\times$ daily, delivering results via HTML email with persistent state tracking across runs.}
-          \resumeItemListEnd
-    \resumeSubHeadingListEnd
-\vspace{-15pt}
 
 %-----------EDUCATION-----------
 \section{Education}
     \resumeSubHeadingListStart
       \resumeSubheading
-        {Furman University}{}
+        {Furman University}{May 2024}
         {Bachelor of Science in Computer Science}{Greenville, South Carolina}
         \resumeItemListStart
           \resumeItem{Heatherington Scholarship recipient for outstanding academic performance (3.93 CS GPA).}
           \resumeItem{Member, Upsilon Pi Epsilon (Computing Honor Society).}
+          \resumeItem{Graduated in 3 years.}
         \resumeItemListEnd
       \resumeSubHeadingListEnd
 
