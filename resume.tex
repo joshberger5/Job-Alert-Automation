@@ -160,7 +160,7 @@
 
         \resumeItem{Cut a high-volume endpoint's latency by 97\% (10.5s to 0.4s average, 14.7s to 0.7s at p99) by moving duplicate detection into a hashed, indexed database lookup with an advisory lock, so other teams could migrate to it.}
 
-        \resumeItem{Eliminated N+1 queries on five endpoints with entity graphs and batch fetching, ending 504 timeouts and cutting one endpoint from 12.3s to 1.4s; added Hibernate-statistics tests that fail if the N+1s return.}
+        \resumeItem{Eliminated N+1 queries on five endpoints through entity graphs and batch fetching, ending 504 timeouts and cutting one endpoint from 12.3s to 1.4s; added Hibernate-statistics tests that fail if the N+1s return.}
 
         \resumeItem{Led a 15,000-line rewrite moving a core service off a forked task-management library pinned to an end-of-life Spring Boot version onto an in-house data store; load testing created 197,000+ records in 30 minutes with zero failed requests and a 258ms median.}
 
