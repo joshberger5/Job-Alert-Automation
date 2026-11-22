@@ -168,7 +168,7 @@
 
         \resumeItem{Replaced a service's 276 tests with 347 that run 59s faster, raising mutation coverage from 84\% to 95\% and swapped Kafka timeout tests that could stall the suite for 1,100+ seconds for configuration tests that run in under 2 seconds, and deleted 100+ unused mock files.}
 
-        \resumeItem{Shipped reopening closed tasks across four services before a client's production launch deadline, including syncing with a legacy mainframe task system, and fixed two bugs the it exposed: a stale API contract that turned any list containing a reopened task into a 500, and an infinite Kafka retry loop triggered by a stale message schema, which I made non-retryable before it reached production.}
+        \resumeItem{Shipped reopening closed tasks across four services before a client's production launch deadline, including syncing with a legacy mainframe task system, and fixed two bugs it exposed: a stale API contract that turned any list containing a reopened task into a 500, and an infinite Kafka retry loop triggered by a stale message schema, which I made non-retryable before it reached production.}
 
         \resumeItem{Integrated a Temporal workflow engine with a task platform across 7 repositories so mortgage servicers can launch and track automated business processes from their task queue, including human-in-the-loop steps, and the work was featured in a CTO demo.}
 
